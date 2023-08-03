@@ -1,10 +1,13 @@
-### Soul
-#### core service of Artchitect
+### Soul - Душа Архитектора
 
-- handles creative process
-- makes utility tasks
-- local: connected to entropy sensor (via webcam)
-- local: connected to Stable Diffusion
-- remote: connected with PostgresDB (persistent storage)
-- remote: connected withh Redis (pub/sub)
-- remote: connected with Telegram Bot (post 10-min images)
+Soul - базовый сервис, в котором запущен Главный Цикл Архитектора и происходит рисование картин.
+Расположен на домашнем сервере с мощной GPU и веб-камерой (с веб-камеры считывается энтропия пространства).
+
+- обслуживает Главный Цикл Архитектора, в котором происходит Творческий процесс
+- выполняет сервисные задачи (постить в телеграм)
+- локально подключен к датчику энтропии (веб-камера)
+- локально подключен к AI StableDiffusion и может запросить рисование картины у ИИ
+- удалённо связан с БД PostgresDB (постоянно хранилище данных)
+- удалённо связан с Redis (используется pub/sub для передачи потоковых данных на gate-серверы)
+- удалённо связан с Телеграм Ботом для постинга картин (картина выбирается энтропией, потому только soul может этот
+  запрос выполнить)

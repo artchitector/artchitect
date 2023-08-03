@@ -6,10 +6,12 @@ import (
 )
 
 type Config struct {
-	// main
-	IsDebug bool
+	// базовые параметры
+	IsDebug      bool
+	InvokeAIPath string
+	DbDSN        string
 
-	// services
+	// службы
 	CreatorActive bool
 }
 
@@ -25,10 +27,12 @@ func InitEnv() *Config {
 	}
 
 	return &Config{
-		// main
-		IsDebug: env["IS_DEBUG"] == "true",
+		// базовые параметры
+		IsDebug:      env["IS_DEBUG"] == "true",
+		InvokeAIPath: env["INVOKEAI_PATH"],
+		DbDSN:        env["DB_DSN"],
 
-		// services
+		// службы
 		CreatorActive: env["CREATOR_ACTIVE"] == "true",
 	}
 }

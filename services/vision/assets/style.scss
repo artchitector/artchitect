@@ -1,0 +1,63 @@
+$link: #d4d1c3;
+$link-hover: #d4d1c3;
+$body-background-color: #d4d1c3;
+
+// Import Bulma's core, Bulma and Buefy styles
+@import "~bulma/sass/utilities/_all";
+@import "~bulma";
+@import "~buefy/src/scss/buefy";
+
+// Nothing work for me here, i tried to change base-colors, but nothing changed
+// TODO need to overwrite bulma-variables and minify template styles
+
+//.navbar {
+//  background-color: #2d2d2d;
+//}
+//
+//body {
+//  background-color: #d4d1c3;
+//}
+
+section {
+  background-color: #fcfbf2;
+  padding: 30px;
+  margin: 15px 0 15px 0;
+}
+
+section.red-section {
+  background-color: #eee;
+  color: #8b0000;
+  border: 1px solid darkred;
+}
+
+section.green-section {
+  background-color: #cdf5ca;
+  color: #003a07;
+  border: 1px solid #00a41e;
+
+  a {
+    color: #00bb67;
+    text-decoration: underline;
+  }
+}
+
+section a {
+  color: #1e8431;
+  text-decoration: underline;
+}
+
+.has-color-base {
+  color: #d4d1c3;
+}
+
+// helps to fit image into flexbox cell
+img.absolutely {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+}

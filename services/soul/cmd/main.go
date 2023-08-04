@@ -9,6 +9,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
+	"image"
 	"os"
 	"os/signal"
 	"syscall"
@@ -38,6 +39,17 @@ func main() {
 
 	// общие зависимости
 	database := infrastructure.InitDB(ctx, config.DbDSN)
+
+	// веб-камера + энтропия
+	entropy := external.NewEntropy()
+	webcam := infrastructure.NewWebcam(config.WebcamDeviceID, config.WebcamFrameResolution)
+	webcamStream := make(chan image.Image)
+	go func() {
+		entropy.StartEntropyDecode(ctx, webcamStream)
+	}()
+	if err := webcam.Start(ctx, webcamStream); err != nil {
+		log.Fatal().Err(err).Send()
+	}
 
 	// запуск фоновых служб
 	go runServices(ctx)

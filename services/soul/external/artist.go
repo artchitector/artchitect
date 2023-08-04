@@ -1,9 +1,11 @@
 package external
 
 import (
+	"bytes"
 	"context"
 	"github.com/pkg/errors"
 	"image"
+	"image/png"
 	"strings"
 )
 
@@ -35,13 +37,18 @@ func (a *Artist) MakeArt(
 		return nil, errors.Wrap(err, "[artist] ОШИБКА РАСШИФРОВКИ")
 	}
 
-	// Нанесение водяного знака (с котом и номером работы в углу картинки)
+	// Нанесение водяного знака (с котом и номером работы в углу картинки). Кота тоже рисовал Архитектор, но v1 (опытная версия)
 	img, err = a.makeWatermark(img, artID)
+	if err != nil {
+		return nil, errors.Wrap(err, "[artist] ОШИБКА ВОДЯНОГО ЗНАКА")
+	}
 	return img, nil
 }
 
 func (a *Artist) decode(data []byte) (image.Image, error) {
-	return nil, errors.New("[artist] РАСШИФРОВКА - НЕ ГОТОВО")
+	b := bytes.NewReader(data)
+	img, err := png.Decode(b)
+	return img, err
 }
 
 func (a *Artist) makeWatermark(img image.Image, artID uint) (image.Image, error) {

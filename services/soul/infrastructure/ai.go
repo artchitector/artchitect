@@ -170,7 +170,7 @@ func (ai *AI) execute(ctx context.Context) (string, error) {
 }
 
 func (ai *AI) checkLineAndGetFile(line string) (found bool, filename string) {
-	log.Info().Msgf("[ai] СТРОКА: %s", line)
+	log.Debug().Msgf("[ai] СТРОКА: %s", line)
 	match := ai.pathFinderRegexp.FindStringSubmatch(line)
 	if len(match) > 1 {
 		return true, match[1]

@@ -11,6 +11,10 @@ type Config struct {
 	InvokeAIPath string
 	DbDSN        string
 
+	// hardware
+	WebcamDeviceID        string
+	WebcamFrameResolution string
+
 	// службы
 	CreatorActive bool
 }
@@ -31,6 +35,10 @@ func InitEnv() *Config {
 		IsDebug:      env["IS_DEBUG"] == "true",
 		InvokeAIPath: env["INVOKEAI_PATH"],
 		DbDSN:        env["DB_DSN"],
+
+		// hardware
+		WebcamDeviceID:        env["WEBCAM_DEVICE_ID"],
+		WebcamFrameResolution: env["WEBCAM_FRAME_RESOLUTION"],
 
 		// службы
 		CreatorActive: env["CREATOR_ACTIVE"] == "true",

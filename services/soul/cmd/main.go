@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/artchitector/artchitect2/model"
 	"github.com/artchitector/artchitect2/services/soul/external"
 	"github.com/artchitector/artchitect2/services/soul/infrastructure"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -39,6 +41,7 @@ func main() {
 
 	// общие зависимости
 	database := infrastructure.InitDB(ctx, config.DbDSN)
+	red := infrastructure.InitRedis(config)
 
 	// веб-камера + энтропия
 	entropy := external.NewEntropy()
@@ -47,6 +50,33 @@ func main() {
 	go func() {
 		entropy.StartEntropyDecode(ctx, webcamStream)
 	}()
+
+	// redis-stream
+	stream := external.NewStream(red)
+
+	go func() {
+		sCtx, done := context.WithTimeout(ctx, time.Second*10)
+		defer done()
+		ch := entropy.SubscribeEntropy(sCtx)
+
+		for ent := range ch {
+			log.Info().Msgf("[main] ПОЛУЧЕНА ЭНТРОПИИ ПО КАНАЛУ %+v", ent)
+			if b, err := json.Marshal(ent); err != nil {
+				log.Fatal().Msgf("JSON MARSHAL")
+			} else {
+				err = stream.SendCargo(ctx, model.Event{
+					Channel: model.ChanEntropy,
+					Payload: string(b),
+				})
+				if err != nil {
+					log.Fatal().Msgf("SEND CARGO FAILED")
+				}
+			}
+		}
+
+		log.Fatal().Msgf("STOP ASGARD")
+	}()
+
 	if err := webcam.Start(ctx, webcamStream); err != nil {
 		log.Fatal().Err(err).Send()
 	}

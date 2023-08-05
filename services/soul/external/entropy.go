@@ -6,6 +6,7 @@ import (
 	"github.com/artchitector/artchitect2/model"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"golang.org/x/exp/slices"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -13,6 +14,7 @@ import (
 	"math/bits"
 	"os"
 	"sync"
+	"time"
 )
 
 const (
@@ -21,11 +23,23 @@ const (
 	EntropyImageSide        = 8 // размер изображения в пикселях (энтропия 8х8 пикселей, всего 64 байта, это под uint64 число)
 )
 
+type EntropyPack struct {
+	Entropy model.Entropy
+	Choice  model.Entropy
+}
+
+type subscriber struct {
+	ctx context.Context
+	ch  chan EntropyPack
+}
+
 type Entropy struct {
 	previousFrame        image.Image
 	currentFrame         image.Image
 	mutex                sync.Mutex
-	lastExtractedEntropy map[string]model.Entropy
+	lastExtractedEntropy *EntropyPack
+	sMutex               sync.Mutex
+	subscribers          []*subscriber
 }
 
 func NewEntropy() *Entropy {
@@ -34,6 +48,8 @@ func NewEntropy() *Entropy {
 		currentFrame:         nil,
 		mutex:                sync.Mutex{},
 		lastExtractedEntropy: nil,
+		sMutex:               sync.Mutex{},
+		subscribers:          make([]*subscriber, 0),
 	}
 }
 
@@ -54,6 +70,57 @@ func (e *Entropy) StartEntropyDecode(ctx context.Context, stream chan image.Imag
 	}
 }
 
+func (e *Entropy) SubscribeEntropy(subscriberCtx context.Context) chan EntropyPack {
+	ch := make(chan EntropyPack)
+	sub := subscriber{
+		ctx: subscriberCtx,
+		ch:  ch,
+	}
+	e.sMutex.Lock()
+	defer e.sMutex.Unlock()
+
+	e.subscribers = append(e.subscribers, &sub)
+	go func() {
+		<-subscriberCtx.Done()
+		e.unsubscribe(&sub)
+	}()
+	return ch
+}
+
+func (e *Entropy) unsubscribe(sub *subscriber) {
+	e.sMutex.Lock()
+	defer e.sMutex.Unlock()
+
+	idx := slices.IndexFunc(e.subscribers, func(s *subscriber) bool { return s == sub })
+	if idx == -1 {
+		log.Warn().Msgf("[entropy] КАНАЛ ОТСУТСТВУЕТ. ПРОБЛЕМА")
+		return
+	}
+
+	e.subscribers = append(e.subscribers[:idx], e.subscribers[idx+1:]...)
+	log.Debug().Msgf("[entropy] ПОДПИСЧИК %d - УДАЛЕНО. УСПЕХ.", idx)
+}
+
+func (e *Entropy) notifyListeners(ctx context.Context, entropy EntropyPack) {
+	e.sMutex.Lock()
+	subscribers := e.subscribers[:]
+	e.sMutex.Unlock()
+
+	for _, sub := range subscribers {
+		// отправка энтропии всем слушателям
+		go func(s *subscriber) {
+			select {
+			case <-s.ctx.Done():
+				return
+			case <-time.After(time.Second):
+				log.Error().Msgf("[entropy] ОТПРАВКА ЗАВИСЛА, ГРУЗ ПОТЕРЯН")
+			case s.ch <- entropy:
+				log.Debug().Msgf("[entropy] ГРУЗ ЭНТРОПИИ ОТПРАВЛЕН")
+			}
+		}(sub)
+	}
+}
+
 func (e *Entropy) handleEvent(ctx context.Context, img image.Image) (bool, error) {
 	if err := e.saveFrame(ctx, img); err != nil {
 		return false, errors.Wrap(err, "[entropy] СОХРАНЕНИЕ КАДРА. АВАРИЯ.")
@@ -69,12 +136,12 @@ func (e *Entropy) handleEvent(ctx context.Context, img image.Image) (bool, error
 
 	e.mutex.Lock()
 	defer e.mutex.Unlock()
-	e.lastExtractedEntropy = map[string]model.Entropy{
-		model.EntropyTypeDirect: entropy,
-		model.EntropyTypeChoice: choice,
+	e.lastExtractedEntropy = &EntropyPack{
+		Entropy: entropy,
+		Choice:  choice,
 	}
-
-	log.Debug().Msgf("[entropy] СОХРАНЕНА ЭНТРОПИЯ E:%s C:%s", entropy, choice)
+	log.Debug().Msgf("[entropy] ЭНТРОПИЯ E:%s C:%s", entropy, choice)
+	e.notifyListeners(ctx, *e.lastExtractedEntropy)
 	return true, nil
 }
 

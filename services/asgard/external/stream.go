@@ -9,17 +9,20 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Stream течёт сверху от soul вниз к gate, как ручей. Русло ручья - Redis pub/sub.
-type Stream struct {
+// Bifrost - радужный мост, соединяющий миры.
+// Биврёст как ручей, течёт сверху по мирам от Asgard вниз к Alfheimr и далее к Midgard.
+// Техническое русло ручья - Redis pub/sub.
+
+type Bifrost struct {
 	red *redis.Client
 }
 
-func NewStream(red *redis.Client) *Stream {
-	return &Stream{red: red}
+func NewStream(red *redis.Client) *Bifrost {
+	return &Bifrost{red: red}
 }
 
 // SendCargo - отправка груза вниз по ручью
-func (s *Stream) SendCargo(ctx context.Context, event model.Event) error {
+func (s *Bifrost) SendCargo(ctx context.Context, event model.Event) error {
 	var cargo []byte
 	var err error
 	if cargo, err = json.Marshal(event); err != nil {

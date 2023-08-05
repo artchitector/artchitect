@@ -1,4 +1,4 @@
-module github.com/artchitector/artchitect2/services/soul
+module github.com/artchitector/artchitect2/services/asgard
 
 go 1.20
 

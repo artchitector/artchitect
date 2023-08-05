@@ -3,15 +3,10 @@ package model
 import (
 	"fmt"
 	"image"
-)
-
-const (
-	EntropyTypeDirect = "entropy"
-	EntropyTypeChoice = "inverted"
+	"time"
 )
 
 type Entropy struct {
-	Type       string      `json:"type"`
 	IntValue   uint64      `json:"int"`
 	FloatValue float64     `json:"float"`
 	Image      image.Image `json:"-"`
@@ -20,4 +15,10 @@ type Entropy struct {
 
 func (e Entropy) String() string {
 	return fmt.Sprintf("E:%.6f", e.FloatValue)
+}
+
+type EntropyPack struct {
+	Timestamp time.Time `json:"timestamp"`
+	Entropy   Entropy   `json:"entropy"`
+	Choice    Entropy   `json:"choice"`
 }

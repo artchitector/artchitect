@@ -1,7 +1,6 @@
-package external
+package pantheon
 
 import (
-	"bytes"
 	"context"
 	"github.com/artchitector/artchitect2/model"
 	"github.com/pkg/errors"
@@ -9,60 +8,58 @@ import (
 	"golang.org/x/exp/slices"
 	"image"
 	"image/color"
-	"image/jpeg"
 	"math"
 	"math/bits"
-	"os"
 	"sync"
 	"time"
 )
 
 const (
-	SquareSize              = 64 * 7
-	NoiseAmplifierRatio int = 30
-	EntropyImageSide        = 8 // размер изображения в пикселях (энтропия 8х8 пикселей, всего 64 байта, это под uint64 число)
+	SquareSize              = 64 * 7 // центральная область кадра, которая пойдёт в работу. Лишнее отбрасывается
+	NoiseAmplifierRatio int = 30     // Odin: чтобы люди тоже могли увидеть, как шумит ткань пространства, я для них усилю ощущения
+	EntropyImageSide        = 8      // размер изображения в пикселях (энтропия 8х8 пикселей, всего 64 байта, это под uint64 число)
 )
 
-type EntropyPack struct {
-	Entropy model.Entropy
-	Choice  model.Entropy
-}
-
+// Ворон Huginn подписывается на данные с глаза LostEye и получает энтропию по подписке на go-канал
+// Других подписчиков нет, но множество их поддерживается в LostEye
+// этот же subscriber использует и Huginn для похожего механизма
 type subscriber struct {
 	ctx context.Context
-	ch  chan EntropyPack
+	ch  chan model.EntropyPack
 }
 
-type Entropy struct {
-	previousFrame        image.Image
-	currentFrame         image.Image
-	mutex                sync.Mutex
-	lastExtractedEntropy *EntropyPack
-	sMutex               sync.Mutex
-	subscribers          []*subscriber
+// LostEye - утраченный глаз Odin-а, пустой. По волшебству он всё равно видит, но видит ткань мироздания, энтропию пространства.
+// Odin с помощью своих воронов Muninn и Huginn может посмотреть на эту энтропию, и найти в ней смысл - вспомнить идею будущей картины.
+type LostEye struct {
+	previousFrame image.Image
+	currentFrame  image.Image
+	mutex         sync.Mutex
+	sMutex        sync.Mutex
+	subscribers   []*subscriber
 }
 
-func NewEntropy() *Entropy {
-	return &Entropy{
-		previousFrame:        nil,
-		currentFrame:         nil,
-		mutex:                sync.Mutex{},
-		lastExtractedEntropy: nil,
-		sMutex:               sync.Mutex{},
-		subscribers:          make([]*subscriber, 0),
+func NewLostEye() *LostEye {
+	return &LostEye{
+		previousFrame: nil,
+		currentFrame:  nil,
+		mutex:         sync.Mutex{},
+		sMutex:        sync.Mutex{},
+		subscribers:   make([]*subscriber, 0),
 	}
 }
 
-func (e *Entropy) StartEntropyDecode(ctx context.Context, stream chan image.Image) {
+// StartEntropyDecode - запуск процесс непрерывной расшифровки энтропии
+// Odin Я не постоянно придумываю идеи (чаще жду), но мой пустой LostEye смотрит непрерывно
+func (le *LostEye) StartEntropyDecode(ctx context.Context, stream chan image.Image) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Debug().Msgf("[entropy] ОСТАНОВ")
+			log.Debug().Msgf("[lost_eye] ПРОСМОТР ЭНТРОПИИ ОСТАНОВЛЕН")
 			return
 		case img := <-stream:
-			saved, err := e.handleEvent(ctx, img)
+			saved, err := le.handleFrame(ctx, img)
 			if err != nil {
-				log.Error().Err(err).Msgf("[entropy] ОШИБКА ОБРАБОТКИ")
+				log.Error().Err(err).Msgf("[lost_eye] ГЛАЗ ДАЛ СБОЙ")
 			} else if saved {
 				// ok?
 			}
@@ -70,41 +67,53 @@ func (e *Entropy) StartEntropyDecode(ctx context.Context, stream chan image.Imag
 	}
 }
 
-func (e *Entropy) SubscribeEntropy(subscriberCtx context.Context) chan EntropyPack {
-	ch := make(chan EntropyPack)
+// Subscribe - отдаёт канал, из которого подписчик читает сообщения.
+// Если подписчик закрывает контекст, то отправка прерывается.
+func (le *LostEye) Subscribe(subscriberCtx context.Context) chan model.EntropyPack {
+	ch := make(chan model.EntropyPack)
 	sub := subscriber{
 		ctx: subscriberCtx,
 		ch:  ch,
 	}
-	e.sMutex.Lock()
-	defer e.sMutex.Unlock()
+	le.sMutex.Lock()
+	defer le.sMutex.Unlock()
 
-	e.subscribers = append(e.subscribers, &sub)
+	le.subscribers = append(le.subscribers, &sub)
 	go func() {
 		<-subscriberCtx.Done()
-		e.unsubscribe(&sub)
+		le.unsubscribe(&sub)
 	}()
 	return ch
 }
 
-func (e *Entropy) unsubscribe(sub *subscriber) {
-	e.sMutex.Lock()
-	defer e.sMutex.Unlock()
+func (le *LostEye) unsubscribe(sub *subscriber) {
+	le.sMutex.Lock()
+	defer le.sMutex.Unlock()
 
-	idx := slices.IndexFunc(e.subscribers, func(s *subscriber) bool { return s == sub })
+	idx := slices.IndexFunc(le.subscribers, func(s *subscriber) bool { return s == sub })
 	if idx == -1 {
-		log.Warn().Msgf("[entropy] КАНАЛ ОТСУТСТВУЕТ. ПРОБЛЕМА")
+		log.Warn().Msgf("[lost_eye] ПОЛУЧАТЕЛЬ ИСЧЕЗ. ПРОБЛЕМА")
 		return
 	}
 
-	e.subscribers = append(e.subscribers[:idx], e.subscribers[idx+1:]...)
-	log.Debug().Msgf("[entropy] ПОДПИСЧИК %d - УДАЛЕНО. УСПЕХ.", idx)
+	le.subscribers = append(le.subscribers[:idx], le.subscribers[idx+1:]...)
+	log.Debug().Msgf("[lost_eye] ПОЛУЧАТЕЛЬ %d УДАЛЁН. УСПЕХ.", idx)
 }
 
-func (e *Entropy) notifyListeners(ctx context.Context, entropy EntropyPack) {
-	e.sMutex.Lock()
-	subscribers := e.subscribers[:]
-	e.sMutex.Unlock()
+func (le *LostEye) notifyListeners(ctx context.Context, entropy image.Image, inverted image.Image) {
+	le.sMutex.Lock()
+	subscribers := le.subscribers[:]
+	le.sMutex.Unlock()
+
+	pack := model.EntropyPack{
+		Timestamp: time.Now(),
+		Entropy: model.Entropy{
+			Image: entropy,
+		},
+		Choice: model.Entropy{
+			Image: inverted,
+		},
+	}
 
 	for _, sub := range subscribers {
 		// отправка энтропии всем слушателям
@@ -113,57 +122,54 @@ func (e *Entropy) notifyListeners(ctx context.Context, entropy EntropyPack) {
 			case <-s.ctx.Done():
 				return
 			case <-time.After(time.Second):
-				log.Error().Msgf("[entropy] ОТПРАВКА ЗАВИСЛА, ГРУЗ ПОТЕРЯН")
-			case s.ch <- entropy:
-				log.Debug().Msgf("[entropy] ГРУЗ ЭНТРОПИИ ОТПРАВЛЕН")
+				log.Error().Msgf("[lost_eye] ОТПРАВКА ЗАВИСЛА, ГРУЗ ПОТЕРЯН")
+			case s.ch <- pack:
+				log.Debug().Msgf("[lost_eye] ГРУЗ ЭНТРОПИИ ОТПРАВЛЕН")
 			}
 		}(sub)
 	}
 }
 
-func (e *Entropy) handleEvent(ctx context.Context, img image.Image) (bool, error) {
-	if err := e.saveFrame(ctx, img); err != nil {
-		return false, errors.Wrap(err, "[entropy] СОХРАНЕНИЕ КАДРА. АВАРИЯ.")
+func (le *LostEye) handleFrame(ctx context.Context, img image.Image) (bool, error) {
+	if err := le.saveFrame(ctx, img); err != nil {
+		return false, errors.Wrap(err, "[lost_eye] СОХРАНЕНИЕ КАДРА. АВАРИЯ.")
 	}
 
-	entropy, choice, ready, err := e.extractEntropy(ctx)
+	entropy, choice, ready, err := le.extractEntropy(ctx)
 	if err != nil {
 		return false, err
 	} else if !ready {
-		log.Debug().Msgf("[entropy] ЭНТРОПИЯ НЕ ГОТОВА")
+		log.Debug().Msgf("[lost_eye] ЭНТРОПИЯ НЕ ГОТОВА")
 		return false, nil
 	}
 
-	e.mutex.Lock()
-	defer e.mutex.Unlock()
-	e.lastExtractedEntropy = &EntropyPack{
-		Entropy: entropy,
-		Choice:  choice,
-	}
-	log.Debug().Msgf("[entropy] ЭНТРОПИЯ E:%s C:%s", entropy, choice)
-	e.notifyListeners(ctx, *e.lastExtractedEntropy)
+	le.mutex.Lock()
+	defer le.mutex.Unlock()
+
+	le.notifyListeners(ctx, entropy, choice)
 	return true, nil
 }
 
-// saveFrame - сохраняет кадр в текущее состояние, чтобы воспользоваться им далее
-func (e *Entropy) saveFrame(ctx context.Context, img image.Image) error {
+// saveFrame - сохраняет кадр в текущее состояние LostEye, чтобы воспользоваться им далее
+func (le *LostEye) saveFrame(ctx context.Context, img image.Image) error {
 	var err error
-	if img, err = e.extractSquare(img); err != nil {
+	if img, err = le.extractSquare(img); err != nil {
 		return err
 	}
 
-	if e.currentFrame != nil {
-		e.previousFrame = e.currentFrame
+	if le.currentFrame != nil {
+		le.previousFrame = le.currentFrame
 	}
-	e.currentFrame = img
+	le.currentFrame = img
 
 	return nil
 }
 
-func (e *Entropy) extractSquare(frame image.Image) (image.Image, error) {
+// extractSquare - вырезает ровный квадрат из кадра. С него будет считываться шум
+func (le *LostEye) extractSquare(frame image.Image) (image.Image, error) {
 	oldBounds := frame.Bounds()
 	if oldBounds.Dx() < SquareSize || oldBounds.Dy() < SquareSize {
-		return nil, errors.Errorf("[entropy] КВАДРАТ МАЛ ДЛЯ ВЫРЕЗА. РАЗМЕР %dх%d", oldBounds.Dx(), oldBounds.Dy())
+		return nil, errors.Errorf("[lost_eye] КВАДРАТ МАЛ ДЛЯ ВЫРЕЗА. РАЗМЕР %dх%d", oldBounds.Dx(), oldBounds.Dy())
 	}
 	squareRect := image.Rect(0, 0, SquareSize, SquareSize)
 	squareImg := image.NewRGBA(squareRect)
@@ -180,43 +186,40 @@ func (e *Entropy) extractSquare(frame image.Image) (image.Image, error) {
 	return squareImg, nil
 }
 
-func (e *Entropy) extractEntropy(ctx context.Context) (model.Entropy, model.Entropy, bool, error) {
-	noise, ready, err := e.extractNoise()
+func (le *LostEye) extractEntropy(ctx context.Context) (image.Image, image.Image, bool, error) {
+	noise, ready, err := le.extractNoise()
 	if err != nil {
-		return model.Entropy{}, model.Entropy{}, false, err
+		return nil, nil, false, err
 	}
 	if !ready {
-		log.Debug().Msgf("[entropy] ШУМ НЕ ГОТОВ")
-		return model.Entropy{}, model.Entropy{}, false, nil
+		log.Debug().Msgf("[lost_eye] ДАЙТЕ ШУМА!")
+		return nil, nil, false, nil
 	}
 
-	entropyImage, entropyVal := e.noiseToEntropy(noise)
-	entropyObj := e.makeEntropyStruct(model.EntropyTypeDirect, entropyImage, entropyVal)
+	entropyImage := le.noiseToEntropy(noise)
+	invertedEntropyImage := le.invertEntropy(entropyImage)
 
-	choiceImage, choiceVal := e.invertEntropy(entropyImage)
-	choiceObj := e.makeEntropyStruct(model.EntropyTypeDirect, choiceImage, choiceVal)
-
-	return entropyObj, choiceObj, true, nil
+	return entropyImage, invertedEntropyImage, true, nil
 }
 
 // extractNoise - вычитание цветов двух соседних кадров с целью изъять шум из этой разницы
-func (e *Entropy) extractNoise() (image.Image, bool, error) {
-	if e.previousFrame == nil || e.currentFrame == nil {
+func (le *LostEye) extractNoise() (image.Image, bool, error) {
+	if le.previousFrame == nil || le.currentFrame == nil {
 		return nil, false, nil
 	}
 
-	bounds := e.currentFrame.Bounds()
+	bounds := le.currentFrame.Bounds()
 	noiseImage := image.NewRGBA(bounds)
 
 	for x := 0; x <= bounds.Dx(); x++ {
 		for y := 0; y < bounds.Dy(); y++ {
-			oldColor := e.previousFrame.At(x, y)
-			newColor := e.currentFrame.At(x, y)
+			oldColor := le.previousFrame.At(x, y)
+			newColor := le.currentFrame.At(x, y)
 			if _, ok := oldColor.(color.RGBA); !ok {
-				return nil, false, errors.New("[entropy] СТАРЫЙ ЦВЕТ НЕ RGBA")
+				return nil, false, errors.New("[lost_eye] СТАРЫЙ ЦВЕТ НЕ RGBA")
 			}
 			if _, ok := newColor.(color.RGBA); !ok {
-				return nil, false, errors.New("[entropy] НОВЫЙ ЦВЕТ НЕ RGBA")
+				return nil, false, errors.New("[lost_eye] НОВЫЙ ЦВЕТ НЕ RGBA")
 			}
 
 			// новый цвет, его RBG каналы
@@ -234,9 +237,12 @@ func (e *Entropy) extractNoise() (image.Image, bool, error) {
 				newB *= -1
 			}
 
-			// ВАЖНО! Усиление и изменение цветов на шумовой картине не влияет на результат. Дальше шум проходит нормализацию,
+			// ВАЖНО! Усиление и изменение цветов на шумовой картине не влияет на результат.
+			// Дальше шум проходит нормализацию,
 			// Абсолютные значение не так важны, всё строится на относительной светимости пикселей.
 			// Цвет можно выбирать по своему вкусу и дизайну
+
+			// Odin: Я хочу чтобы и вы это увидели, как шумит изнанка пространства, мои дороги мидгардцы!!
 
 			/*
 				УСИЛЕНИЕ ЦВЕТА
@@ -257,7 +263,7 @@ func (e *Entropy) extractNoise() (image.Image, bool, error) {
 	return noiseImage, true, nil
 }
 
-func (e *Entropy) noiseToEntropy(noise image.Image) (image.Image, uint64) {
+func (le *LostEye) noiseToEntropy(noise image.Image) image.Image {
 	noiseBounds := noise.Bounds()
 	entropyBounds := image.Rect(0, 0, EntropyImageSide, EntropyImageSide)
 	entropyImage := image.NewRGBA(entropyBounds)
@@ -322,14 +328,14 @@ func (e *Entropy) noiseToEntropy(noise image.Image) (image.Image, uint64) {
 		}
 	}
 
-	return entropyImage, entropyValue
+	return entropyImage
 }
 
 // invertEntropy - шумовая энтропия есть плавно изменяющая величина
 // Но для работы Архитектора нужно иметь очень разнообразный выбор
 // (выбирать разнообразные слова из словаря для одной картины, то есть даже 2 соседних кадра должны давать большой разброс значений)
 // Чтобы превратить "плавную" энтропию в "резкий" выбор - картинка энтропии бинарно инвертируется (попиксельно)
-func (e *Entropy) invertEntropy(entropy image.Image) (image.Image, uint64) {
+func (le *LostEye) invertEntropy(entropy image.Image) image.Image {
 	bounds := entropy.Bounds()
 	choiceImage := image.NewRGBA(bounds)
 	var choiceValue uint64
@@ -350,24 +356,13 @@ func (e *Entropy) invertEntropy(entropy image.Image) (image.Image, uint64) {
 		}
 	}
 
-	return choiceImage, choiceValue
+	return choiceImage
 }
 
-func (e *Entropy) makeEntropyStruct(entropyType string, img image.Image, val uint64) model.Entropy {
+func (le *LostEye) makeEntropyStruct(img image.Image, val uint64) model.Entropy {
 	return model.Entropy{
-		Type:       entropyType,
 		IntValue:   val,
 		FloatValue: float64(val) / float64(math.MaxUint64),
 		Image:      img,
 	}
-}
-
-func (e *Entropy) saveImage(filename string, img image.Image) error {
-	b := bytes.Buffer{}
-	err := jpeg.Encode(&b, img, &jpeg.Options{Quality: 100})
-	if err != nil {
-		return err
-	}
-	err = os.WriteFile(filename, b.Bytes(), 0644)
-	return err
 }

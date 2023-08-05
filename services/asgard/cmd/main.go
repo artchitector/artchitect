@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/artchitector/artchitect2/model"
-	"github.com/artchitector/artchitect2/services/soul/external"
-	"github.com/artchitector/artchitect2/services/soul/infrastructure"
-	"github.com/artchitector/artchitect2/services/soul/internal"
+	"github.com/artchitector/artchitect2/services/asgard/external"
+	"github.com/artchitector/artchitect2/services/asgard/infrastructure"
+	"github.com/artchitector/artchitect2/services/asgard/pantheon"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
@@ -43,12 +43,19 @@ func main() {
 	database := infrastructure.InitDB(ctx, config.DbDSN)
 	red := infrastructure.InitRedis(config)
 
-	// веб-камера + энтропия
-	entropy := external.NewEntropy()
+	// веб-камера -> глаз Одина (pantheon.LostEye) -> Хугин (pantheon.Huginn)
 	webcam := infrastructure.NewWebcam(config.WebcamDeviceID, config.WebcamFrameResolution)
 	webcamStream := make(chan image.Image)
+	lostEye := pantheon.NewLostEye()
 	go func() {
-		entropy.StartEntropyDecode(ctx, webcamStream)
+		// Глаз начинает смотреть в ткань мироздания
+		lostEye.StartEntropyDecode(ctx, webcamStream)
+	}()
+
+	huginn := pantheon.NewHuginn(lostEye)
+	go func() {
+		// Хугин смотрит в глаз и осмысляет поступающую энтропию
+		huginn.StartEntropyRealize(ctx)
 	}()
 
 	// redis-stream
@@ -57,7 +64,7 @@ func main() {
 	go func() {
 		sCtx, done := context.WithTimeout(ctx, time.Second*10)
 		defer done()
-		ch := entropy.SubscribeEntropy(sCtx)
+		ch := huginn.Subscribe(sCtx)
 
 		for ent := range ch {
 			log.Info().Msgf("[main] ПОЛУЧЕНА ЭНТРОПИИ ПО КАНАЛУ %+v", ent)
@@ -93,13 +100,13 @@ func runArtchitect(
 	config *infrastructure.Config,
 	database *gorm.DB,
 ) {
-	artRepo := model.NewArtRepository(database, nil)
-
-	ai := infrastructure.NewAI(config.InvokeAIPath)
-	artist := external.NewArtist(ai)
-	creator := internal.NewCreator(config.CreatorActive, artist, artRepo)
-	artchitect := internal.NewArtchitect(creator)
-	artchitect.Run(ctx)
+	//artRepo := model.NewArtRepository(database, nil)
+	//
+	//ai := infrastructure.NewAI(config.InvokeAIPath)
+	//freyja := pantheon.NewFreyja(ai)
+	//creator := pantheon.NewOdin(config.CreatorActive, freyja, artRepo)
+	//artchitect := pantheon.NewArtchitect(creator)
+	//artchitect.Run(ctx)
 }
 
 // runServices - запуск фоновых служб

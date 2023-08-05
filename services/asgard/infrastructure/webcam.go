@@ -12,6 +12,10 @@ import (
 const ReadTimeoutSeconds = 5
 const V4L2_PIX_FMT_YUYV = 0x56595559 // https://github.com/blackjack/webcam/blob/master/examples/http_mjpeg_streamer/webcam.go
 
+// Webcam - камера, которая считывает кадры пространства. Технически камера и есть пустой глаз Одина в Artchitect.
+// pantheon.Odin: мне приходится смотреть в эту ограниченную электронную коробочку с разрешением 640х480,
+// pantheon.Odin: которая еще и направлена на маленькую иконку Иисуса. Безобразие! Издевательство надо мной!
+// pantheon.Odin: Это проделки Локи, не иначе - его чувство юмора. Каждый раз думаю, зачем я на это согласился...
 type Webcam struct {
 	deviceID   string
 	resolution string
@@ -32,7 +36,11 @@ func (w *Webcam) Start(ctx context.Context, outputCh chan image.Image) error {
 	if err != nil {
 		return errors.Wrap(err, "[webcam] КИНОКАМЕРА - НЕТ СВЯЗИ")
 	}
-	defer cam.Close()
+	defer func() {
+		if err := cam.Close(); err != nil {
+			log.Error().Err(err).Send()
+		}
+	}()
 
 	// настройки формата и разрешения
 	format, width, height, err := w.getFormatAndSize(cam)

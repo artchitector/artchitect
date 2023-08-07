@@ -1,7 +1,9 @@
 package main
 
 import (
+	bytes2 "bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"github.com/artchitector/artchitect2/model"
 	"github.com/artchitector/artchitect2/services/asgard/communication"
@@ -11,6 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 	"image"
+	"image/png"
 	"os"
 	"os/signal"
 	"syscall"
@@ -69,6 +72,28 @@ func main() {
 
 		for ent := range ch {
 			log.Info().Msgf("[main] ПОЛУЧЕНА ЭНТРОПИИ ПО КАНАЛУ %+v", ent)
+
+			if ent.Entropy.Image != nil {
+				b := bytes2.Buffer{}
+				if err := png.Encode(&b, ent.Entropy.Image); err != nil {
+					log.Error().Err(err).Msgf("[main] PNG НЕ УДАЛСЯ. ЖАЛЬ")
+				} else {
+					bbb := b.Bytes()
+					log.Info().Msgf("SIZE: %db", len(bbb))
+					ent.Entropy.ImageEncoded = base64.StdEncoding.EncodeToString(bbb)
+				}
+			}
+			if ent.Choice.Image != nil {
+				b := bytes2.Buffer{}
+				if err := png.Encode(&b, ent.Choice.Image); err != nil {
+					log.Error().Err(err).Msgf("[main] PNG НЕ УДАЛСЯ. ЖАЛЬ")
+				} else {
+					bbb := b.Bytes()
+					log.Info().Msgf("SIZE: %db", len(bbb))
+					ent.Choice.ImageEncoded = base64.StdEncoding.EncodeToString(bbb)
+				}
+			}
+
 			if b, err := json.Marshal(ent); err != nil {
 				log.Fatal().Msgf("JSON MARSHAL")
 			} else {

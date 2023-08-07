@@ -231,25 +231,40 @@ export default {
   },
   methods: {
     onMessage(chan, msg) {
-      if (msg.entropy.int) {
-        this.entropy.bytes = (msg.entropy.int >>> 0).toString(2)
-        this.entropy.float = msg.entropy.float
-        this.entropy.int = msg.entropy.int
-      } else {
-        this.entropy.bytes = null
-        this.entropy.float = null
-        this.entropy.int = null
+      if (msg.entropy) {
+        if (msg.entropy.int) {
+          this.entropy.bytes = (msg.entropy.int >>> 0).toString(2)
+          this.entropy.float = msg.entropy.float
+          this.entropy.int = msg.entropy.int
+        } else {
+          this.entropy.bytes = null
+          this.entropy.float = null
+          this.entropy.int = null
+        }
+        if (msg.entropy.imageEncoded) {
+          this.images["entropy"] = msg.entropy.imageEncoded
+        } else {
+          console.log('entropy no image')
+        }
       }
 
-      if (msg.choice.int) {
-        this.choice.bytes = (msg.choice.int >>> 0).toString(2)
-        this.choice.float = msg.choice.float
-        this.choice.int = msg.choice.int
-      } else {
-        this.choice.bytes = 0
-        this.choice.float = 0
-        this.choice.int = 0
+      if (msg.choice) {
+        if (msg.choice.int) {
+          this.choice.bytes = (msg.choice.int >>> 0).toString(2)
+          this.choice.float = msg.choice.float
+          this.choice.int = msg.choice.int
+        } else {
+          this.choice.bytes = 0
+          this.choice.float = 0
+          this.choice.int = 0
+        }
+        if (msg.choice.imageEncoded) {
+          this.images["choice"] = msg.choice.imageEncoded
+        } else {
+          console.log('choice no image')
+        }
       }
+
 
       // for (const imageName in msg.ImagesEncoded) {
       //   this.images[imageName] = msg.ImagesEncoded[imageName]

@@ -1,11 +1,7 @@
 package main
 
 import (
-	bytes2 "bytes"
 	"context"
-	"encoding/base64"
-	"encoding/json"
-	"github.com/artchitector/artchitect2/model"
 	"github.com/artchitector/artchitect2/services/asgard/communication"
 	"github.com/artchitector/artchitect2/services/asgard/infrastructure"
 	"github.com/artchitector/artchitect2/services/asgard/pantheon"
@@ -13,11 +9,9 @@ import (
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 	"image"
-	"image/png"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 func main() {
@@ -61,54 +55,14 @@ func main() {
 		huginn.StartEntropyRealize(ctx)
 	}()
 
-	// redis-stream
-	stream := communication.NewStream(red)
-
-	// TODO ЭТО НАДО УБРАТЬ ИЗ MAIN
+	// redis-bifröst
+	bifröst := communication.NewBifröst(red)
+	heimdall := pantheon.NewHeimdallr(huginn, bifröst)
 	go func() {
-		sCtx, done := context.WithTimeout(ctx, time.Second*10000)
-		defer done()
-		ch := huginn.Subscribe(sCtx)
-
-		for ent := range ch {
-			log.Info().Msgf("[main] ПОЛУЧЕНА ЭНТРОПИИ ПО КАНАЛУ %+v", ent)
-
-			if ent.Entropy.Image != nil {
-				b := bytes2.Buffer{}
-				if err := png.Encode(&b, ent.Entropy.Image); err != nil {
-					log.Error().Err(err).Msgf("[main] PNG НЕ УДАЛСЯ. ЖАЛЬ")
-				} else {
-					bbb := b.Bytes()
-					log.Info().Msgf("SIZE: %db", len(bbb))
-					ent.Entropy.ImageEncoded = base64.StdEncoding.EncodeToString(bbb)
-				}
-			}
-			if ent.Choice.Image != nil {
-				b := bytes2.Buffer{}
-				if err := png.Encode(&b, ent.Choice.Image); err != nil {
-					log.Error().Err(err).Msgf("[main] PNG НЕ УДАЛСЯ. ЖАЛЬ")
-				} else {
-					bbb := b.Bytes()
-					log.Info().Msgf("SIZE: %db", len(bbb))
-					ent.Choice.ImageEncoded = base64.StdEncoding.EncodeToString(bbb)
-				}
-			}
-
-			if b, err := json.Marshal(ent); err != nil {
-				log.Fatal().Msgf("JSON MARSHAL")
-			} else {
-				err = stream.SendDrakkar(ctx, model.Cargo{
-					Channel: model.ChanEntropy,
-					Payload: string(b),
-				})
-				if err != nil {
-					log.Fatal().Msgf("SEND CARGO FAILED")
-				}
-			}
+		err := heimdall.StartStream(ctx)
+		if err != nil {
 
 		}
-
-		log.Fatal().Msgf("STOP ASGARD")
 	}()
 
 	if err := webcam.Start(ctx, webcamStream); err != nil {

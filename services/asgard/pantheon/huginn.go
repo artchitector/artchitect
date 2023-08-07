@@ -5,8 +5,6 @@ import (
 	"github.com/artchitector/artchitect2/model"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
-	"image"
-	"image/color"
 	"math"
 	"sync"
 	"time"
@@ -21,8 +19,9 @@ type Huginn struct {
 	// Huginn пробрасывает цепочку вызовов в глаз
 	lostEye *LostEye
 
-	// Huginn: Я отправляю энтропию не только Muninn, но и по радужному мосту communication.Bifrost в Alfheimr (api-gateway).
-	// Huginn: из Alfheimr светлые эльфы переправят эту энтропию на Землю, в Midgard (frontend), где её увидят люди.
+	// Huginn: Я отправляю энтропию не только Muninn, но и Heimdallr, который непрерывно ретранслирует её
+	// 		по радужному мосту communication.Bifrost в Alfheimr (api-gateway).
+	// Huginn: Далее из Alfheimr светлые эльфы переправят эту энтропию на Землю, в Midgard (frontend), где её увидят люди.
 	// Huginn: для этого у меня тут механизм нескольких подписчиков
 	// Odin: Воистину, пусть и смертные тоже увидят эту ткань пространства в виде меняющихся картинок.
 	// Odin: Они всё равно ничего в ней не поймут.
@@ -122,12 +121,8 @@ func (h *Huginn) notifyListeners(ctx context.Context, pack model.EntropyPack) {
 // Huginn: рассматриваю две картинки энтропии (прямую и обратную)
 // Huginn: и превращаю их в нерушимые и твёрдые сущности - конкретные числа, на которые Odin сможет положиться
 func (h *Huginn) realizeEntropy(ctx context.Context, pack model.EntropyPack) model.EntropyPack {
-	if pack.Entropy.Image == nil || pack.Choice.Image == nil {
-		log.Fatal().Msgf("[huginn] ПУСТОЙ ГЛАЗ НЕ ПОЛОЖИЛ ЭНТРОПИЮ В КОРОБКУ." +
-			"Я ТАК РАБОТАТЬ НЕ БУДУ. ЗАПРАШИВАЮ У ОДИНА ОСТАНОВКУ ВСЕГО АСГАРДА")
-	}
-	entropyVal := h.imgToInt(pack.Entropy.Image)
-	choiceVal := h.imgToInt(pack.Choice.Image)
+	entropyVal := h.matrixToInt(pack.Entropy.Matrix)
+	choiceVal := h.matrixToInt(pack.Choice.Matrix)
 
 	pack.Entropy.IntValue = entropyVal
 	pack.Entropy.FloatValue = float64(entropyVal) / float64(math.MaxUint64)
@@ -137,27 +132,21 @@ func (h *Huginn) realizeEntropy(ctx context.Context, pack model.EntropyPack) mod
 	return pack
 }
 
-// imgToInt - ворон Huginn будет превращать картинку в число
+// matrixToInt - ворон Huginn будет превращать картинку (матрицу сил пикселей) в число
 // Huginn: на картине 64 пикселя, каждый светится с силой от 0 до 255.
 // Huginn: Я превращу каждый пиксель в 0 или 1 (смотря насколько он светится, больше ли чем наполовину).
 // Huginn: Эти 64 включенных или выключенных пикселя станут битами в uint64-числе
-
-// Loki: Huginn, ты бы мог не читать данные с картинки, а передавать силу пикселей в двумерном массиве.
-// Loki: картинку можно генерировать только перед отправкой в Альфхейм.
-// Huginn: Да, по-твоему было бы оптимальнее, но так ИСТОРИЧЕСКИ СЛОЖИЛОСЬ! TODO Odin приди, порядок наведи.
-func (h *Huginn) imgToInt(img image.Image) uint64 {
-	bounds := img.Bounds()
-	var val uint64
-	for x := 0; x < bounds.Dx(); x++ {
-		for y := 0; y < bounds.Dy(); y++ {
-			col := img.At(x, y)
-			power := col.(color.RGBA).R // сила пикселя от 0 до 255
+func (h *Huginn) matrixToInt(matrix model.EntropyMatrix) uint64 {
+	var result uint64
+	for x := 0; x < matrix.Size(); x++ {
+		for y := 0; y < matrix.Size(); y++ {
+			power := matrix.Get(x, y)
 			isEnabledPixel := power >= math.MaxUint8/2
 			if isEnabledPixel {
-				byteIndex := x*EntropyImageSide + y
-				val = val | 1<<(63-byteIndex)
+				byteIndex := x*matrix.Size() + y
+				result = result | 1<<(63-byteIndex)
 			}
 		}
 	}
-	return val
+	return result
 }

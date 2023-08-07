@@ -17,7 +17,7 @@ import (
 const (
 	SquareSize              = 64 * 7 // центральная область кадра, которая пойдёт в работу. Лишнее отбрасывается
 	NoiseAmplifierRatio int = 30     // Odin: чтобы люди тоже могли увидеть, как шумит ткань пространства, я для них усилю ощущения
-	EntropyImageSide        = 8      // размер изображения в пикселях (энтропия 8х8 пикселей, всего 64 байта, это под uint64 число)
+	// размер изображения в пикселях (энтропия 8х8 пикселей, всего 64 байта, это под uint64 число)
 )
 
 // Ворон Huginn подписывается на данные с глаза LostEye и получает энтропию по подписке на go-канал
@@ -100,7 +100,11 @@ func (le *LostEye) unsubscribe(sub *subscriber) {
 	log.Debug().Msgf("[lost_eye] ПОЛУЧАТЕЛЬ %d УДАЛЁН. УСПЕХ.", idx)
 }
 
-func (le *LostEye) notifyListeners(ctx context.Context, entropy image.Image, inverted image.Image) {
+func (le *LostEye) notifyListeners(
+	ctx context.Context,
+	entropyMatrix model.EntropyMatrix,
+	choiceMatrix model.EntropyMatrix,
+) {
 	le.sMutex.Lock()
 	subscribers := le.subscribers[:]
 	le.sMutex.Unlock()
@@ -108,10 +112,10 @@ func (le *LostEye) notifyListeners(ctx context.Context, entropy image.Image, inv
 	pack := model.EntropyPack{
 		Timestamp: time.Now(),
 		Entropy: model.Entropy{
-			Image: entropy,
+			Matrix: entropyMatrix,
 		},
 		Choice: model.Entropy{
-			Image: inverted,
+			Matrix: choiceMatrix,
 		},
 	}
 
@@ -186,20 +190,20 @@ func (le *LostEye) extractSquare(frame image.Image) (image.Image, error) {
 	return squareImg, nil
 }
 
-func (le *LostEye) extractEntropy(ctx context.Context) (image.Image, image.Image, bool, error) {
+func (le *LostEye) extractEntropy(ctx context.Context) (model.EntropyMatrix, model.EntropyMatrix, bool, error) {
 	noise, ready, err := le.extractNoise()
 	if err != nil {
-		return nil, nil, false, err
+		return model.EntropyMatrix{}, model.EntropyMatrix{}, false, err
 	}
 	if !ready {
 		log.Debug().Msgf("[lost_eye] ДАЙТЕ ШУМА!")
-		return nil, nil, false, nil
+		return model.EntropyMatrix{}, model.EntropyMatrix{}, false, nil
 	}
 
-	entropyImage := le.noiseToEntropy(noise)
-	invertedEntropyImage := le.invertEntropy(entropyImage)
+	entropyMatrix := le.noiseToEntropy(noise)
+	choiceMatrix := le.invertEntropy(entropyMatrix)
 
-	return entropyImage, invertedEntropyImage, true, nil
+	return entropyMatrix, choiceMatrix, true, nil
 }
 
 // extractNoise - вычитание цветов двух соседних кадров с целью изъять шум из этой разницы
@@ -263,12 +267,10 @@ func (le *LostEye) extractNoise() (image.Image, bool, error) {
 	return noiseImage, true, nil
 }
 
-func (le *LostEye) noiseToEntropy(noise image.Image) image.Image {
+func (le *LostEye) noiseToEntropy(noise image.Image) model.EntropyMatrix {
 	noiseBounds := noise.Bounds()
-	entropyBounds := image.Rect(0, 0, EntropyImageSide, EntropyImageSide)
-	entropyImage := image.NewRGBA(entropyBounds)
 
-	proportion := noiseBounds.Dx() / entropyBounds.Dx()
+	proportion := noiseBounds.Dx() / model.EntropySize
 	// power - интенсивность пикселя, а min и max - это шкала для нормализации всего шума внутри этой шкалы.
 	// Все 64 пикселя энтропии будут нормализованы по шкале 0 до 255 (так усиление с предыдущего шага и исчезнет)
 	var minPixelPower int64 = math.MaxInt64
@@ -278,9 +280,9 @@ func (le *LostEye) noiseToEntropy(noise image.Image) image.Image {
 	// собираем силу каждого пикселя.
 	// размер шума - 448х448, а энтропии 8х8. В каждом пикселе энтропии находится 56х56 пикселей исходного шума.
 	// Среднее значение зоны 56х56 пикселей будет сжато в 1 пиксель энтропии
-	for x := 0; x < entropyBounds.Dx(); x++ {
+	for x := 0; x < model.EntropySize; x++ {
 		powers = append(powers, make([]int64, 8))
-		for y := 0; y < entropyBounds.Dy(); y++ {
+		for y := 0; y < model.EntropySize; y++ {
 			var powerOfPixel int64
 			for nx := x * proportion; nx < x*proportion+proportion; nx++ {
 				for ny := y * proportion; ny < y*proportion+proportion; ny++ {
@@ -300,69 +302,37 @@ func (le *LostEye) noiseToEntropy(noise image.Image) image.Image {
 		}
 	}
 
-	var entropyValue uint64
 	scale := maxPixelPower - minPixelPower
-	for x := 0; x < entropyBounds.Dx(); x++ {
-		for y := 0; y < entropyBounds.Dy(); y++ {
+	matrix := model.EntropyMatrix{}
+
+	for x := 0; x < model.EntropySize; x++ {
+		for y := 0; y < model.EntropySize; y++ {
 			// нормализация - из энергии текущего пикселя вычитаем энергию самого слабого пикселя,
 			//так лишняя энергия будет погашена во всех пикселях
 			powerOfPixel := powers[x][y] - minPixelPower
-
-			redPower := math.Round(float64(powerOfPixel) / float64(scale) * math.MaxUint8)
-
-			if redPower >= float64(math.MaxUint8)/2.0 {
-				// картинка 8х8 пикселей тут превращается в uint64 число. Каждый пиксель - это бит числа.
-				// если пиксель ближе к красному цвету по шкале - то это включенный бит uint64-числа - 1
-				// если пиксель ближе к чёрному цвету по шкале - то это выключенный бит uint64-числа - 0
-				// 64 пикселя = 64 бита = uint64 число
-				byteIndex := x*EntropyImageSide + y
-				entropyValue = entropyValue | 1<<(63-byteIndex)
-			}
-
-			entropyImage.SetRGBA(x, y, color.RGBA{
-				R: uint8(redPower),
-				G: 0,
-				B: 0,
-				A: 255,
-			})
+			scaledPower := math.Round(float64(powerOfPixel) / float64(scale) * math.MaxUint8)
+			matrix.Set(x, y, uint8(scaledPower))
 		}
 	}
 
-	return entropyImage
+	// Huginn: теперь эта матрица содержит 64 числа. Это 64 пикселя на картинке энтропии и 64 бита в будущем uint64-числе
+	return matrix
 }
 
 // invertEntropy - шумовая энтропия есть плавно изменяющая величина
 // Но для работы Архитектора нужно иметь очень разнообразный выбор
 // (выбирать разнообразные слова из словаря для одной картины, то есть даже 2 соседних кадра должны давать большой разброс значений)
 // Чтобы превратить "плавную" энтропию в "резкий" выбор - картинка энтропии бинарно инвертируется (попиксельно)
-func (le *LostEye) invertEntropy(entropy image.Image) image.Image {
-	bounds := entropy.Bounds()
-	choiceImage := image.NewRGBA(bounds)
-	var choiceValue uint64
+func (le *LostEye) invertEntropy(entropyMatrix model.EntropyMatrix) model.EntropyMatrix {
+	choiceMatrix := model.EntropyMatrix{}
 
-	for x := 0; x < bounds.Dx(); x++ {
-		for y := 0; y < bounds.Dy(); y++ {
-			col := entropy.At(x, y)
-			power := col.(color.RGBA).R                         // сила пикселя от 0 до 255
-			power = bits.Reverse8(power)                        // теперь сила этого пикселя инвертирована бинарно
-			choiceImage.Set(x, y, color.RGBA{R: power, A: 255}) // на картинке ставим инвертированный пиксель для наглядности
-
-			// считаем включенные биты с картинки и готовим uint64-число
-			isEnabledPixel := power >= math.MaxUint8/2
-			if isEnabledPixel {
-				byteIndex := x*EntropyImageSide + y
-				choiceValue = choiceValue | 1<<(63-byteIndex)
-			}
+	for x := 0; x < model.EntropySize; x++ {
+		for y := 0; y < model.EntropySize; y++ {
+			power := entropyMatrix.Get(x, y)
+			power = bits.Reverse8(power)  // теперь сила этого пикселя инвертирована бинарно
+			choiceMatrix.Set(x, y, power) // сохраняем эту инверсию в матрицу
 		}
 	}
 
-	return choiceImage
-}
-
-func (le *LostEye) makeEntropyStruct(img image.Image, val uint64) model.Entropy {
-	return model.Entropy{
-		IntValue:   val,
-		FloatValue: float64(val) / float64(math.MaxUint64),
-		Image:      img,
-	}
+	return choiceMatrix
 }

@@ -14,10 +14,13 @@ import (
 // По ручью отправляются драккары с грузами.
 
 type Bifröst struct {
+	// Loki: Я изменил тут "o" на "ö", чтобы придерживаться скандинавского написания.
+	// Loki: Теперь эту букву нельзя набрать на английской раскладке и прийдётся копировать из места в место.
+	// Loki: удачи вам, господа программисты Artchitect))
 	red *redis.Client
 }
 
-func NewStream(red *redis.Client) *Bifröst {
+func NewBifröst(red *redis.Client) *Bifröst {
 	return &Bifröst{red: red}
 }
 

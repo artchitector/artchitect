@@ -13,6 +13,7 @@ import (
 	"image/jpeg"
 	"image/png"
 	"math"
+	"math/bits"
 )
 
 /*
@@ -26,12 +27,31 @@ Odin: Мидгард должен видеть то же, что и я вижу.
 Heimdallr: Да, Odin. Я сделаю это, но я добавлю свою маленькую деталь...
 */
 type Heimdallr struct {
-	huginn  *Huginn
-	bifröst bifröst
+	huginn      *Huginn
+	bifröst     bifröst
+	colorScheme *colorScheme
+}
+
+// colorScheme цветовая схема для раскрашивания энтропии
+// Heimdallr: я буду менять цвет энтропии плавно, чтобы она переливалась всеми существующими RGB-цветами
+type colorScheme struct {
+	Red   colorSchemeColor
+	Green colorSchemeColor
+	Blue  colorSchemeColor
+}
+
+type colorSchemeColor struct {
+	Current float64 // текущий уровень цвета
+	Target  float64 // требуемый уровень цвета, к которому в скором времени придёт состояние цвета
+	Step    float64 // шаг изменения Current в Target за каждый просчёт энтропии. Цвет будет плавно меняться
 }
 
 func NewHeimdallr(huginn *Huginn, bifröst bifröst) *Heimdallr {
-	return &Heimdallr{huginn: huginn, bifröst: bifröst}
+	return &Heimdallr{
+		huginn:      huginn,
+		bifröst:     bifröst,
+		colorScheme: nil,
+	}
 }
 
 /*
@@ -53,8 +73,8 @@ func (h *Heimdallr) StartStream(ctx context.Context) {
 
 			// Heimdallr: так. Моя задача из матрицы силы пикселей сделать видимую картинку
 			var err error
-			entropy.Entropy.ImageEncoded = h.encodeEntropyImage(entropy.Entropy.Matrix)
-			entropy.Choice.ImageEncoded = h.encodeEntropyImage(entropy.Choice.Matrix)
+			h.updateColorScheme(entropy)
+			entropy.Entropy.ImageEncoded, entropy.Choice.ImageEncoded = h.EncodeEntropyImages(entropy)
 			entropy.ImageFrameEncoded, err = h.encodeJpeg(entropy.ImageFrame, model.EntropyJpegQualityFrame)
 			if err != nil {
 				log.Error().Msgf("[heimdallr] НЕ СМОГ СДЕЛАТЬ JPEG ЭНТРОПИИ")
@@ -90,6 +110,12 @@ func (h *Heimdallr) StartStream(ctx context.Context) {
 	}
 }
 
+func (h *Heimdallr) EncodeEntropyImages(entropy model.EntropyPackExtended) (string, string) {
+	entropyImage := h.encodeEntropyImage(entropy.Entropy.Matrix)
+	choiceImage := h.encodeEntropyImage(entropy.Choice.Matrix)
+	return entropyImage, choiceImage
+}
+
 func (h *Heimdallr) sendDrakkar(ctx context.Context, channel string, pack interface{}) error {
 	// Heimdallr: теперь отправлю этот ценный драккар по волнам Биврёста...
 	var b []byte
@@ -104,8 +130,8 @@ func (h *Heimdallr) sendDrakkar(ctx context.Context, channel string, pack interf
 	return err
 }
 
-// MakeEntropyImage - матрица сил пикселей в энтропии становится 8х8 PNG картинкой
-func (h *Heimdallr) MakeEntropyImage(matrix model.EntropyMatrix) image.Image {
+// makeEntropyImage - матрица сил пикселей в энтропии становится 8х8 PNG картинкой
+func (h *Heimdallr) makeEntropyImage(matrix model.EntropyMatrix) image.Image {
 	bounds := image.Rect(0, 0, matrix.Size(), matrix.Size())
 	img := image.NewRGBA(bounds)
 	for x := 0; x < matrix.Size(); x++ {
@@ -119,20 +145,112 @@ func (h *Heimdallr) MakeEntropyImage(matrix model.EntropyMatrix) image.Image {
 
 // makeColor - сделать цвет по силе пикселя
 // Odin: сила пикселя лежит от 0 (полностью не светится) до 255 (полностью светится), но цвет не определён
-// Heimdallr: я сделаю золотой
+// Heimdallr: Я охраняю РАДУЖНЫЙ мост, и знаю о цветах многое.
+// Heimdallr: Я сделаю свой цвет. Это и есть моя упомянутая выше деталь.
 func (h *Heimdallr) makeColor(power uint8) color.Color {
-	greenToRedProportion := 165.0 / 255.0 // для золотого цвета
+	//greenToRedProportion := 165.0 / 255.0
+
+	// Цвета могут быть почти чёрные (по значениям Current, но иметь какой-то цвет). Надо нормализовать цвета так,
+	// чтобы цвет был яркий
+
 	return color.RGBA{
-		R: power,
-		G: uint8(greenToRedProportion * float64(power)),
-		B: 0,
+		R: uint8(float64(power) * h.colorScheme.Red.Current),
+		G: uint8(float64(power) * h.colorScheme.Green.Current),
+		B: uint8(float64(power) * h.colorScheme.Blue.Current),
+		//R: power,
+		//G: uint8(greenToRedProportion * float64(power)),
+		//B: 0,
 		A: math.MaxUint8,
+	}
+}
+
+func (h *Heimdallr) updateColorScheme(entropy model.EntropyPackExtended) {
+	const Chance = 0.90
+	// Heimdallr: я собираюсь плавно менять цвет от одного к другому, чтобы он переливался
+	if h.colorScheme == nil {
+		// начинается всё с белого цвета
+		h.colorScheme = &colorScheme{
+			// шкала цвета 1.0 во float64 = 255 в uint8. 1.0 - полный красный, 0.5 - половина красного, 0.0 - нет красного
+			Red: colorSchemeColor{
+				Current: 1.0, // если Current != Target - цвет находится в изменении
+				Target:  1.0,
+				Step:    0.0,
+			},
+			Green: colorSchemeColor{
+				Current: 1.0,
+				Target:  1.0,
+				Step:    0.0,
+			},
+			Blue: colorSchemeColor{
+				Current: 1.0,
+				Target:  1.0,
+				Step:    0.0,
+			},
+		}
+	}
+
+	colors := map[string]*colorSchemeColor{
+		"rød":   &h.colorScheme.Red,   // Odin: задействуем милый глазу норвежский язык!
+		"grønn": &h.colorScheme.Green, // Odin: задействуем милый глазу норвежский язык!
+		"blå":   &h.colorScheme.Blue,  // Odin: задействуем милый глазу норвежский язык!
+	}
+
+	// Heimdallr: менять цвета я буду тоже опираясь на энтропию, она послужит зерном к этим изменениям
+	changedColor := false
+	for farge, col := range colors { // Odin: farge - "цвет" по-норвежски. там лежит норвежское наименование
+		if col.Current != col.Target {
+			// Heimdallr: цвет уже меняется, оставим его
+			col.Current += col.Step // цвет сдвинут на один шаг
+			// Heimdallr: после сдвига цвет уже может быть успешно установлен
+			if col.Step > 0 {
+				// Яркость цвета росла
+				if col.Current >= col.Target {
+					col.Current = col.Target
+					col.Step = 0.0 // цвет окончательно установлен
+					//log.Debug().Msgf("%s DONE", farge)
+				}
+				// цвет еще в процессе перехода
+			} else {
+				// Яркость цвета уменьшалась на этом шаге
+				if col.Current <= col.Target {
+					col.Current = col.Target
+					col.Step = 0.0 // цвет окончательно установлен
+					//log.Debug().Msgf("%s DONE", farge)
+				}
+			}
+		} else if !changedColor {
+			// Heimdallr: Этот цвет сейчас не находится в процессе изменения. Мне надо придумать,
+			// менять его или оставить пока. Чтобы иметь выбор, на что опереться, я возьму uint64 от уже инвертированной
+			// энтропии (от choice) и еще раз это число инвертирую, только уже полностью (LostEye до этого инвертировал попиксельно).
+			// Это будет моим случайным числом, по которому я определю необходимость менять цвет и уровень+скорость изменения
+			invertedChoiceI := bits.Reverse64(entropy.Choice.IntValue)
+			// Heimdallr: Huginn любезно согласился оставить это знание публичным, я воспользуюсь
+			chance := h.huginn.UintToFloat(invertedChoiceI)
+			if chance > Chance {
+				// цвет надо менять
+				col.Target = entropy.Choice.FloatValue
+				// поменяем цвет за 300 шагов или меньше
+				steps := 300.0 * entropy.Choice.FloatValue
+				col.Step = (col.Target - col.Current) / steps
+				log.Info().Msgf(
+					"[Heimdallr] МЕНЯЮ ЦВЕТ %s БЫЛО:%.3f БУДЕТ:%.3f ШАГ:%.3f ШАГОВ:%d",
+					farge,
+					col.Current,
+					col.Target,
+					col.Step,
+					int(steps),
+				)
+				// Odin: ловко ты это придумал. Иногда бывает тёмный цвет, но это терпимо.
+				changedColor = true
+			}
+		}
+
 	}
 }
 
 // encodeEntropyImage - картинка энтропии в base64-encode виде для передаче по json до Мидгарда
 func (h *Heimdallr) encodeEntropyImage(matrix model.EntropyMatrix) string {
-	img := h.MakeEntropyImage(matrix)
+	img := h.makeEntropyImage(matrix)
 	b := bytes.Buffer{}
 	if err := png.Encode(&b, img); err != nil {
 		log.Fatal().Err(err).Msgf("[heimdallr] Я СОЗДАЛ ИСПОРЧЕННУЮ КАРТИНКУ. МОЙ ДОЗОР ОКОНЧЕН, АСГАРД ЗАСЫПАЕТ НА ВРЕМЯ!")
@@ -149,7 +267,8 @@ func (h *Heimdallr) encodeJpeg(img image.Image, quality int) (string, error) {
 		return "", err
 	}
 	data := b.Bytes()
-	log.Info().Msgf("[heimdallr] %d. IMAGE SIZE = %dкБ", quality, len(data)/1024)
+	//log.Debug().Msgf("[heimdallr] %d. IMAGE SIZE = %dкБ", quality, len(data)/1024)
+	// Heimdallr: Картинка frame - 10-20Кб, картинка шума около 40Кб. И так несколько раз в секунду, такой траффик.
 	return base64.StdEncoding.EncodeToString(data), nil
 
 }

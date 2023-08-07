@@ -2,6 +2,7 @@ package pantheon
 
 import (
 	"context"
+	"fmt"
 	"github.com/artchitector/artchitect2/model"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
@@ -90,6 +91,15 @@ func (h *Huginn) Subscribe(subscriberCtx context.Context) chan model.EntropyPack
 	return ch
 }
 
+// UintToFloat
+// Huginn: uint64-число энтропии - это число на шкале от минимального uint64 до максимального math.MaxUint64
+// Huginn: изменим шкалу этого числа на float64 от 0.0 до 1.0 (соответствует 0 и math.MaxUint64 на uint-шкале)
+// Heimdallr: Эй, Huginn, мне тоже нужно превращать число от uint64 в float64 по твоей схеме.
+// Huginn: Хорошо. Метод сделаю публичным, чтобы ты, Heimdallr, мог воспользоваться этим знанием в своей работе.
+func (h *Huginn) UintToFloat(i uint64) float64 {
+	return float64(i) / float64(math.MaxUint64)
+}
+
 func (h *Huginn) unsubscribe(sub *huSubscriber) {
 	h.sMutex.Lock()
 	defer h.sMutex.Unlock()
@@ -132,9 +142,12 @@ func (h *Huginn) realizeEntropy(ctx context.Context, pack model.EntropyPackExten
 	choiceVal := h.matrixToInt(pack.Choice.Matrix)
 
 	pack.Entropy.IntValue = entropyVal
-	pack.Entropy.FloatValue = float64(entropyVal) / float64(math.MaxUint64)
+	pack.Entropy.FloatValue = h.UintToFloat(entropyVal)
+	pack.Entropy.ByteString = fmt.Sprintf("%064b", entropyVal)
+
 	pack.Choice.IntValue = choiceVal
-	pack.Choice.FloatValue = float64(choiceVal) / float64(math.MaxUint64)
+	pack.Choice.FloatValue = h.UintToFloat(choiceVal)
+	pack.Choice.ByteString = fmt.Sprintf("%064b", choiceVal)
 
 	return pack
 }

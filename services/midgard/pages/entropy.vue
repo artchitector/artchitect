@@ -233,7 +233,7 @@ export default {
     onMessage(chan, msg) {
       if (msg.entropy) {
         if (msg.entropy.int) {
-          this.entropy.bytes = (msg.entropy.int >>> 0).toString(2)
+          this.entropy.bytes = msg.entropy.byte
           this.entropy.float = msg.entropy.float
           this.entropy.int = msg.entropy.int
         } else {
@@ -250,7 +250,7 @@ export default {
 
       if (msg.choice) {
         if (msg.choice.int) {
-          this.choice.bytes = (msg.choice.int >>> 0).toString(2)
+          this.choice.bytes = msg.choice.byte
           this.choice.float = msg.choice.float
           this.choice.int = msg.choice.int
         } else {

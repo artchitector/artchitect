@@ -32,6 +32,7 @@ func (em *EntropyMatrix) Get(x, y int) uint8 {
 type Entropy struct {
 	IntValue   uint64  `json:"int"`
 	FloatValue float64 `json:"float"`
+	ByteString string  `json:"byte"` // uint64 в виде нулей и единиц
 
 	ImageEncoded string `json:"image"`   // base64-encoded 8x8 PNG изображение энтропии
 	ImageID      string `json:"imageId"` // ключ для получения изображения энтропии с memory-сервера

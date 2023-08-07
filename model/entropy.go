@@ -2,12 +2,15 @@ package model
 
 import (
 	"fmt"
+	"image"
 	"time"
 )
 
 // EntropySize - Энтропия считается по квадрату 8 на 8 пикселей
 // Odin: Фригг, где мои очки? Я не могу разобрать, что тут нарисовано! Тысяча чертей в эту допотопную машину!
 const EntropySize = 8
+const EntropyJpegQualityFrame = 65
+const EntropyJpegQualityNoise = 20
 
 // EntropyMatrix - матрица хранит силу каждого из 64 пикселей в энтропии
 type EntropyMatrix struct {
@@ -27,11 +30,11 @@ func (em *EntropyMatrix) Get(x, y int) uint8 {
 }
 
 type Entropy struct {
-	IntValue     uint64  `json:"int"`
-	FloatValue   float64 `json:"float"`
-	ImageEncoded string  `json:"imageEncoded"` // перед отправкой в Биврёст эту картинку надо base64-энкодить
+	IntValue   uint64  `json:"int"`
+	FloatValue float64 `json:"float"`
 
-	ImageID string `json:"imageId"` // ключ для получения изображения энтропии с memory-сервера
+	ImageEncoded string `json:"image"`   // base64-encoded 8x8 PNG изображение энтропии
+	ImageID      string `json:"imageId"` // ключ для получения изображения энтропии с memory-сервера
 	// Odin: ImageID тут нужен не для потоковой передачи энтропии, а для сохранения принятых когда-то решений.
 	// Например, если я придумал картину, и вспомнил для неё seed-номер 213712211,
 	// то ДОЛЖНО сохранить и видимую мной энтропию (прямую и обратную),
@@ -57,8 +60,25 @@ func (e Entropy) String() string {
 	return fmt.Sprintf("E:%.6f", e.FloatValue)
 }
 
+// EntropyPack - рассчитанная энтропия.
+// Постоянно отправляется на клиент, даже когда не используется в работе. Видна повсеместно на сайте.
 type EntropyPack struct {
 	Timestamp time.Time `json:"timestamp"`
 	Entropy   Entropy   `json:"entropy"`
 	Choice    Entropy   `json:"choice"`
+}
+
+// EntropyPackExtended - энтропия с подробным описанием. Видна только на странице /entropy на сайте.
+// К остальным данным тут еще добавляются кадр с камеры и шум для наглядности, так что событие это объёмное.
+
+type EntropyPackExtended struct {
+	Timestamp time.Time `json:"timestamp"`
+	Entropy   Entropy   `json:"entropy"`
+	Choice    Entropy   `json:"choice"`
+
+	ImageFrame        image.Image `json:"-"`          // сами картинки передаются только в памяти сервиса Асгард
+	ImageFrameEncoded string      `json:"imageFrame"` // base64-encoded jpeg картинки (уходят в Мидгард)
+
+	ImageNoise        image.Image `json:"-"`          // сами картинки передаются только в памяти сервиса Асгард
+	ImageNoiseEncoded string      `json:"imageNoise"` // base64-encoded jpeg картинки (уходят в Мидгард)
 }

@@ -23,9 +23,9 @@ const (
 // Ворон Huginn подписывается на данные с глаза LostEye и получает энтропию по подписке на go-канал
 // Других подписчиков нет, но множество их поддерживается в LostEye
 // этот же subscriber использует и Huginn для похожего механизма
-type subscriber struct {
+type leSubscriber struct {
 	ctx context.Context
-	ch  chan model.EntropyPack
+	ch  chan model.EntropyPackExtended
 }
 
 // LostEye - утраченный глаз Odin-а, пустой. По волшебству он всё равно видит, но видит ткань мироздания, энтропию пространства.
@@ -35,7 +35,7 @@ type LostEye struct {
 	currentFrame  image.Image
 	mutex         sync.Mutex
 	sMutex        sync.Mutex
-	subscribers   []*subscriber
+	subscribers   []*leSubscriber
 }
 
 func NewLostEye() *LostEye {
@@ -44,7 +44,7 @@ func NewLostEye() *LostEye {
 		currentFrame:  nil,
 		mutex:         sync.Mutex{},
 		sMutex:        sync.Mutex{},
-		subscribers:   make([]*subscriber, 0),
+		subscribers:   make([]*leSubscriber, 0),
 	}
 }
 
@@ -69,9 +69,9 @@ func (le *LostEye) StartEntropyDecode(ctx context.Context, stream chan image.Ima
 
 // Subscribe - отдаёт канал, из которого подписчик читает сообщения.
 // Если подписчик закрывает контекст, то отправка прерывается.
-func (le *LostEye) Subscribe(subscriberCtx context.Context) chan model.EntropyPack {
-	ch := make(chan model.EntropyPack)
-	sub := subscriber{
+func (le *LostEye) Subscribe(subscriberCtx context.Context) chan model.EntropyPackExtended {
+	ch := make(chan model.EntropyPackExtended)
+	sub := leSubscriber{
 		ctx: subscriberCtx,
 		ch:  ch,
 	}
@@ -86,11 +86,11 @@ func (le *LostEye) Subscribe(subscriberCtx context.Context) chan model.EntropyPa
 	return ch
 }
 
-func (le *LostEye) unsubscribe(sub *subscriber) {
+func (le *LostEye) unsubscribe(sub *leSubscriber) {
 	le.sMutex.Lock()
 	defer le.sMutex.Unlock()
 
-	idx := slices.IndexFunc(le.subscribers, func(s *subscriber) bool { return s == sub })
+	idx := slices.IndexFunc(le.subscribers, func(s *leSubscriber) bool { return s == sub })
 	if idx == -1 {
 		log.Warn().Msgf("[lost_eye] ПОЛУЧАТЕЛЬ ИСЧЕЗ. ПРОБЛЕМА")
 		return
@@ -102,26 +102,15 @@ func (le *LostEye) unsubscribe(sub *subscriber) {
 
 func (le *LostEye) notifyListeners(
 	ctx context.Context,
-	entropyMatrix model.EntropyMatrix,
-	choiceMatrix model.EntropyMatrix,
+	pack model.EntropyPackExtended,
 ) {
 	le.sMutex.Lock()
 	subscribers := le.subscribers[:]
 	le.sMutex.Unlock()
 
-	pack := model.EntropyPack{
-		Timestamp: time.Now(),
-		Entropy: model.Entropy{
-			Matrix: entropyMatrix,
-		},
-		Choice: model.Entropy{
-			Matrix: choiceMatrix,
-		},
-	}
-
 	for _, sub := range subscribers {
 		// отправка энтропии всем слушателям
-		go func(s *subscriber) {
+		go func(s *leSubscriber) {
 			select {
 			case <-s.ctx.Done():
 				return
@@ -139,7 +128,7 @@ func (le *LostEye) handleFrame(ctx context.Context, img image.Image) (bool, erro
 		return false, errors.Wrap(err, "[lost_eye] СОХРАНЕНИЕ КАДРА. АВАРИЯ.")
 	}
 
-	entropy, choice, ready, err := le.extractEntropy(ctx)
+	pack, ready, err := le.extractEntropy(ctx)
 	if err != nil {
 		return false, err
 	} else if !ready {
@@ -150,7 +139,7 @@ func (le *LostEye) handleFrame(ctx context.Context, img image.Image) (bool, erro
 	le.mutex.Lock()
 	defer le.mutex.Unlock()
 
-	le.notifyListeners(ctx, entropy, choice)
+	le.notifyListeners(ctx, pack)
 	return true, nil
 }
 
@@ -190,20 +179,32 @@ func (le *LostEye) extractSquare(frame image.Image) (image.Image, error) {
 	return squareImg, nil
 }
 
-func (le *LostEye) extractEntropy(ctx context.Context) (model.EntropyMatrix, model.EntropyMatrix, bool, error) {
+func (le *LostEye) extractEntropy(ctx context.Context) (model.EntropyPackExtended, bool, error) {
 	noise, ready, err := le.extractNoise()
 	if err != nil {
-		return model.EntropyMatrix{}, model.EntropyMatrix{}, false, err
+		return model.EntropyPackExtended{}, false, err
 	}
 	if !ready {
 		log.Debug().Msgf("[lost_eye] ДАЙТЕ ШУМА!")
-		return model.EntropyMatrix{}, model.EntropyMatrix{}, false, nil
+		return model.EntropyPackExtended{}, false, nil
 	}
 
 	entropyMatrix := le.noiseToEntropy(noise)
 	choiceMatrix := le.invertEntropy(entropyMatrix)
 
-	return entropyMatrix, choiceMatrix, true, nil
+	pack := model.EntropyPackExtended{
+		Timestamp: time.Now(),
+		Entropy: model.Entropy{
+			Matrix: entropyMatrix,
+		},
+		Choice: model.Entropy{
+			Matrix: choiceMatrix,
+		},
+		ImageFrame: le.currentFrame,
+		ImageNoise: noise,
+	}
+
+	return pack, true, nil
 }
 
 // extractNoise - вычитание цветов двух соседних кадров с целью изъять шум из этой разницы

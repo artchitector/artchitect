@@ -30,21 +30,21 @@
     </p>
     <hr/>
     <p v-if="locale === 'ru'">
-      <b>Шаг 1. Исходный кадр (Source)</b>
+      <b>Шаг 1. Исходный кадр (Frame)</b>
       <br/>
       Энтропия (в форме светового шума) получается из разницы двух соседних кадров. Текущий кадр виден ниже, его
       содержание не имеет принципиального
       значения. Красным отмечена область, с которой будет сниматься фоновый шум.
     </p>
     <p v-else>
-      <b>Step 1. Original frame (Source)</b>
+      <b>Step 1. Original frame (Frame)</b>
       <br/>
       Entropy (in the form of light noise) is obtained from the difference of two adjacent frames. The current frame is
       visible below, its content does not matter. The area from which background noise will be removed is marked in red.
     </p>
     <div class="has-text-centered">
-      <img v-if="images.source !== null" :src="`data:image/jpeg;base64, ${images.source}`"
-           alt="loading source stream"/>
+      <img :src="`data:image/jpeg;base64, ${images.frame}`"
+           alt="loading frame stream"/>
     </div>
     <p v-if="locale === 'ru'">
       <b>Шаг 2. Шум (Noise)</b>
@@ -61,7 +61,7 @@
       visual representation , the noise looks like this:
     </p>
     <div class="has-text-centered">
-      <img v-if="images.noise !== null" :src="`data:image/jpeg;base64, ${images.noise}`"
+      <img :src="`data:image/jpeg;base64, ${images.noise}`"
            style="height: 256px; width: 256px;"
            alt="loading noise stream"/>
     </div>
@@ -167,7 +167,7 @@ export default {
       connection: null,
 
       images: {
-        source: null,
+        frame: null,
         noise: null,
         entropy: null,
         choice: null
@@ -194,7 +194,7 @@ export default {
       this.maintenance = true
       return
     }
-    this.connection = new WsConnection(process.env.WS_URL, this.logPrefix, ['entropy'], 100)
+    this.connection = new WsConnection(process.env.WS_URL, this.logPrefix, ['entropy_extended'], 100)
     this.connection.onmessage((channel, message) => {
       this.status.error = null
       this.status.reconnecting = null
@@ -241,8 +241,8 @@ export default {
           this.entropy.float = null
           this.entropy.int = null
         }
-        if (msg.entropy.imageEncoded) {
-          this.images["entropy"] = msg.entropy.imageEncoded
+        if (msg.entropy.image) {
+          this.images["entropy"] = msg.entropy.image
         } else {
           console.log('entropy no image')
         }
@@ -258,11 +258,18 @@ export default {
           this.choice.float = 0
           this.choice.int = 0
         }
-        if (msg.choice.imageEncoded) {
-          this.images["choice"] = msg.choice.imageEncoded
+        if (msg.choice.image) {
+          this.images["choice"] = msg.choice.image
         } else {
           console.log('choice no image')
         }
+      }
+
+      if (!!msg.imageFrame) {
+        this.images["frame"] = msg.imageFrame
+      }
+      if (!!msg.imageNoise) {
+        this.images["noise"] = msg.imageNoise
       }
 
 

@@ -26,16 +26,23 @@ type Huginn struct {
 	// Odin: Воистину, пусть и смертные тоже увидят эту ткань пространства в виде меняющихся картинок.
 	// Odin: Они всё равно ничего в ней не поймут.
 	sMutex      sync.Mutex
-	subscribers []*subscriber
+	subscribers []*huSubscriber
 
-	lastEntropy *model.EntropyPack // может быть пустым, если кто-то уже воспользовался этой энтропией (она на один раз)
+	lastEntropy *model.EntropyPackExtended // может быть пустым, если кто-то уже воспользовался этой энтропией (она на один раз)
+}
+
+// Heimdallr подписывается на данные от Huginn и получает энтропию по подписке на go-канал
+// huSubscriber - механизм подписок
+type huSubscriber struct {
+	ctx context.Context
+	ch  chan model.EntropyPackExtended
 }
 
 func NewHuginn(lostEye *LostEye) *Huginn {
 	return &Huginn{
 		lostEye:     lostEye,
 		sMutex:      sync.Mutex{},
-		subscribers: make([]*subscriber, 0),
+		subscribers: make([]*huSubscriber, 0),
 		lastEntropy: nil,
 	}
 }
@@ -66,9 +73,9 @@ func (h *Huginn) StartEntropyRealize(ctx context.Context) {
 
 // Subscribe - отдаёт канал, из которого подписчик читает сообщения.
 // Если подписчик закрывает контекст, то отправка прерывается.
-func (h *Huginn) Subscribe(subscriberCtx context.Context) chan model.EntropyPack {
-	ch := make(chan model.EntropyPack)
-	sub := subscriber{
+func (h *Huginn) Subscribe(subscriberCtx context.Context) chan model.EntropyPackExtended {
+	ch := make(chan model.EntropyPackExtended)
+	sub := huSubscriber{
 		ctx: subscriberCtx,
 		ch:  ch,
 	}
@@ -83,11 +90,11 @@ func (h *Huginn) Subscribe(subscriberCtx context.Context) chan model.EntropyPack
 	return ch
 }
 
-func (h *Huginn) unsubscribe(sub *subscriber) {
+func (h *Huginn) unsubscribe(sub *huSubscriber) {
 	h.sMutex.Lock()
 	defer h.sMutex.Unlock()
 
-	idx := slices.IndexFunc(h.subscribers, func(s *subscriber) bool { return s == sub })
+	idx := slices.IndexFunc(h.subscribers, func(s *huSubscriber) bool { return s == sub })
 	if idx == -1 {
 		log.Warn().Msgf("[huginn] ПОДПИСАНТ ИСЧЕЗ. ПРОБЛЕМА")
 		return
@@ -97,14 +104,14 @@ func (h *Huginn) unsubscribe(sub *subscriber) {
 	log.Debug().Msgf("[huginn] ПОДПИСАНТ %d УДАЛЁН. УСПЕХ.", idx)
 }
 
-func (h *Huginn) notifyListeners(ctx context.Context, pack model.EntropyPack) {
+func (h *Huginn) notifyListeners(ctx context.Context, pack model.EntropyPackExtended) {
 	h.sMutex.Lock()
 	subscribers := h.subscribers[:]
 	h.sMutex.Unlock()
 
 	for _, sub := range subscribers {
 		// отправка энтропии всем слушателям
-		go func(s *subscriber) {
+		go func(s *huSubscriber) {
 			select {
 			case <-s.ctx.Done():
 				return
@@ -120,7 +127,7 @@ func (h *Huginn) notifyListeners(ctx context.Context, pack model.EntropyPack) {
 // realizeEntropy
 // Huginn: рассматриваю две картинки энтропии (прямую и обратную)
 // Huginn: и превращаю их в нерушимые и твёрдые сущности - конкретные числа, на которые Odin сможет положиться
-func (h *Huginn) realizeEntropy(ctx context.Context, pack model.EntropyPack) model.EntropyPack {
+func (h *Huginn) realizeEntropy(ctx context.Context, pack model.EntropyPackExtended) model.EntropyPackExtended {
 	entropyVal := h.matrixToInt(pack.Entropy.Matrix)
 	choiceVal := h.matrixToInt(pack.Choice.Matrix)
 

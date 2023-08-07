@@ -3,8 +3,8 @@ package model
 import "time"
 
 const (
-	ChanEntropy            = "entropy"
-	ChanEntropyCalculation = "entropy_calculation"
+	ChanEntropy         = "entropy"
+	ChanEntropyExtended = "entropy_extended"
 )
 
 // Здесь расположены модели, необходимые для передачи рантаймовых событий от soul до клиентов

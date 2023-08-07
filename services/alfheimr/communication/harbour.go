@@ -63,7 +63,7 @@ func (l *Harbour) Run(ctx context.Context) error {
 	subscriber := l.red.Subscribe(
 		ctx,
 		model.ChanEntropy,
-		model.ChanEntropyCalculation,
+		model.ChanEntropyExtended,
 	)
 	log.Info().Msgf("[harbour] ГАВАНЬ НАЧИНАЕТ ПРИЁМ ГРУЗОВ")
 	for {
@@ -89,7 +89,7 @@ func (l *Harbour) Run(ctx context.Context) error {
 func (l *Harbour) handle(ctx context.Context, msg *redis.Message) error {
 	broadcastChannels := []string{
 		model.ChanEntropy,
-		model.ChanEntropyCalculation,
+		model.ChanEntropyExtended,
 	}
 	idx := slices.IndexFunc(broadcastChannels, func(s string) bool { return msg.Channel == s })
 	if idx != -1 {

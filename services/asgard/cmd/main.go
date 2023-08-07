@@ -59,10 +59,7 @@ func main() {
 	bifröst := communication.NewBifröst(red)
 	heimdall := pantheon.NewHeimdallr(huginn, bifröst)
 	go func() {
-		err := heimdall.StartStream(ctx)
-		if err != nil {
-
-		}
+		heimdall.StartStream(ctx)
 	}()
 
 	if err := webcam.Start(ctx, webcamStream); err != nil {

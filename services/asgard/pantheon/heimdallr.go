@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"image"
 	"image/color"
+	"image/jpeg"
 	"image/png"
 	"math"
 )
@@ -39,41 +40,68 @@ Heimdallr: брррррр... возьмёмся за дело.
 Odin: этот поток критически важен, его нельзя терять. При его отключении надо "ронять" весь Asgard для его перезапуска.
 Heimdallr: проооще простооого... (протяжно и безразлично)
 */
-func (h *Heimdallr) StartStream(ctx context.Context) error {
+func (h *Heimdallr) StartStream(ctx context.Context) {
 	entropyCh := h.huginn.Subscribe(ctx)
-FOR:
+
 	for {
 		select {
 		case <-ctx.Done():
 			log.Info().Msgf("[heimdallr] МММММ. НАКОНЕЦ И МОЯ ОСТАНОВКА")
-			return nil
+			return
 		case entropy := <-entropyCh:
-			log.Debug().Msgf("[heimdallr] ВИЖУ ЭНТРОПИЮ ОТ ХУГИНА %+v", entropy)
+			//log.Debug().Msgf("[heimdallr] ВИЖУ ЭНТРОПИЮ ОТ ХУГИНА %+v", entropy)
 
 			// Heimdallr: так. Моя задача из матрицы силы пикселей сделать видимую картинку
-			// TODO [Heimdallr делает картинки]
+			var err error
 			entropy.Entropy.ImageEncoded = h.encodeEntropyImage(entropy.Entropy.Matrix)
 			entropy.Choice.ImageEncoded = h.encodeEntropyImage(entropy.Choice.Matrix)
-
-			// Heimdallr: теперь отправлю этот ценный драккар по волнам Биврёста...
-			var b []byte
-			var err error
-			if b, err = json.Marshal(&entropy); err != nil {
-				log.Error().Msgf("[heimdallr] ЭНТРОПИЯ ИСПОРЧЕНА. БЛЭКАУТ!")
-				break FOR
-			}
-			err = h.bifröst.SendDrakkar(ctx, model.Cargo{
-				Channel: model.ChanEntropy,
-				Payload: string(b),
-			})
+			entropy.ImageFrameEncoded, err = h.encodeJpeg(entropy.ImageFrame, model.EntropyJpegQualityFrame)
 			if err != nil {
-				// Heimdallr: поток не прерываю. Проблема может быть сетевая из-за Redis
+				log.Error().Msgf("[heimdallr] НЕ СМОГ СДЕЛАТЬ JPEG ЭНТРОПИИ")
+			}
+			entropy.ImageNoiseEncoded, err = h.encodeJpeg(entropy.ImageNoise, model.EntropyJpegQualityNoise)
+			if err != nil {
+				log.Error().Msgf("[heimdallr] НЕ СМОГ СДЕЛАТЬ JPEG ОБРАТНОЙ ЭНТРОПИИ")
+			}
+
+			if err = h.sendDrakkar(ctx, model.ChanEntropyExtended, entropy); err != nil {
 				log.Error().Msgf("[heimdallr] BIFRÖST СЛОМАН, ДРАККАР С ГРУЗОМ ЭНТРОПИИ УТЕРЯН В ТКАНИ ПРОСТРАНСТВА")
+				// Heimdallr: поток не прерываю. Проблема может быть сетевая из-за Redis
+				continue
+			}
+
+			// Odin: в Альфхейм и Мидгард отправятся две посылки с энтропией
+			// Odin: model.EntropyPackExtended содержит еще и кадр с шумом, большие jpeg-картинки. Это тяжёлая модель,
+			// и она нужна лишь в одном месте - на странице entropy
+			// Odin: model.EntropyPack содержит только минимальные картинки 8х8 (весом по 200байт), это лёгкая модель, и
+			// она используется везде в Artchitect для отображения текущей энтропии
+			// Heimdallr: я отправлю два разные пакета в разные каналы. Читатели разберутся, кому какой нужен.
+			miniEntropy := model.EntropyPack{
+				Timestamp: entropy.Timestamp,
+				Entropy:   entropy.Entropy,
+				Choice:    entropy.Choice,
+			}
+			if err = h.sendDrakkar(ctx, model.ChanEntropy, miniEntropy); err != nil {
+				log.Error().Msgf("[heimdallr] BIFRÖST СЛОМАН, ДРАККАР С ГРУЗОМ ЭНТРОПИИ УТЕРЯН В ТКАНИ ПРОСТРАНСТВА")
+				// Heimdallr: поток не прерываю. Проблема может быть сетевая из-за Redis
+				continue
 			}
 		}
 	}
+}
 
-	return errors.Errorf("[heimdallr] ПОТОК УТЕРЯН")
+func (h *Heimdallr) sendDrakkar(ctx context.Context, channel string, pack interface{}) error {
+	// Heimdallr: теперь отправлю этот ценный драккар по волнам Биврёста...
+	var b []byte
+	var err error
+	if b, err = json.Marshal(&pack); err != nil {
+		return errors.Wrap(err, "[heimdallr] ЭНТРОПИЯ ИСПОРЧЕНА. БЛЭКАУТ!")
+	}
+	err = h.bifröst.SendDrakkar(ctx, model.Cargo{
+		Channel: channel,
+		Payload: string(b),
+	})
+	return err
 }
 
 // MakeEntropyImage - матрица сил пикселей в энтропии становится 8х8 PNG картинкой
@@ -112,4 +140,16 @@ func (h *Heimdallr) encodeEntropyImage(matrix model.EntropyMatrix) string {
 	}
 
 	return base64.StdEncoding.EncodeToString(b.Bytes())
+}
+
+func (h *Heimdallr) encodeJpeg(img image.Image, quality int) (string, error) {
+	b := bytes.Buffer{}
+	err := jpeg.Encode(&b, img, &jpeg.Options{Quality: quality})
+	if err != nil {
+		return "", err
+	}
+	data := b.Bytes()
+	log.Info().Msgf("[heimdallr] %d. IMAGE SIZE = %dкБ", quality, len(data)/1024)
+	return base64.StdEncoding.EncodeToString(data), nil
+
 }

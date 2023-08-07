@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/artchitector/artchitect2/model"
-	"github.com/artchitector/artchitect2/services/asgard/external"
+	"github.com/artchitector/artchitect2/services/asgard/communication"
 	"github.com/artchitector/artchitect2/services/asgard/infrastructure"
 	"github.com/artchitector/artchitect2/services/asgard/pantheon"
 	"github.com/rs/zerolog"
@@ -59,10 +59,11 @@ func main() {
 	}()
 
 	// redis-stream
-	stream := external.NewStream(red)
+	stream := communication.NewStream(red)
 
+	// TODO ЭТО НАДО УБРАТЬ ИЗ MAIN
 	go func() {
-		sCtx, done := context.WithTimeout(ctx, time.Second*10)
+		sCtx, done := context.WithTimeout(ctx, time.Second*10000)
 		defer done()
 		ch := huginn.Subscribe(sCtx)
 
@@ -71,7 +72,7 @@ func main() {
 			if b, err := json.Marshal(ent); err != nil {
 				log.Fatal().Msgf("JSON MARSHAL")
 			} else {
-				err = stream.SendCargo(ctx, model.Event{
+				err = stream.SendDrakkar(ctx, model.Cargo{
 					Channel: model.ChanEntropy,
 					Payload: string(b),
 				})
@@ -79,6 +80,7 @@ func main() {
 					log.Fatal().Msgf("SEND CARGO FAILED")
 				}
 			}
+
 		}
 
 		log.Fatal().Msgf("STOP ASGARD")

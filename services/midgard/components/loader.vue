@@ -1,5 +1,5 @@
 <template>
-    <img class="loader-image" :class="`loader-image-size-${size}`" src="/loader2.png"/>
+    <img class="loader-image" :class="`loader-image-size-${size}`" src="/loader2.png" alt="loading..."/>
 </template>
 <script>
 export default {

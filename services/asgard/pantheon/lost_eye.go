@@ -122,9 +122,9 @@ func (le *LostEye) notifyListeners(ctx context.Context, entropy image.Image, inv
 			case <-s.ctx.Done():
 				return
 			case <-time.After(time.Second):
-				log.Error().Msgf("[lost_eye] ОТПРАВКА ЗАВИСЛА, ГРУЗ ПОТЕРЯН")
+				log.Error().Msgf("[lost_eye] ОТПРАВКА ЗАВИСЛА, ЭНТРОПИЯ ПОТЕРЯНА")
 			case s.ch <- pack:
-				log.Debug().Msgf("[lost_eye] ГРУЗ ЭНТРОПИИ ОТПРАВЛЕН")
+				//log.Debug().Msgf("[lost_eye] ЭНТРОПИЯ ОТПРАВЛЕНА")
 			}
 		}(sub)
 	}

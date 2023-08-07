@@ -231,29 +231,29 @@ export default {
   },
   methods: {
     onMessage(chan, msg) {
-      if (msg.Entropy) {
-        this.entropy.bytes = msg.Entropy.Binary
-        this.entropy.float = msg.Entropy.Float64
-        this.entropy.int = msg.Entropy.Uint64
+      if (msg.entropy.int) {
+        this.entropy.bytes = (msg.entropy.int >>> 0).toString(2)
+        this.entropy.float = msg.entropy.float
+        this.entropy.int = msg.entropy.int
       } else {
         this.entropy.bytes = null
         this.entropy.float = null
         this.entropy.int = null
       }
 
-      if (msg.Choice) {
-        this.choice.bytes = msg.Choice.Binary
-        this.choice.float = msg.Choice.Float64
-        this.choice.int = msg.Choice.Uint64
+      if (msg.choice.int) {
+        this.choice.bytes = (msg.choice.int >>> 0).toString(2)
+        this.choice.float = msg.choice.float
+        this.choice.int = msg.choice.int
       } else {
         this.choice.bytes = 0
         this.choice.float = 0
         this.choice.int = 0
       }
 
-      for (const imageName in msg.ImagesEncoded) {
-        this.images[imageName] = msg.ImagesEncoded[imageName]
-      }
+      // for (const imageName in msg.ImagesEncoded) {
+      //   this.images[imageName] = msg.ImagesEncoded[imageName]
+      // }
     }
   }
 }

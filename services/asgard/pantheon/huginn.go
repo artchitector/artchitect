@@ -21,7 +21,7 @@ type Huginn struct {
 	// Huginn пробрасывает цепочку вызовов в глаз
 	lostEye *LostEye
 
-	// Huginn: Я отправляю энтропию не только Muninn, но и по радужному мосту external.Bifrost в Alfheimr (api-gateway).
+	// Huginn: Я отправляю энтропию не только Muninn, но и по радужному мосту communication.Bifrost в Alfheimr (api-gateway).
 	// Huginn: из Alfheimr светлые эльфы переправят эту энтропию на Землю, в Midgard (frontend), где её увидят люди.
 	// Huginn: для этого у меня тут механизм нескольких подписчиков
 	// Odin: Воистину, пусть и смертные тоже увидят эту ткань пространства в виде меняющихся картинок.
@@ -110,9 +110,9 @@ func (h *Huginn) notifyListeners(ctx context.Context, pack model.EntropyPack) {
 			case <-s.ctx.Done():
 				return
 			case <-time.After(time.Second):
-				log.Error().Msgf("[huginn] ОТПРАВКА ЗАВИСЛА, ГРУЗ ПОТЕРЯН")
+				log.Error().Msgf("[huginn] ОТПРАВКА ЗАВИСЛА, ЭНТРОПИЯ ПОТЕРЯНА")
 			case s.ch <- pack:
-				log.Debug().Msgf("[huginn] ГРУЗ ЭНТРОПИИ ОТПРАВЛЕН")
+				//log.Debug().Msgf("[huginn] ЭНТРОПИЯ ОТПРАВЛЕНА")
 			}
 		}(sub)
 	}

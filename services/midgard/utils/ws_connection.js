@@ -57,9 +57,9 @@ class WsConnection {
     })
     this.connection.addEventListener('message', (e) => {
       const ev = JSON.parse(e.data);
-      if (this.events.includes(ev.Name)) {
-        let data = JSON.parse(ev.Payload)
-        this.emit('onmessage', ev.Name, data)
+      if (this.events.includes(ev.channel)) {
+        let data = JSON.parse(ev.payload)
+        this.emit('onmessage', ev.channel, data)
       }
     })
     this.connection.addEventListener('open', (e) => {

@@ -27,8 +27,18 @@ type EntropyCalculationState struct {
 	Choice     Entropy   `json:"choice"`
 }
 
-// Event - упаковка для событий для передачи по каналам (внутри сервиса gate) и отправки клиентам
-type Event struct {
+// Cargo - упаковка для событий при передаче между Асгардом и Альфхеймом (между бекэнд-серверами)
+// Odin: этот груз везёт хрустальный драккар по волнам радужного моста из Асгарда в Альфхейм. Красиво?
+// Odin: Жаль, что выглядит как набор каких-то символов на одном из человеческих языков
+type Cargo struct {
+	Channel string `json:"channel"`
+	Payload string `json:"payload"`
+}
+
+// Radiogram - упаковка для событий при передаче между Альфхеймом и Мидгардом (между api-gateway и клиентом)
+// Odin: "Слушайте наше радио Artchitect-FM, настраивайте ваши радиостанции на канал между мирами!"
+// Odin: "Радиостанция Artchitect-FM - свет маяка в тумане для заблудших душ."
+type Radiogram struct {
 	Channel string `json:"channel"`
 	Payload string `json:"payload"`
 }

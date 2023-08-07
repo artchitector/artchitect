@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"github.com/artchitector/artchitect2/services/alfheimr/external"
+	"github.com/artchitector/artchitect2/services/alfheimr/communication"
 	"github.com/artchitector/artchitect2/services/alfheimr/infrastructure"
+	"github.com/artchitector/artchitect2/services/alfheimr/portals"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
@@ -11,7 +12,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 func main() {
@@ -40,24 +40,16 @@ func main() {
 	_ = infrastructure.InitDB(ctx, config.DbDSN)
 	// СЛУШАТЕЛЬ РЕДИСА И СОБЫТИЙ. ФОНОВЫЙ ЗАПУСК ОБРАБОТКИ
 	red := infrastructure.InitRedis(config)
-	lis := external.NewListener(red)
+
+	harbour := communication.NewHarbour(red)
 	go func() {
-		if err := lis.Run(ctx); err != nil {
-			log.Fatal().Msgf("[ВРАТА] СЛУШАТЕЛЬ - АВАРИЯ")
+		if err := harbour.Run(ctx); err != nil {
+			log.Fatal().Msgf("[ГЛАВНЫЙ] ГАВАНЬ ПРЕКРАТИЛА РАБОТУ. ODIN НЕДОВОЛЕН")
 		}
 	}()
-	// ТЕСТОВЫЙ ЗАПУСК СЛУШАТЕЛЯ КАНАЛА
-	go func() {
-		time.Sleep(time.Second)
 
-		tCtx, tDone := context.WithTimeout(ctx, time.Second*5)
-		defer tDone()
-
-		ch := lis.Subscribe(tCtx)
-		for e := range ch {
-			log.Info().Msgf("[ТЕСТ] ПОЛУЧЕНО СООБЩЕНИЕ: %+v", e)
-		}
-	}()
+	// СБОРКА ПОРТАЛОВ (ХЕНДЛЕРОВ)
+	radioPortal := portals.NewRadioPortal(harbour)
 
 	// ЗАПУСК HTTP-СЕРВЕРА
 	go func() {
@@ -74,9 +66,15 @@ func main() {
 			log.Fatal().Err(err).Send()
 		}
 
-		// http-ручки
+		// Odin: это порталы, через которые Мидгард может связаться с Альфхеймом
+		// Odin: есть порталы, которые закрываются сразу (http-api), а есть длительно действующий (websocket)
 		r.GET("/ping", func(c *gin.Context) {
 			c.JSON(200, gin.H{"message": "pong"})
+		})
+
+		// connection - Портал с постоянной связью c Мидгардом (вебсокете)
+		r.GET("/radio", func(c *gin.Context) {
+			radioPortal.Handle(c.Writer, c.Request)
 		})
 
 		// запуск http-сервера

@@ -32,7 +32,7 @@ func (em *EntropyMatrix) Get(x, y int) uint8 {
 type Entropy struct {
 	IntValue   uint64  `json:"int"`
 	FloatValue float64 `json:"float"`
-	ByteString string  `json:"byte"` // uint64 в виде нулей и единиц
+	ByteString string  `json:"byte" gorm:"-"` // uint64 в виде нулей и единиц. не хранится в БД
 
 	ImageEncoded string `json:"image"`   // base64-encoded 8x8 PNG изображение энтропии
 	ImageID      string `json:"imageId"` // ключ для получения изображения энтропии с memory-сервера
@@ -54,7 +54,7 @@ type Entropy struct {
 	//		то твоё место на троне твоего двонца займу Я - Loki! Бог хитрости!
 	// Odin: [ссылает Локи в темницу на 100 лет] Да охлади ты свою гордыню, бедный сын ётунов...
 
-	Matrix EntropyMatrix `json:"-"` // Это нужно только в Асгарде для преобразований, по сети не уходит
+	Matrix EntropyMatrix `json:"-" gorm:"-"` // Это нужно только в Асгарде для преобразований, по сети не уходит
 }
 
 func (e Entropy) String() string {
@@ -65,21 +65,21 @@ func (e Entropy) String() string {
 // Постоянно отправляется на клиент, даже когда не используется в работе. Видна повсеместно на сайте.
 type EntropyPack struct {
 	Timestamp time.Time `json:"timestamp"`
-	Entropy   Entropy   `json:"entropy"`
-	Choice    Entropy   `json:"choice"`
+	Entropy   Entropy   `json:"entropy" gorm:"embedded;embeddedPrefix:entropy_"`
+	Choice    Entropy   `json:"choice" gorm:"embedded;embeddedPrefix:choice_"`
 }
 
 // EntropyPackExtended - энтропия с подробным описанием. Видна только на странице /entropy на сайте.
 // К остальным данным тут еще добавляются кадр с камеры и шум для наглядности, так что событие это объёмное.
-
+// кадр = 10-20кб, шум = 40Кб. И так десяток раз в секунду.
 type EntropyPackExtended struct {
 	Timestamp time.Time `json:"timestamp"`
-	Entropy   Entropy   `json:"entropy"`
-	Choice    Entropy   `json:"choice"`
+	Entropy   Entropy   `json:"entropy" gorm:"embedded;embeddedPrefix:entropy_"`
+	Choice    Entropy   `json:"choice" gorm:"embedded;embeddedPrefix:choice_"`
 
-	ImageFrame        image.Image `json:"-"`          // сами картинки передаются только в памяти сервиса Асгард
-	ImageFrameEncoded string      `json:"imageFrame"` // base64-encoded jpeg картинки (уходят в Мидгард)
+	ImageFrame        image.Image `json:"-" gorm:"-"`          // сами картинки передаются только в памяти сервиса Асгард
+	ImageFrameEncoded string      `json:"imageFrame" gorm:"-"` // base64-encoded jpeg картинки (уходят в Мидгард)
 
-	ImageNoise        image.Image `json:"-"`          // сами картинки передаются только в памяти сервиса Асгард
-	ImageNoiseEncoded string      `json:"imageNoise"` // base64-encoded jpeg картинки (уходят в Мидгард)
+	ImageNoise        image.Image `json:"-" gorm:"-"`          // сами картинки передаются только в памяти сервиса Асгард
+	ImageNoiseEncoded string      `json:"imageNoise" gorm:"-"` // base64-encoded jpeg картинки (уходят в Мидгард)
 }

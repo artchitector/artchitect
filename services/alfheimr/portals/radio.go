@@ -64,7 +64,6 @@ func (cp *RadioPortal) Handle(w http.ResponseWriter, r *http.Request) {
 			cancel() // Odin: если есть какие-то проблемы, то лучше разорвём канал связи совсем
 			return
 		}
-		log.Info().Msgf("[portal:radio] РАДИОГРАММА ОТПРАВЛЕНА")
 	}
 
 	log.Debug().Msgf("[portal:radio] РАДИОТРАНСЛЯЦИЯ ОСТАНОВЛЕНА")

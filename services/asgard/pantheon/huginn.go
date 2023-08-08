@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/artchitector/artchitect2/model"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
 	"math"
@@ -29,7 +30,10 @@ type Huginn struct {
 	sMutex      sync.Mutex
 	subscribers []*huSubscriber
 
-	lastEntropy *model.EntropyPackExtended // может быть пустым, если кто-то уже воспользовался этой энтропией (она на один раз)
+	mutex sync.Mutex
+
+	// Через эти каналы Muninn будет получать энтропию разовыми вызовами (без подписки)
+	internalEntropyRetranslators []chan model.EntropyPackExtended
 }
 
 // Heimdallr подписывается на данные от Huginn и получает энтропию по подписке на go-канал
@@ -41,10 +45,10 @@ type huSubscriber struct {
 
 func NewHuginn(lostEye *LostEye) *Huginn {
 	return &Huginn{
-		lostEye:     lostEye,
-		sMutex:      sync.Mutex{},
-		subscribers: make([]*huSubscriber, 0),
-		lastEntropy: nil,
+		lostEye:                      lostEye,
+		sMutex:                       sync.Mutex{},
+		subscribers:                  make([]*huSubscriber, 0),
+		internalEntropyRetranslators: make([]chan model.EntropyPackExtended, 0),
 	}
 }
 
@@ -65,9 +69,23 @@ func (h *Huginn) StartEntropyRealize(ctx context.Context) {
 
 			// Huginn: но Muninn не требует постоянный поток энтропии. Для него я отложу последнюю энтропию, и он
 			// воспользуется ей тогда, когда ему нужно будет дать Odin-у новое воспоминание.
-			h.sMutex.Lock()
-			h.lastEntropy = &pack
-			h.sMutex.Unlock()
+
+			if len(h.internalEntropyRetranslators) != 0 {
+				h.mutex.Lock()
+				currentRetranslator := h.internalEntropyRetranslators[0]
+				h.internalEntropyRetranslators = h.internalEntropyRetranslators[1:]
+				h.mutex.Unlock()
+				select {
+				case <-ctx.Done():
+					close(currentRetranslator)
+					return
+				case <-time.After(time.Millisecond * 10):
+					log.Warn().Msgf("[higunn] ПРОБЛЕМА С РЕТРАНСЛЯТОРОМ. НЕ УСПЕЛ В 10МС")
+				case currentRetranslator <- pack:
+					//ok
+				}
+				close(currentRetranslator)
+			}
 		}
 	}
 }
@@ -169,4 +187,32 @@ func (h *Huginn) matrixToInt(matrix model.EntropyMatrix) uint64 {
 		}
 	}
 	return result
+}
+
+// GetNextEntropy - следующая посчитанная энтропия будет отправлена к Muninn через возвращённый канал
+// Muninn: когда я собираюсь что-то вспомнить для Odin, то мне нужно понять текущее состояние ткани пространства
+func (h *Huginn) GetNextEntropy(ctx context.Context) (model.EntropyPack, error) {
+	internalRetranslator := make(chan model.EntropyPackExtended)
+	h.mutex.Lock()
+	h.internalEntropyRetranslators = append(h.internalEntropyRetranslators, internalRetranslator)
+	h.mutex.Unlock()
+	select {
+	case <-ctx.Done():
+		return model.EntropyPack{}, errors.Errorf("[huginn] НЕТ ПЕРЕДАЧИ ЭНТРОПИИ. КОНТЕКСТ ЗАВЕРШЁН")
+	case <-time.After(time.Second):
+		return model.EntropyPack{}, errors.Errorf("[huginn] ТАЙМАУТ 1СЕК ВЫШЕЛ. ЭНТРОПИЯ ЗАВИСЛА")
+	case extendedPack := <-internalRetranslator:
+		pack := h.makeEntropyPack(extendedPack)
+		// Huginn: Muninn пользуется нерасширенной энтропией в своей работе. Ему не нужны там лишние картинки, и эта
+		// энтропия будет сохраняться в БД (model.Word содержит model.EntropyPack)
+		return pack, nil
+	}
+}
+
+func (h *Huginn) makeEntropyPack(pack model.EntropyPackExtended) model.EntropyPack {
+	return model.EntropyPack{
+		Timestamp: pack.Timestamp,
+		Entropy:   pack.Entropy,
+		Choice:    pack.Choice,
+	}
 }

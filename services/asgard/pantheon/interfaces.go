@@ -3,11 +3,13 @@ package pantheon
 import (
 	"context"
 	"github.com/artchitector/artchitect2/model"
+	"image"
 )
 
 // artPile - Куча написанных картин (репозиторий для таблицы art)
 type artPile interface {
 	GetNextArtID(ctx context.Context) (uint, error)
+	SaveArt(ctx context.Context, artID uint, art model.Art, idea model.Idea) (model.Art, error)
 }
 
 type ai interface {
@@ -16,4 +18,8 @@ type ai interface {
 
 type bifröst interface {
 	SendDrakkar(ctx context.Context, cargo model.Cargo) error
+}
+
+type warehouse interface {
+	SaveImage(ctx context.Context, artID uint, img image.Image) error
 }

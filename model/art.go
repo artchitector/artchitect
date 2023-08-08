@@ -7,58 +7,68 @@ import (
 	"time"
 )
 
+const (
+	// Version1 Odin: Версия алгоритма создания картины. Сейчас тут только одна.
+	// Version1 Odin: в версии v1 тут у нас допотопный StableDiffusion v1.5, но он рисует ярко, пусть и не аккуратно
+	Version1 = "v1"
+)
+
 // ### entities
 
 type Art struct {
+	// ID не автоинкрементное поле. Автоинкремент сделан в коде вручную.
+	// Odin: Все номера картин должны идти подряд без пропусков, поэтому тут не используется sequence/autoincrement
 	ID        uint      `json:"id" gorm:"primarykey"`
 	CreatedAt time.Time `json:"createdAt"`
 
-	Version     string `json:"version"`     // version of art-generation-algorithm (different dictionary or settings...)
-	Seed        uint   `json:"seed"`        // entropy-generated seed number, which is seed for Stable Diffusion input
-	SeedEntropy string `json:"seedEntropy"` // unique identifier of original entropy image
+	// Version - Odin: может быть несколько вариантов генерации картины (разные словари, разные версии StableDiffusion)
+	Version string `json:"version"`
+	// Odin: это идея картины. Картина может быть воссоздана по этой идее на той же версии ИИ без изменений сколько угодно раз
+	// Odin: саму картинку можно репродуцировать, а вот идея пришла "из космоса", и её не повторить
+	// Loki: кстати, если в настройках ИИ поменять разрешение или другой параметр,
+	// Loki: то из этой же идеи будет нарисована похожая, но другая картина
+	// Odin: раз так, то общая уникальность изображения заключена в составном ключе seed+words+AIversion+AIsettings
+	// Odin: используя идею и повторив эти настройки можно воссоздать ТУ ЖЕ картину и на другой машине
+	Idea Idea `json:"idea"`
 
-	TotalTime uint `json:"totalTime"` // seconds, how long whole generation process taken
-	PaintTime uint `json:"paintTime"` // seconds, how long stable diffusion generate image
-
-	Tags  []ArtTag `json:"tags"`  // set of tags
-	Likes ArtLikes `json:"likes"` // current likes-summary
+	TotalTime          uint `json:"totalTime"`          // мс, сколько заняло рисование картины от начала до конца
+	IdeaGenerationTime uint `json:"ideaGenerationTime"` // мс. сколько заняла сборка идеи
+	PaintTime          uint `json:"paintTime"`          // мс. сколько заняло рисование в недрах ИИ
 }
 
-type ArtTag struct {
-	ID        uint      `json:"-" gorm:"primarykey"`
-	CreatedAt time.Time `json:"createdAt"`
-	ArtID     uint      `json:"-"`
-	Keyword   string    `json:"keyword"` // keyword which will be passed into Stable Diffusion as part of prompt
-	Entropy   string    `json:"entropy"` // unique identifier of original entropy image
+// ### pile - куча - репозиторий
+
+type ArtPile struct {
+	db *gorm.DB
 }
 
-type ArtLikes struct {
-	ArtID uint `json:"-" gorm:"primaryKey"`
-	Likes uint `json:"likes"` // likes total amount
+func NewArtPile(db *gorm.DB) *ArtPile {
+	return &ArtPile{db: db}
 }
 
-// ### repository
-
-type ArtRepository struct {
-	db      *gorm.DB
-	entropy entropy
-}
-
-func NewArtRepository(db *gorm.DB, entropy entropy) *ArtRepository {
-	return &ArtRepository{db: db, entropy: entropy}
-}
-
-func (ar *ArtRepository) GetArt(ctx context.Context, ID uint) (Art, error) {
+func (ap *ArtPile) GetArt(ctx context.Context, ID uint) (Art, error) {
 	return Art{}, errors.New("fake method GetArt")
 }
 
-func (ar *ArtRepository) GetMaxArtID(ctx context.Context) (uint, error) {
+func (ap *ArtPile) GetMaxArtID(ctx context.Context) (uint, error) {
 	var id uint
-	err := ar.db.WithContext(ctx).Select("case when max(id) is null then 0 else max(id) end as max_id").Model(&Art{}).Scan(&id).Error
+	err := ap.db.WithContext(ctx).Select("case when max(id) is null then 0 else max(id) end as max_id").Model(&Art{}).Scan(&id).Error
 	return id, err
 }
 
-func (ar *ArtRepository) GetNextArtID(ctx context.Context) (uint, error) {
-	id, err := ar.GetMaxArtID(ctx)
+func (ap *ArtPile) GetNextArtID(ctx context.Context) (uint, error) {
+	id, err := ap.GetMaxArtID(ctx)
 	return id + 1, err
+}
+
+func (ap *ArtPile) SaveArt(ctx context.Context, artID uint, art Art, idea Idea) (Art, error) {
+	art.ID = artID
+	idea.ArtID = artID
+	if err := ap.db.Save(&art).Error; err != nil {
+		return Art{}, err
+	}
+	if err := ap.db.Save(&idea).Error; err != nil {
+		return Art{}, err
+	}
+	return art, nil
 }

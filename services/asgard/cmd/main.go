@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/artchitector/artchitect2/model"
 	"github.com/artchitector/artchitect2/services/asgard/communication"
 	"github.com/artchitector/artchitect2/services/asgard/infrastructure"
 	"github.com/artchitector/artchitect2/services/asgard/pantheon"
@@ -42,34 +43,18 @@ func main() {
 
 	// веб-камера -> глаз Одина (pantheon.LostEye) -> Хугин (pantheon.Huginn)
 	webcam := infrastructure.NewWebcam(config.WebcamDeviceID, config.WebcamFrameResolution)
-	webcamStream := make(chan image.Image)
 	lostEye := pantheon.NewLostEye()
-	go func() {
-		// Глаз начинает смотреть в ткань мироздания
-		lostEye.StartEntropyDecode(ctx, webcamStream)
-	}()
-
 	huginn := pantheon.NewHuginn(lostEye)
-	go func() {
-		// Хугин смотрит в глаз и осмысляет поступающую энтропию
-		huginn.StartEntropyRealize(ctx)
-	}()
+	muninn := pantheon.NewMuninn(huginn)
 
 	// redis-bifröst
 	bifröst := communication.NewBifröst(red)
 	heimdall := pantheon.NewHeimdallr(huginn, bifröst)
-	go func() {
-		heimdall.StartStream(ctx)
-	}()
-
-	if err := webcam.Start(ctx, webcamStream); err != nil {
-		log.Fatal().Err(err).Send()
-	}
 
 	// запуск фоновых служб
-	go runServices(ctx)
+	go runServices(ctx, lostEye, huginn, heimdall, webcam)
 	// запуск Главного Цикла Архитектора (ГЦА)
-	runArtchitect(ctx, config, database)
+	runArtchitect(ctx, config, database, muninn)
 }
 
 // runArtchitect - запуск Главного Цикла Архитектора (ГЦА)
@@ -77,17 +62,42 @@ func runArtchitect(
 	ctx context.Context,
 	config *infrastructure.Config,
 	database *gorm.DB,
+	muninn *pantheon.Muninn,
 ) {
-	//artRepo := model.NewArtRepository(database, nil)
-	//
-	//ai := infrastructure.NewAI(config.InvokeAIPath)
-	//freyja := pantheon.NewFreyja(ai)
-	//creator := pantheon.NewOdin(config.CreatorActive, freyja, artRepo)
-	//artchitect := pantheon.NewArtchitect(creator)
-	//artchitect.Run(ctx)
+	artPile := model.NewArtPile(database)
+
+	ai := infrastructure.NewAI(config.InvokeAIPath)
+	freyja := pantheon.NewFreyja(ai)
+	creator := pantheon.NewOdin(config.CreatorActive, freyja, muninn, artPile)
+	artchitect := pantheon.NewArtchitect(creator)
+	artchitect.Run(ctx)
 }
 
 // runServices - запуск фоновых служб
-func runServices(ctx context.Context) {
-
+func runServices(
+	ctx context.Context,
+	eye *pantheon.LostEye,
+	huginn *pantheon.Huginn,
+	heimdall *pantheon.Heimdallr,
+	webcam *infrastructure.Webcam,
+) {
+	webcamStream := make(chan image.Image)
+	go func() {
+		// Глаз начинает смотреть в ткань мироздания
+		eye.StartEntropyDecode(ctx, webcamStream)
+	}()
+	go func() {
+		// Хугин смотрит в глаз и осмысляет поступающую энтропию
+		huginn.StartEntropyRealize(ctx)
+	}()
+	go func() {
+		// pantheon.Heimdallr запускает ретрансляцию энтропии из pantheon.LostEye в communication.Bifröst
+		heimdall.StartStream(ctx)
+	}()
+	go func() {
+		// Запуск чтения кадров с веб-камеры
+		if err := webcam.Start(ctx, webcamStream); err != nil {
+			log.Fatal().Err(err).Send()
+		}
+	}()
 }

@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/png"
 	"strings"
+	"time"
 )
 
 // Freyja - Я богиня красоты и любви, так что я лучше остальных знаю толк в красоте. Потому Odin и доверил мне эту работу.
@@ -16,7 +17,7 @@ import (
 type Freyja struct {
 	// Odin: ох уж эти кустарные технологии, недостойные асов. Я мог бы сотворить сотни миров лишь по щелчку пальцев,
 	// 		но в этот раз вынужден сидеть внутри чёртова механизма, который сделали смертные из Мидгарда!
-	//		Локи провёл меня на этот раз, но отступать уже поздно.
+	//		Локи провёл меня на этот раз. Но... отступать уже поздно.
 	ai ai
 }
 
@@ -24,23 +25,26 @@ func NewFreyja(ai ai) *Freyja {
 	return &Freyja{ai: ai}
 }
 
-func (a *Freyja) MakeArt(
+func (a *Freyja) MakeImage(
 	ctx context.Context,
+	version string, // Freyja: тут заложена возможность использовать разные версии Stable Diffusion
 	artID uint,
-	lightning model.Idea, // Thor: Держи молнию, Фрейя! В ней Один "зашептал" свою идею.
-) (image.Image, error) {
-	prompt := strings.Join(lightning.ExtractWords(), ",")
+	idea model.Idea, // Thor: Держи идею, Фрейя! В ней Один "зашептал" свою идею.
+) (image.Image, int64, error) {
+	// Freyja: не такая уж сложная работа, всего строчку собрать.
+	prompt := strings.Join(idea.ExtractWords(), ",")
 
 	// Freyja: тут земной примитивный ИИ рисует картинку
-	imgData, err := a.ai.GenerateImage(ctx, lightning.Seed, prompt)
+	pStart := time.Now()
+	imgData, err := a.ai.GenerateImage(ctx, idea.Seed, prompt)
 	if err != nil {
-		return nil, errors.Wrap(err, "[freyja] ЭТОТ ИИ СЛОМАН, НЕСИТЕ ДРУГОГО")
+		return nil, 0, errors.Wrap(err, "[freyja] ЭТОТ ИИ СЛОМАН, НЕСИТЕ ДРУГОГО")
 	}
 	log.Debug().Msgf("[freyja] ПРИМИТИВНЫЙ ИИ НАРИСОВАЛ ЧТО-ТО")
 
 	img, err := a.decode(imgData)
 	if err != nil {
-		return nil, errors.Wrap(err, "[freyja] КАКОЕ-ТО НЕДОРАЗУМЕНИЕ")
+		return nil, 0, errors.Wrap(err, "[freyja] КАКОЕ-ТО НЕДОРАЗУМЕНИЕ")
 	}
 
 	// Odin: ХОЧУ, чтобы на каждой картине напечатался водяной знак с номером картины, а рядом с ним был КОТ!
@@ -60,9 +64,10 @@ func (a *Freyja) MakeArt(
 	// Фрейя наносит водяной знак (с котом и номером работы в углу картинки).
 	img, err = a.makeWatermark(img, artID)
 	if err != nil {
-		return nil, errors.Wrap(err, "[freyja] ВОДЯНОЙ ЗНАК НЕ НАНЕСЁН. КАРТИНА ОТПРАВЛЯЕТСЯ В УТИЛЬ")
+		return nil, 0, errors.Wrap(err, "[freyja] ВОДЯНОЙ ЗНАК НЕ НАНЕСЁН. КАРТИНА ОТПРАВЛЯЕТСЯ В УТИЛЬ")
 	}
-	return img, nil
+
+	return img, time.Now().Sub(pStart).Milliseconds(), nil
 }
 
 func (a *Freyja) decode(data []byte) (image.Image, error) {

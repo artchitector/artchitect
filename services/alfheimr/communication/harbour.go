@@ -122,7 +122,7 @@ func (l *Harbour) makeRadioshow(ctx context.Context, msg *redis.Message) {
 			case <-time.After(time.Second):
 				log.Error().Msgf("[radio] РАДИОГРАММА ПОТЕРЯНА. КАНАЛ:%s", msg.Channel)
 			case s.eventCh <- event:
-				log.Debug().Msgf("[radio] РАДИОГРАММА ОТПРАВЛЕНА. КАНАЛ:%s. УСПЕХ", msg.Channel)
+				//log.Debug().Msgf("[radio] РАДИОГРАММА ОТПРАВЛЕНА. КАНАЛ:%s. УСПЕХ", msg.Channel)
 			}
 		}(sub)
 	}

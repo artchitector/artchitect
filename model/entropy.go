@@ -30,7 +30,7 @@ func (em *EntropyMatrix) Get(x, y int) uint8 {
 }
 
 type Entropy struct {
-	IntValue   uint64  `json:"int"`
+	IntValue   uint64  `json:"int" gorm:"type:numeric"` // numeric для поддержки больших чисел
 	FloatValue float64 `json:"float"`
 	ByteString string  `json:"byte" gorm:"-"` // uint64 в виде нулей и единиц. не хранится в БД
 

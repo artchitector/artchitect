@@ -24,12 +24,14 @@ func NewOdin(
 	freyja *Freyja,
 	muninn *Muninn,
 	artPile artPile,
+	warehouse warehouse,
 ) *Odin {
 	return &Odin{
-		isActive: isActive,
-		freyja:   freyja,
-		muninn:   muninn,
-		artPile:  artPile,
+		isActive:  isActive,
+		freyja:    freyja,
+		muninn:    muninn,
+		artPile:   artPile,
+		warehouse: warehouse,
 	}
 }
 
@@ -94,10 +96,7 @@ func (o *Odin) create(ctx context.Context) (art model.Art, err error) {
 		return model.Art{}, errors.Wrap(err, "[odin] ТРЕВОГА! КАРТИНА НЕ СОЗДАНА!")
 	}
 
-	return model.Art{}, errors.Errorf("STOOOOOOY")
-
-	totalTimeMs := time.Now().Sub(tStart).Milliseconds()
-	art, err = o.saveArt(ctx, version, artID, idea, img, totalTimeMs, ideaGenerationMs, paintTimeMs)
+	art, err = o.saveArt(ctx, version, artID, idea, img, tStart, ideaGenerationMs, paintTimeMs)
 	if err != nil {
 		return model.Art{}, errors.Wrap(err, "[odin] Я В ЯРОСТИ! НАРИСОВАННАЯ КАРТИНА УТЕРЯНА!")
 	}
@@ -147,7 +146,7 @@ func (o *Odin) saveArt(
 	artID uint,
 	idea model.Idea,
 	img image.Image,
-	totalTimeMs int64,
+	totalTimeStart time.Time,
 	ideaGenerationTimeMs int64,
 	paintTimeMs int64,
 ) (model.Art, error) {
@@ -159,7 +158,7 @@ func (o *Odin) saveArt(
 	art := model.Art{
 		ID:                 artID,
 		Version:            version,
-		TotalTime:          uint(totalTimeMs),
+		TotalTime:          uint(time.Now().Sub(totalTimeStart).Milliseconds()),
 		IdeaGenerationTime: uint(ideaGenerationTimeMs),
 		PaintTime:          uint(paintTimeMs),
 	}

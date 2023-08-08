@@ -78,5 +78,6 @@ func (a *Freyja) decode(data []byte) (image.Image, error) {
 }
 
 func (a *Freyja) makeWatermark(img image.Image, artID uint) (image.Image, error) {
-	return nil, errors.New("[freyja] ВОДЯНЫЕ ЗНАКИ МЫ ЕЩЕ НЕ ИЗГОТОВИЛИ")
+	return img, nil
+	//return nil, errors.New("[freyja] ВОДЯНЫЕ ЗНАКИ МЫ ЕЩЕ НЕ ИЗГОТОВИЛИ")
 }

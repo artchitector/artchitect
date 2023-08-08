@@ -65,10 +65,11 @@ func runArtchitect(
 	muninn *pantheon.Muninn,
 ) {
 	artPile := model.NewArtPile(database)
+	warehouse := communication.NewWarehouse(config.WarehouseFullsizeUrl, config.WarehouseArtUrls)
 
 	ai := infrastructure.NewAI(config.InvokeAIPath)
 	freyja := pantheon.NewFreyja(ai)
-	creator := pantheon.NewOdin(config.CreatorActive, freyja, muninn, artPile)
+	creator := pantheon.NewOdin(config.CreatorActive, freyja, muninn, artPile, warehouse)
 	artchitect := pantheon.NewArtchitect(creator)
 	artchitect.Run(ctx)
 }

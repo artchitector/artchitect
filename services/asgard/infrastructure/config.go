@@ -11,9 +11,11 @@ type Config struct {
 	InvokeAIPath string
 
 	// подключения к внешним службам
-	DbDSN         string
-	RedisAddr     string
-	RedisPassword string
+	DbDSN                string
+	RedisAddr            string
+	RedisPassword        string
+	WarehouseArtUrls     string
+	WarehouseFullsizeUrl string
 
 	// hardware
 	WebcamDeviceID        string
@@ -40,9 +42,11 @@ func InitEnv() *Config {
 		InvokeAIPath: env["INVOKEAI_PATH"],
 
 		// подключения к внешним службам
-		DbDSN:         env["DB_DSN"],
-		RedisAddr:     env["REDIS_ADDR"],
-		RedisPassword: env["REDIS_PASSWORD"],
+		DbDSN:                env["DB_DSN"],
+		RedisAddr:            env["REDIS_ADDR"],
+		RedisPassword:        env["REDIS_PASSWORD"],
+		WarehouseArtUrls:     env["WAREHOUSE_ART_URL"],
+		WarehouseFullsizeUrl: env["WAREHOUSE_FULLSIZE_URL"],
 
 		// hardware
 		WebcamDeviceID:        env["WEBCAM_DEVICE_ID"],

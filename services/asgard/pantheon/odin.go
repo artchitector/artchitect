@@ -15,6 +15,7 @@ type Odin struct {
 	isActive  bool       // иногда Odin не творит
 	freyja    *Freyja    // Freyja - богиня любви и красоты. помогает Odin рисовать картины из этих идей
 	muninn    *Muninn    // ворон-помнящий
+	gungner   *Gungner   // копьё Одина Гунгнир
 	heimdallr *Heimdallr // Heimdallr умеет обогащать данные красивыми картинками (нужно перед сохранением)
 	artPile   artPile    // куча уже написанных картин. Odin посмотрит на эту кучу и объявит порядковый номер новой работы.
 	warehouse warehouse  // Odin: интерфейс хранилища для сохранения холстов
@@ -25,6 +26,7 @@ func NewOdin(
 	isActive bool,
 	freyja *Freyja,
 	muninn *Muninn,
+	gungner *Gungner,
 	heimdallr *Heimdallr,
 	artPile artPile,
 	warehouse warehouse,
@@ -33,6 +35,7 @@ func NewOdin(
 		isActive:  isActive,
 		freyja:    freyja,
 		muninn:    muninn,
+		gungner:   gungner,
 		heimdallr: heimdallr,
 		artPile:   artPile,
 		warehouse: warehouse,
@@ -99,7 +102,13 @@ func (o *Odin) create(ctx context.Context) (art model.Art, err error) {
 	var paintTimeMs int64
 	img, paintTimeMs, err = o.freyja.MakeImage(ctx, version, artID, idea)
 	if err != nil {
-		return model.Art{}, errors.Wrap(err, "[odin] ТРЕВОГА! КАРТИНА НЕ СОЗДАНА!")
+		return model.Art{}, errors.Wrap(err, "[odin] КАТАСТРОФА! КАРТИНА НЕ СОЗДАНА!")
+	}
+
+	img, err = o.gungner.MakeArtWatermark(img, artID)
+	if err != nil {
+		return model.Art{}, errors.Wrap(err, "[odin] ПРОКЛЯТЬЕ! Я НЕ СМОГ НАНЕСТИ ПОДПИСЬ!")
+		// Loki: в следующий раз получится обязательно, "могучий" всеотец ))))
 	}
 
 	art, err = o.saveArt(ctx, version, artID, idea, img, tStart, ideaGenerationMs, paintTimeMs)

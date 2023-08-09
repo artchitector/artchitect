@@ -37,7 +37,7 @@ func NewWebcam(deviceID string, resolution string) *Webcam {
 
 func (w *Webcam) Start(ctx context.Context, outputCh chan image.Image) error {
 	if strings.Index(w.deviceID, "http") == 0 {
-		//w.StartHttpTransfer(ctx, outputCh)
+		w.StartHttpTransfer(ctx, outputCh)
 		return nil
 	}
 

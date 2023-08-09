@@ -57,7 +57,8 @@ func main() {
 	heimdall := pantheon.NewHeimdallr(huginn, bifröst)
 	ai := infrastructure.NewAI(config.InvokeAIPath)
 	freyja := pantheon.NewFreyja(ai)
-	odin := pantheon.NewOdin(config.CreatorActive, freyja, muninn, heimdall, artPile, warehouse)
+	gungner := pantheon.NewGungner()
+	odin := pantheon.NewOdin(config.CreatorActive, freyja, muninn, gungner, heimdall, artPile, warehouse)
 
 	// запуск фоновых служб
 	go runServices(ctx, lostEye, huginn, heimdall, webcam, keyhole)

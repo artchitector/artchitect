@@ -34,7 +34,7 @@ type Idea struct {
 	Words                []Word      // Odin: Это слова, которые будут составлять основу идеи картины. Пример: "brain,smile,by hidari,Archangel,Lucifer,sauron,sharp,fractal,Tanks,moon and other planets and stars,by stanley"
 	// WordsStr - строка нужна для уменьшения траффика, чтобы не гонять полные данные о словах с энтропией.
 	// Подробная информация о словах нужна только на одной странице /art/:id
-	WordsStr string // Все слова в виде "Wōden,Óðinn,Wuodan,Uuôden,Wêda..."
+	WordsStr string // Все слова в виде одной строки через запятую "Wōden,Óðinn,Wuodan,Uuôden,Wêda..."
 }
 
 func (l Idea) ExtractWords() []string {

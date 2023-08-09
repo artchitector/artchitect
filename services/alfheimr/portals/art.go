@@ -11,6 +11,10 @@ type ArtRequest struct {
 	ID uint `uri:"id" binding:"required,numeric"`
 }
 
+type LastRequest struct {
+	Last uint `uri:"last" binding:"required,numeric"`
+}
+
 // ArtPortal - канал связи, по которому Мидгард получает данные картин
 type ArtPortal struct {
 	artPile artPile
@@ -27,7 +31,8 @@ func (ap *ArtPortal) HandleArt(c *gin.Context) {
 		return
 	}
 	if request.ID < 1 {
-
+		c.JSON(http.StatusBadRequest, wrapError(errors.Errorf("ID must be positive")))
+		return
 	}
 
 	art, err := ap.artPile.GetArtRecursive(c, request.ID)
@@ -40,4 +45,25 @@ func (ap *ArtPortal) HandleArt(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, art)
+}
+
+func (ap *ArtPortal) HandleLast(c *gin.Context) {
+	var request LastRequest
+	if err := c.ShouldBindUri(&request); err != nil {
+		c.JSON(http.StatusBadRequest, wrapError(err))
+		return
+	}
+	if request.Last < 1 || request.Last > 100 {
+		c.JSON(http.StatusBadRequest, wrapError(errors.Errorf("Last must be 0-100")))
+		return
+	}
+
+	arts, err := ap.artPile.GetLastArts(c, request.Last)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, wrapError(err))
+		return
+	}
+
+	flatArts := makeFlatArts(arts)
+	c.JSON(http.StatusOK, flatArts)
 }

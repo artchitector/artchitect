@@ -78,6 +78,7 @@ func main() {
 		})
 
 		r.GET("/art/:id", artPortal.HandleArt)
+		r.GET("/arts/last/:last", artPortal.HandleLast)
 
 		// connection - Портал с постоянной связью c Мидгардом (вебсокете)
 		r.GET("/radio", func(c *gin.Context) {

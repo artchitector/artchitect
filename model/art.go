@@ -15,8 +15,7 @@ const (
 	Version1 = "v1"
 )
 
-// ### entities
-
+// Art - сущность "картина"
 type Art struct {
 	// ID не автоинкрементное поле. Автоинкремент сделан в коде вручную.
 	// Odin: Все номера картин должны идти подряд без пропусков, поэтому тут не используется sequence/autoincrement
@@ -81,13 +80,14 @@ func NewArtPile(db *gorm.DB) *ArtPile {
 
 func (ap *ArtPile) GetArt(ctx context.Context, ID uint) (Art, error) {
 	var art Art
-	err := ap.db.Where("id = ?", ID).Limit(1).First(&art).Error
+	err := ap.db.WithContext(ctx).Where("id = ?", ID).Limit(1).First(&art).Error
 	return art, err
 }
 
 func (ap *ArtPile) GetArtRecursive(ctx context.Context, ID uint) (Art, error) {
 	var art Art
 	err := ap.db.
+		WithContext(ctx).
 		Preload("Idea").
 		Preload("Idea.Words").
 		Where("id = ?", ID).
@@ -99,7 +99,12 @@ func (ap *ArtPile) GetArtRecursive(ctx context.Context, ID uint) (Art, error) {
 
 func (ap *ArtPile) GetMaxArtID(ctx context.Context) (uint, error) {
 	var id uint
-	err := ap.db.WithContext(ctx).Select("case when max(id) is null then 0 else max(id) end as max_id").Model(&Art{}).Scan(&id).Error
+	err := ap.db.
+		WithContext(ctx).
+		Select("case when max(id) is null then 0 else max(id) end as max_id").
+		Model(&Art{}).
+		Scan(&id).
+		Error
 	return id, err
 }
 
@@ -108,20 +113,31 @@ func (ap *ArtPile) GetNextArtID(ctx context.Context) (uint, error) {
 	return id + 1, err
 }
 
+func (ap *ArtPile) GetLastArts(ctx context.Context, last uint) ([]Art, error) {
+	arts := make([]Art, 0, last)
+	err := ap.db.WithContext(ctx).
+		Preload("Idea").
+		Order("id desc").
+		Limit(int(last)).
+		Find(&arts).Error
+	return arts, err
+}
+
 func (ap *ArtPile) SaveArt(ctx context.Context, artID uint, art Art, idea Idea) (Art, error) {
 	art.ID = artID
 	idea.ArtID = artID
-	if err := ap.db.Save(&art).Error; err != nil {
+	db := ap.db.WithContext(ctx)
+	if err := db.Save(&art).Error; err != nil {
 		return Art{}, err
 	}
 	words := idea.Words
 	idea.Words = nil
-	if err := ap.db.Save(&idea).Error; err != nil {
+	if err := db.Save(&idea).Error; err != nil {
 		return Art{}, err
 	}
 	for _, w := range words {
 		w.IdeaID = artID
-		if err := ap.db.Save(&w).Error; err != nil {
+		if err := db.Save(&w).Error; err != nil {
 			return Art{}, err
 		}
 	}

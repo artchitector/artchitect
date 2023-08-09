@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"image"
+	"strings"
 	"time"
 )
 
@@ -89,9 +90,8 @@ func (o *Odin) create(ctx context.Context) (art model.Art, err error) {
 	} else {
 		log.Info().Msgf("[odin] ODIN ПРИДУМАЛ ИДЕЮ КАРТИНЫ #%d: %s", artID, idea.String())
 	}
-	enrStart := time.Now()
+	// работа Heimdallr занимает ~10мс
 	idea = o.heimdallr.EnrichIdeaWithImages(idea)
-	log.Info().Msgf("[odin] ОБОГАЩЕНИЕ ЭНТРОПИИ КАРТИНАМИ ПРОШЛО ЗА %s", time.Now().Sub(enrStart))
 	ideaGenerationMs := time.Now().Sub(iStart).Milliseconds()
 
 	var img image.Image
@@ -161,6 +161,7 @@ func (o *Odin) saveArt(
 		return model.Art{}, errors.Wrapf(err, "[odin] Я РАЗДАВЛЮ ЭТОТ СКЛАД, КАК КЛОПА! КАРТИНА #%d ПОТЕРЯНА!", artID)
 	}
 	idea.ArtID = artID
+	idea.WordsStr = strings.Join(idea.ExtractWords(), ",")
 	art := model.Art{
 		ID:                 artID,
 		Version:            version,

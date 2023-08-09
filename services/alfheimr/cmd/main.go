@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/artchitector/artchitect2/model"
 	"github.com/artchitector/artchitect2/services/alfheimr/communication"
 	"github.com/artchitector/artchitect2/services/alfheimr/infrastructure"
 	"github.com/artchitector/artchitect2/services/alfheimr/portals"
@@ -37,7 +38,7 @@ func main() {
 	}()
 
 	// СБОРКА ЗАВИСИМОСТЕЙ
-	_ = infrastructure.InitDB(ctx, config.DbDSN)
+	db := infrastructure.InitDB(ctx, config.DbDSN)
 	// СЛУШАТЕЛЬ РЕДИСА И СОБЫТИЙ. ФОНОВЫЙ ЗАПУСК ОБРАБОТКИ
 	red := infrastructure.InitRedis(config)
 
@@ -48,8 +49,12 @@ func main() {
 		}
 	}()
 
+	// КУЧИ ДАННЫХ
+	artPile := model.NewArtPile(db)
+
 	// СБОРКА ПОРТАЛОВ (ХЕНДЛЕРОВ)
 	radioPortal := portals.NewRadioPortal(harbour)
+	artPortal := portals.NewArtPortal(artPile)
 
 	// ЗАПУСК HTTP-СЕРВЕРА
 	go func() {
@@ -71,6 +76,8 @@ func main() {
 		r.GET("/ping", func(c *gin.Context) {
 			c.JSON(200, gin.H{"message": "pong"})
 		})
+
+		r.GET("/art/:id", artPortal.HandleArt)
 
 		// connection - Портал с постоянной связью c Мидгардом (вебсокете)
 		r.GET("/radio", func(c *gin.Context) {

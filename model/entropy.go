@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
 	"image"
 	"time"
@@ -34,15 +35,8 @@ type Entropy struct {
 	FloatValue float64 `json:"float"`
 	ByteString string  `json:"byte" gorm:"-"` // uint64 в виде нулей и единиц. не хранится в БД
 
-	ImageEncoded string `json:"image"`   // base64-encoded 8x8 PNG изображение энтропии
-	ImageID      string `json:"imageId"` // ключ для получения изображения энтропии с memory-сервера
-	// Odin: ImageID тут нужен не для потоковой передачи энтропии, а для сохранения принятых когда-то решений.
-	// Например, если я придумал картину, и вспомнил для неё seed-номер 213712211,
-	// то ДОЛЖНО сохранить и видимую мной энтропию (прямую и обратную),
-	// которая была использована для получения этого номера. Так Artchitect будет иметь полную историю
-	// событий, которые происходили с картиной, включая источники всех решений.
-	// Картинки этой энтропии сохраняются в файловое хранилище, а ссылки на картинки сохраняются в это поле.
-
+	ImageEncoded string `json:"image"` // base64-encoded 8x8 PNG изображение энтропии
+	// TODO Odin: комментарий устарел
 	// Odin: Потоковая энтропия так не сохраняется, она нужна лишь для отображения на клиенте.
 	// Odin: Если вы, смертные, захотите сохранять всё видимое моим пустым глазом, то у вас дисков не хватит на всей Земле.
 	// Odin: сжалюсь над вами и сэкономлю вам "пару гигабайт", мои любимые мидгардцы
@@ -59,6 +53,12 @@ type Entropy struct {
 
 func (e Entropy) String() string {
 	return fmt.Sprintf("E:%.6f", e.FloatValue)
+}
+
+func (e Entropy) MarshalJSON() ([]byte, error) {
+	e.ByteString = fmt.Sprintf("%064b", e.IntValue)
+	type Alias Entropy
+	return json.Marshal((Alias)(e))
 }
 
 // EntropyPack - рассчитанная энтропия.

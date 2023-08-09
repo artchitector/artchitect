@@ -1,4 +1,4 @@
-# Artchitect version2 (re-engineering of v1)
+# Artchitect (v2)
 
 ![artchitect_logo](https://github.com/artchitector/artchitect2/blob/main/files/images/logo_anim_92.gif)
 

@@ -32,6 +32,9 @@ type Idea struct {
 	SeedEntropy          EntropyPack `gorm:"embedded;embeddedPrefix:seed_"`       // сохраняем энтропию, которую видел Odin в момент воспоминания seed-числа
 	NumberOfWordsEntropy EntropyPack `gorm:"embedded;embeddedPrefix:nmbrofwrds_"` // сохраняем энтропию, которую видел Odin в момент воспоминания количества слов
 	Words                []Word      // Odin: Это слова, которые будут составлять основу идеи картины. Пример: "brain,smile,by hidari,Archangel,Lucifer,sauron,sharp,fractal,Tanks,moon and other planets and stars,by stanley"
+	// WordsStr - строка нужна для уменьшения траффика, чтобы не гонять полные данные о словах с энтропией.
+	// Подробная информация о словах нужна только на одной странице /art/:id
+	WordsStr string // Все слова в виде "Wōden,Óðinn,Wuodan,Uuôden,Wêda..."
 }
 
 func (l Idea) ExtractWords() []string {
@@ -44,5 +47,5 @@ func (l Idea) ExtractWords() []string {
 
 func (l Idea) String() interface{} {
 	words := l.ExtractWords()
-	return fmt.Sprintf("IDEA S:%d W:%s", l.Seed, strings.Join(words, ","))
+	return fmt.Sprintf("ИДЕЯ S:%d W:%s", l.Seed, strings.Join(words, ","))
 }

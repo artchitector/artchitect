@@ -11,11 +11,12 @@ import (
 
 // Odin - Всеотец и создатель картин. Именно его уникальные идеи позволяют писать все эти работы в галерее Artchitect.
 type Odin struct {
-	isActive  bool      // иногда Odin не творит
-	freyja    *Freyja   // Freyja - богиня любви и красоты. помогает Odin рисовать картины из этих идей
-	muninn    *Muninn   // ворон-помнящий
-	artPile   artPile   // куча уже написанных картин. Odin посмотрит на эту кучу и объявит порядковый номер новой работы.
-	warehouse warehouse // Odin: интерфейс хранилища для сохранения холстов
+	isActive  bool       // иногда Odin не творит
+	freyja    *Freyja    // Freyja - богиня любви и красоты. помогает Odin рисовать картины из этих идей
+	muninn    *Muninn    // ворон-помнящий
+	heimdallr *Heimdallr // Heimdallr умеет обогащать данные красивыми картинками (нужно перед сохранением)
+	artPile   artPile    // куча уже написанных картин. Odin посмотрит на эту кучу и объявит порядковый номер новой работы.
+	warehouse warehouse  // Odin: интерфейс хранилища для сохранения холстов
 }
 
 // NewOdin - Odin: мне не нравится эта высокомерная самодовольная функция. Создавать меня? Что эта машина о себе возомнила?
@@ -23,6 +24,7 @@ func NewOdin(
 	isActive bool,
 	freyja *Freyja,
 	muninn *Muninn,
+	heimdallr *Heimdallr,
 	artPile artPile,
 	warehouse warehouse,
 ) *Odin {
@@ -30,6 +32,7 @@ func NewOdin(
 		isActive:  isActive,
 		freyja:    freyja,
 		muninn:    muninn,
+		heimdallr: heimdallr,
 		artPile:   artPile,
 		warehouse: warehouse,
 	}
@@ -86,6 +89,9 @@ func (o *Odin) create(ctx context.Context) (art model.Art, err error) {
 	} else {
 		log.Info().Msgf("[odin] ODIN ПРИДУМАЛ ИДЕЮ КАРТИНЫ #%d: %s", artID, idea.String())
 	}
+	enrStart := time.Now()
+	idea = o.heimdallr.EnrichIdeaWithImages(idea)
+	log.Info().Msgf("[odin] ОБОГАЩЕНИЕ ЭНТРОПИИ КАРТИНАМИ ПРОШЛО ЗА %s", time.Now().Sub(enrStart))
 	ideaGenerationMs := time.Now().Sub(iStart).Milliseconds()
 
 	var img image.Image

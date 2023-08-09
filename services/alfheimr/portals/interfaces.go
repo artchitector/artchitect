@@ -8,3 +8,7 @@ import (
 type radio interface {
 	ListenRadio(subscribeCtx context.Context) chan model.Radiogram
 }
+
+type artPile interface {
+	GetArtRecursive(ctx context.Context, ID uint) (model.Art, error)
+}

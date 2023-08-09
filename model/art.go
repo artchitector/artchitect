@@ -2,7 +2,6 @@ package model
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
@@ -81,7 +80,21 @@ func NewArtPile(db *gorm.DB) *ArtPile {
 }
 
 func (ap *ArtPile) GetArt(ctx context.Context, ID uint) (Art, error) {
-	return Art{}, errors.New("fake method GetArt")
+	var art Art
+	err := ap.db.Where("id = ?", ID).Limit(1).First(&art).Error
+	return art, err
+}
+
+func (ap *ArtPile) GetArtRecursive(ctx context.Context, ID uint) (Art, error) {
+	var art Art
+	err := ap.db.
+		Preload("Idea").
+		Preload("Idea.Words").
+		Where("id = ?", ID).
+		Limit(1).
+		First(&art).
+		Error
+	return art, err
 }
 
 func (ap *ArtPile) GetMaxArtID(ctx context.Context) (uint, error) {

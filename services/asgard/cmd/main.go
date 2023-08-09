@@ -8,7 +8,6 @@ import (
 	"github.com/artchitector/artchitect2/services/asgard/pantheon"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 	"image"
 	"os"
 	"os/signal"
@@ -47,30 +46,30 @@ func main() {
 	huginn := pantheon.NewHuginn(lostEye)
 	muninn := pantheon.NewMuninn(huginn)
 
-	// redis-bifröst
+	// внешние связи
 	bifröst := communication.NewBifröst(red)
+	warehouse := communication.NewWarehouse(config.WarehouseFullsizeUrl, config.WarehouseArtUrls)
+
+	// хранилища сущностей
+	artPile := model.NewArtPile(database)
+
 	heimdall := pantheon.NewHeimdallr(huginn, bifröst)
+	ai := infrastructure.NewAI(config.InvokeAIPath)
+	freyja := pantheon.NewFreyja(ai)
+	odin := pantheon.NewOdin(config.CreatorActive, freyja, muninn, heimdall, artPile, warehouse)
 
 	// запуск фоновых служб
 	go runServices(ctx, lostEye, huginn, heimdall, webcam)
 	// запуск Главного Цикла Архитектора (ГЦА)
-	runArtchitect(ctx, config, database, muninn)
+	runArtchitect(ctx, odin)
 }
 
 // runArtchitect - запуск Главного Цикла Архитектора (ГЦА)
 func runArtchitect(
 	ctx context.Context,
-	config *infrastructure.Config,
-	database *gorm.DB,
-	muninn *pantheon.Muninn,
+	odin *pantheon.Odin,
 ) {
-	artPile := model.NewArtPile(database)
-	warehouse := communication.NewWarehouse(config.WarehouseFullsizeUrl, config.WarehouseArtUrls)
-
-	ai := infrastructure.NewAI(config.InvokeAIPath)
-	freyja := pantheon.NewFreyja(ai)
-	creator := pantheon.NewOdin(config.CreatorActive, freyja, muninn, artPile, warehouse)
-	artchitect := pantheon.NewArtchitect(creator)
+	artchitect := pantheon.NewArtchitect(odin)
 	artchitect.Run(ctx)
 }
 

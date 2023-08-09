@@ -74,7 +74,8 @@ func (h *Heimdallr) StartStream(ctx context.Context) {
 			// Heimdallr: так. Моя задача из матрицы силы пикселей сделать видимую картинку
 			var err error
 			h.updateColorScheme(entropy)
-			entropy.Entropy.ImageEncoded, entropy.Choice.ImageEncoded = h.EncodeEntropyImages(entropy)
+			entropy.Entropy.ImageEncoded = h.encodeEntropyImage(entropy.Entropy.Matrix)
+			entropy.Choice.ImageEncoded = h.encodeEntropyImage(entropy.Choice.Matrix)
 			entropy.ImageFrameEncoded, err = h.encodeJpeg(entropy.ImageFrame, model.EntropyJpegQualityFrame)
 			if err != nil {
 				log.Error().Msgf("[heimdallr] НЕ СМОГ СДЕЛАТЬ JPEG ЭНТРОПИИ")
@@ -110,10 +111,19 @@ func (h *Heimdallr) StartStream(ctx context.Context) {
 	}
 }
 
-func (h *Heimdallr) EncodeEntropyImages(entropy model.EntropyPackExtended) (string, string) {
-	entropyImage := h.encodeEntropyImage(entropy.Entropy.Matrix)
-	choiceImage := h.encodeEntropyImage(entropy.Choice.Matrix)
-	return entropyImage, choiceImage
+func (h *Heimdallr) EnrichIdeaWithImages(idea model.Idea) model.Idea {
+	idea.NumberOfWordsEntropy = h.fillEntropyPackWithImages(idea.NumberOfWordsEntropy)
+	idea.SeedEntropy = h.fillEntropyPackWithImages(idea.SeedEntropy)
+	for i, word := range idea.Words {
+		idea.Words[i].Entropy = h.fillEntropyPackWithImages(word.Entropy)
+	}
+	return idea
+}
+
+func (h *Heimdallr) fillEntropyPackWithImages(pack model.EntropyPack) model.EntropyPack {
+	pack.Entropy.ImageEncoded = h.encodeEntropyImage(pack.Entropy.Matrix)
+	pack.Choice.ImageEncoded = h.encodeEntropyImage(pack.Choice.Matrix)
+	return pack
 }
 
 func (h *Heimdallr) sendDrakkar(ctx context.Context, channel string, pack interface{}) error {

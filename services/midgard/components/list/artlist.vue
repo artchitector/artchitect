@@ -2,10 +2,10 @@
   <div>
     <viewer ref="viewer" @liked="onLiked"/>
     <div class="columns" v-for="line in lines">
-      <div class="column" v-for="card in line">
-        <div v-if="!card"></div>
-        <card-complex v-else-if="isComplex" :card="card" @select="select(card.ID)" :no-tags="noTags"/>
-        <card-simple v-else :card-id="card" @select="select(card)"/>
+      <div class="column" v-for="art in line">
+        <div v-if="!art"></div>
+        <art-complex v-else-if="isComplex" :art="art" @select="select(art.ID)" :no-tags="noTags"/>
+        <art-simple v-else :art-id="art" @select="select(art)"/>
       </div>
     </div>
     <div v-if="showLoadMore" class="has-text-centered">
@@ -15,17 +15,17 @@
 </template>
 
 <script>
-import CardComplex from "@/components/list/card/card-complex.vue";
-import CardSimple from "@/components/list/card/card-simple.vue";
+import ArtComplex from "~/components/list/art/art-complex.vue";
+import ArtSimple from "~/components/list/art/art-simple.vue";
 
 export default {
-  name: "cardlist",
-  components: {CardSimple, CardComplex},
+  name: "artlist",
+  components: {ArtSimple, ArtComplex},
   props: [
-    'cards',
-    'cardsInColumn',
-    'cardSize',
-    'visibleCount', // how many cards show at start of component
+    'arts',
+    'artsInColumn',
+    'artSize',
+    'visibleCount', // how many arts show at start of component
     'noTags'
   ],
   data() {
@@ -35,19 +35,19 @@ export default {
   },
   computed: {
     lines() {
-      let cards = []
+      let arts = []
       if (this.currentVisible === -1) {
-        cards = []
+        arts = []
       } else if (this.currentVisible === 0) {
-        cards = this.cards
+        arts = this.arts
       } else {
-        cards = this.cards.slice(0, this.currentVisible)
+        arts = this.arts.slice(0, this.currentVisible)
       }
-      const chunkSize = parseInt(this.cardsInColumn)
+      const chunkSize = parseInt(this.artsInColumn)
       const chunks = []
-      for (let i = 0; i < cards.length; i += chunkSize) {
-        let chunk = cards.slice(i, i + chunkSize)
-        for (let j = chunk.length; j < this.cardsInColumn; j++) {
+      for (let i = 0; i < arts.length; i += chunkSize) {
+        let chunk = arts.slice(i, i + chunkSize)
+        for (let j = chunk.length; j < this.artsInColumn; j++) {
           chunk.push(null)
         }
         chunks.push(chunk)
@@ -55,10 +55,10 @@ export default {
       return chunks
     },
     isComplex() {
-      return typeof this.cards[0] === 'object';
+      return typeof this.arts[0] === 'object';
     },
     showLoadMore() {
-      return this.currentVisible > 0 && this.currentVisible < this.cards.length;
+      return this.currentVisible > 0 && this.currentVisible < this.arts.length;
     }
   },
   mounted() {
@@ -69,17 +69,17 @@ export default {
     }
   },
   methods: {
-    select(cardId) {
+    select(artID) {
       const ids = [];
       const isComplex = this.isComplex
-      this.cards.forEach((card) => {
+      this.arts.forEach((art) => {
         if (isComplex) {
-          ids.push(card.ID)
+          ids.push(art.ID)
         } else {
-          ids.push(card)
+          ids.push(art)
         }
       })
-      this.$refs.viewer.show(ids, cardId)
+      this.$refs.viewer.show(ids, artID)
     },
     showMore() {
       this.currentVisible += parseInt(this.visibleCount)

@@ -22,16 +22,16 @@
       <div class="notification is-danger">{{ $fetchState.error.message }}</div>
     </template>
     <template v-else>
-      <cardlist :cards="liked" cards-in-column="5" card-size="m" visible-count="30" @liked="onLiked"/>
+      <art-list :arts="liked" arts-in-column="5" art-size="m" visible-count="30" @liked="onLiked"/>
     </template>
   </section>
 </template>
 <script>
-import Cardlist from "@/components/list/cardlist.vue";
+import ArtList from "@/components/list/artlist.vue";
 
 export default {
   name: "liked",
-  components: {Cardlist},
+  components: {ArtList},
   head() {
     return {
       title: this.$t('title')

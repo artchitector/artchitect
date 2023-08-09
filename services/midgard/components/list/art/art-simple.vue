@@ -1,15 +1,15 @@
 <template>
   <div class="image-container">
-    <a :href="`/card/${cardId}`" @click.prevent="select()">
-      <img :src="'/api/image/m/' + cardId"/>
+    <a :href="`/art/${artId}`" @click.prevent="select()">
+      <img :src="`/api/image/${artId}/m`" :alt="`art_${artId}`"/>
     </a>
   </div>
 </template>
 
 <script>
 export default {
-  name: "card-simple",
-  props: ['cardId'],
+  name: "art-simple",
+  props: ['artId'],
   methods: {
     select() {
       this.$emit('select')

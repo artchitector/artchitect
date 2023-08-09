@@ -13,3 +13,7 @@ type artPile interface {
 	GetArtRecursive(ctx context.Context, ID uint) (model.Art, error)
 	GetLastArts(ctx context.Context, last uint) ([]model.Art, error)
 }
+
+type warehouse interface {
+	GetArtImage(ctx context.Context, artID uint, size string) ([]byte, error)
+}

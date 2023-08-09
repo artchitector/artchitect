@@ -52,9 +52,13 @@ func main() {
 	// КУЧИ ДАННЫХ
 	artPile := model.NewArtPile(db)
 
+	// WAREHOUSE
+	wh := communication.NewWarehouse(config.WarehouseURL)
+
 	// СБОРКА ПОРТАЛОВ (ХЕНДЛЕРОВ)
 	radioPortal := portals.NewRadioPortal(harbour)
 	artPortal := portals.NewArtPortal(artPile)
+	imPortal := portals.NewImagePortal(wh)
 
 	// ЗАПУСК HTTP-СЕРВЕРА
 	go func() {
@@ -79,6 +83,7 @@ func main() {
 
 		r.GET("/art/:id", artPortal.HandleArt)
 		r.GET("/arts/last/:last", artPortal.HandleLast)
+		r.GET("/image/:id/:size", imPortal.HandleImage)
 
 		// connection - Портал с постоянной связью c Мидгардом (вебсокете)
 		r.GET("/radio", func(c *gin.Context) {

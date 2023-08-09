@@ -44,18 +44,18 @@
         <div v-else-if="wsStatus.reconnecting" class="notification is-size-7 has-text-centered">
           {{ $t('ws_connecting') }} {{ wsStatus.reconnecting.attempt }}/{{ wsStatus.reconnecting.maxAttempts }}
         </div>
-        <cardlist :cards="selection" cards-in-column="5" card-size="s" visible-count="50"/>
+        <art-list :arts="selection" arts-in-column="5" art-size="s" visible-count="50"/>
       </div>
     </section>
   </div>
 </template>
 <script>
 import Viewer from "@/components/viewer/viewer";
-import Cardlist from "@/components/list/cardlist.vue";
+import ArtList from "@/components/list/artlist.vue";
 import WsConnection from "@/utils/ws_connection";
 
 export default {
-  components: {Cardlist, Viewer},
+  components: {ArtList, Viewer},
   head() {
     return {
       title: this.$t('title')

@@ -29,7 +29,7 @@
     <div v-else-if="$fetchState.error" class="notification is-danger">
       {{$t('error')}} {{ $fetchState.error.message }}
     </div>
-    <div v-else-if="!this.cards || !this.cards.length" class="notification is-danger">
+    <div v-else-if="!this.arts || !this.arts.length" class="notification is-danger">
       {{$t('not_loaded')}} :(
     </div>
     <div v-else>
@@ -39,18 +39,18 @@
       <div v-else-if="wsStatus.reconnecting" class="notification is-size-7 has-text-centered">
         {{$t('ws_connecting')}} {{wsStatus.reconnecting.attempt}}/{{wsStatus.reconnecting.maxAttempts}}
       </div>
-      <cardlist :cards="this.cards" cards-in-column="3" card-size="m" visible-count="33"/>
+      <art-list :arts="this.arts" arts-in-column="3" card-size="m" visible-count="33"/>
     </div>
   </div>
 </template>
 
 <script>
-import Cardlist from "@/components/list/cardlist.vue";
+import ArtList from "@/components/list/artlist.vue";
 import WsConnection from "@/utils/ws_connection";
 
 export default {
   name: "last99",
-  components: {Cardlist},
+  components: {ArtList},
   data() {
     return {
       connection: null,
@@ -58,7 +58,7 @@ export default {
         error: null,
         reconnecting: null,
       },
-      cards: []
+      arts: []
     }
   },
   mounted() {
@@ -66,10 +66,10 @@ export default {
     this.connection.onmessage((channel, newCard) => {
       this.wsStatus.error = null;
       this.wsStatus.reconnecting = null;
-      const removedCard = this.cards[this.cards.length - 1];
-      const cards = this.cards.slice(0, this.cards.length - 1)
-      cards.unshift(newCard)
-      this.cards = cards;
+      const removedCard = this.arts[this.arts.length - 1];
+      const arts = this.arts.slice(0, this.arts.length - 1)
+      arts.unshift(newCard)
+      this.arts = arts;
       console.log(`🌄: new card (id=${newCard.ID}), removed (id=${removedCard.ID})`,)
     })
     this.connection.onerror((err) => this.wsStatus.error = err)
@@ -89,8 +89,8 @@ export default {
   },
   async fetch() {
     try {
-      this.cards = await this.$axios.$get('/last_paintings/99')
-      console.log('[last99] loaded cards', this.cards.length)
+      this.arts = await this.$axios.$get('/arts/last/99')
+      console.log('[last99] loaded arts', this.arts.length)
     } catch (e) {
       if (this.connection) {
         this.connection.close()

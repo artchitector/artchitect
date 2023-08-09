@@ -7,8 +7,9 @@ import (
 
 type Config struct {
 	// базовые параметры
-	IsDebug  bool
-	HttpPort string
+	IsDebug      bool
+	HttpPort     string
+	WarehouseURL string
 
 	// подключения к внешним службам
 	DbDSN         string
@@ -29,8 +30,9 @@ func InitEnv() *Config {
 
 	return &Config{
 		// базовые параметры
-		IsDebug:  env["IS_DEBUG"] == "true",
-		HttpPort: env["HTTP_PORT"],
+		IsDebug:      env["IS_DEBUG"] == "true",
+		HttpPort:     env["HTTP_PORT"],
+		WarehouseURL: env["WAREHOUSE_URL"],
 
 		// подключения к внешним службам
 		DbDSN:         env["DB_DSN"],

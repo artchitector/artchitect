@@ -3,6 +3,7 @@ package portals
 import (
 	"github.com/artchitector/artchitect2/model"
 	"github.com/gin-gonic/gin"
+	"strings"
 )
 
 func wrapError(err error) gin.H {
@@ -24,7 +25,7 @@ func makeFlatArt(art model.Art) FlatArt {
 		Version:            art.Version,
 		IdeaSeed:           art.Idea.Seed,
 		IdeaNumberOfWords:  uint(len(art.Idea.Words)),
-		IdeaWords:          nil,
+		IdeaWords:          strings.Split(art.Idea.WordsStr, ","),
 		SeedEntropyEncoded: art.Idea.SeedEntropy.Entropy.ImageEncoded,
 		SeedChoiceEncoded:  art.Idea.SeedEntropy.Choice.ImageEncoded,
 	}

@@ -1,27 +1,27 @@
 <template>
   <div class="image-container">
-    <a :href="`/art/${card.ID}`" @click.prevent="select()">
-      <img :src="'/api/image/m/' + card.ID"/>
+    <a :href="`/art/${art.id}`" @click.prevent="select()">
+      <img :src="`/api/image/${art.id}/m`" :alt="`art_${artId}`"/>
     </a>
     <div class="likes">
       <span>
-        <font-awesome-icon v-if="!card.Liked" icon="fa-solid fa-heart" class="has-color-base"/>
+        <font-awesome-icon v-if="!art.Liked" icon="fa-solid fa-heart" class="has-color-base"/>
         <font-awesome-icon v-else icon="fa-solid fa-heart" class="has-text-danger"/>
-        {{card.Likes}}
+        {{art.Likes}}
       </span>
     </div>
     <div class="version">
-      <span class="tag is-primary is-light">{{ card.Version }}</span>
+      <span class="tag is-primary is-light">{{ art.Version }}</span>
     </div>
-    <p v-if="!noTags" class="is-size-7 tags">{{ card.Spell.Tags }}</p>
-    <p class="is-size-7 info">id={{ card.ID }}, <b>seed: {{ card.Spell.Seed }}</b></p>
+    <p v-if="!noTags" class="is-size-7 tags">{{ art.ideaWords.join(",") }}</p>
+    <p class="is-size-7 info">id={{ art.id }}, <b>seed: {{ art.ideaSeed }}</b></p>
   </div>
 </template>
 
 <script>
 export default {
-  name: "card-complex",
-  props: ['card', 'noTags'],
+  name: "art-complex",
+  props: ['art', 'noTags'],
   methods: {
     select() {
       this.$emit('select')

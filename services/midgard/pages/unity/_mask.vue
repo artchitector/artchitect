@@ -29,17 +29,17 @@
     </template>
     <template v-else-if="data.Type === 'cards'">
       <p class="has-text-centered">total: {{data.Cards.length}}</p>
-      <cardlist :cards="data.Cards" cards-in-column="5" card-size="s" visible-count="50" no-tags="true"/>
+      <artlist :arts="data.Cards" cards-in-column="5" card-size="s" visible-count="50" no-tags="true"/>
     </template>
   </section>
 </template>
 
 <script>
 import UnityList from "@/components/unity/unity-list.vue";
-import Cardlist from "@/components/list/cardlist.vue";
+import Artlist from "@/components/list/artlist.vue";
 
 export default {
-  components: {Cardlist, UnityList},
+  components: {Artlist, UnityList},
   head() {
     let mask = this.$route.params.mask
     return {

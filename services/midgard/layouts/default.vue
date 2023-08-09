@@ -32,34 +32,36 @@
         </NuxtLink>
       </div>
       <div>
-        <NuxtLink :to="localePath('heart')">❤️</NuxtLink>
-        <span> - </span>
+<!--        <NuxtLink :to="localePath('heart')">❤️</NuxtLink>-->
+<!--        <span> - </span>-->
         <NuxtLink :to="localePath('index')">{{$t('main')}}</NuxtLink>
         <span> - </span>
-        <NuxtLink :to="localePath('/idea')">{{$t('idea')}}</NuxtLink>
-        <span> - </span>
+<!--        <NuxtLink :to="localePath('/idea')">{{$t('idea')}}</NuxtLink>-->
+<!--        <span> - </span>-->
         <NuxtLink :to="localePath('/entropy')">{{$t('entropy')}}</NuxtLink>
         <span> - </span>
-        <NuxtLink :to="localePath('/unity')">{{$t('unity')}}</NuxtLink>
-        <span> - </span>
+<!--        <NuxtLink :to="localePath('/unity')">{{$t('unity')}}</NuxtLink>-->
+<!--        <span> - </span>-->
 <!--        <NuxtLink :to="localePath('lottery')">{{$t('lottery')}}</NuxtLink>-->
 <!--        <span> - </span>-->
 <!--        <NuxtLink :to="localePath('selection')">{{$t('selection')}}</NuxtLink>-->
 <!--        <span> - </span>-->
-        <template v-if="loggedIn">
-          <NuxtLink :to="localePath('/liked')">{{$t('liked')}}</NuxtLink>
-          <span> - </span>
-        </template>
+<!--        <template v-if="loggedIn">-->
+<!--          <NuxtLink :to="localePath('/liked')">{{$t('liked')}}</NuxtLink>-->
+<!--          <span> - </span>-->
+<!--        </template>-->
         <NuxtLink :to="switchLocalePath('en')">en</NuxtLink>
         <NuxtLink :to="switchLocalePath('ru')">ru</NuxtLink>
       </div>
-      <div class="security-block">
+
+      <div v-if="false" class="security-block">
         <NuxtLink :to="localePath('login')">
           <figure v-if="avatar" class="image is-32x32">
-            <img :src="avatar" class="is-rounded"/>
+            <img :src="avatar" class="is-rounded" alt="userpic"/>
           </figure>
           <span v-else>🔑</span>
         </NuxtLink>
+
       </div>
     </div>
 
@@ -131,7 +133,7 @@ footer.footer {
   right: 10px;
 
   img {
-    box-shadow: 0px 0px 5px #d4d1c3;
+    box-shadow: 0 0 5px #d4d1c3;
   }
 }
 </style>

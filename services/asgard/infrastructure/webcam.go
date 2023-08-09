@@ -1,11 +1,17 @@
 package infrastructure
 
 import (
+	"bytes"
 	"context"
 	"github.com/blackjack/webcam"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"image"
+	"image/jpeg"
+	"io"
+	"net/http"
+	"strings"
+	"sync"
 	"time"
 )
 
@@ -20,6 +26,9 @@ type Webcam struct {
 	deviceID   string
 	resolution string
 	started    bool
+	mutex      sync.Mutex
+	// rawSingleReceivers - разовое получение изначального кадра внешним подписчиком
+	rawSingleReceivers []chan image.Image
 }
 
 func NewWebcam(deviceID string, resolution string) *Webcam {
@@ -27,6 +36,11 @@ func NewWebcam(deviceID string, resolution string) *Webcam {
 }
 
 func (w *Webcam) Start(ctx context.Context, outputCh chan image.Image) error {
+	if strings.Index(w.deviceID, "http") == 0 {
+		//w.StartHttpTransfer(ctx, outputCh)
+		return nil
+	}
+
 	if w.started == true {
 		return errors.Errorf("[webcam] ДОСТУПЕН ЛИШЬ 1 ПОТОК КИНОКАМЕРЫ")
 	}
@@ -95,6 +109,25 @@ func (w *Webcam) Start(ctx context.Context, outputCh chan image.Image) error {
 				continue
 			}
 
+			go func(img image.Image) {
+				// отправляем кадр в singleReceiver
+				if len(w.rawSingleReceivers) == 0 {
+					return
+				}
+				w.mutex.Lock()
+				currentSingleReceiver := w.rawSingleReceivers[0]
+				w.rawSingleReceivers = w.rawSingleReceivers[1:]
+				w.mutex.Unlock()
+				select {
+				case <-time.After(time.Millisecond * 10):
+					log.Warn().Msgf("[webcam] ЗАКРЫТИЕ КАНАЛА ЕДИНИЧНОГО ПОЛУЧАТЕЛЯ ПО ТАЙМАУТУ")
+					close(currentSingleReceiver)
+					return
+				case currentSingleReceiver <- img:
+					// ok
+				}
+			}(img)
+
 			// отправка кадра получателю
 			select {
 			case <-ctx.Done():
@@ -113,6 +146,58 @@ func (w *Webcam) Start(ctx context.Context, outputCh chan image.Image) error {
 
 	log.Debug().Msgf("[webcam] КАМЕРА ОСТАНОВЛЕНА")
 	return nil
+}
+
+/*
+StartHttpTransfer - для локальной разработки. Кадры для энтропии вытаскиваются из ручки, которую держит production-Асгард
+*/
+func (w *Webcam) StartHttpTransfer(ctx context.Context, outputCh chan image.Image) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Millisecond * 10):
+			func() {
+				r, err := http.Get(w.deviceID)
+				if err != nil {
+					log.Error().Err(err).Msgf("[webcam] НЕ МОГУ ЗАГРУЗИТЬ КАДР ПО HTTP")
+					return
+				}
+				defer r.Body.Close()
+				if r.StatusCode != http.StatusOK {
+					log.Error().Err(err).Msgf("[webcam] HTTP-СТАТУС ОТВЕТА НЕ ОК %d:%s", r.StatusCode, r.Status)
+					return
+				}
+				imgData, err := io.ReadAll(r.Body)
+				if err != nil {
+					log.Error().Err(err).Msgf("[webcam] НЕВОЗМОЖНО ПРОЧИТАТЬ ТЕЛО ОТВЕТА")
+					return
+				}
+				b := bytes.NewReader(imgData)
+				img, err := jpeg.Decode(b)
+				if err != nil {
+					log.Error().Err(err).Msgf("[webcam] НЕВОЗМОЖНО РАСПОЗНАТЬ JPEG")
+					return
+				}
+				outputCh <- img
+			}()
+		}
+	}
+}
+
+func (w *Webcam) GetNextFrame(ctx context.Context) (image.Image, error) {
+	singleReceiver := make(chan image.Image)
+	w.mutex.Lock()
+	w.rawSingleReceivers = append(w.rawSingleReceivers, singleReceiver)
+	w.mutex.Unlock()
+	select {
+	case <-ctx.Done():
+		return nil, errors.Errorf("[webcam] ОСТАНОВ")
+	case <-time.After(time.Second):
+		return nil, errors.Errorf("[webcam] ТАЙМАУТ")
+	case img := <-singleReceiver:
+		return img, nil
+	}
 }
 
 func (w *Webcam) getFormatAndSize(cam *webcam.Webcam) (webcam.PixelFormat, uint32, uint32, error) {

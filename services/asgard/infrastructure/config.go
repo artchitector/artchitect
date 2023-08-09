@@ -9,6 +9,7 @@ type Config struct {
 	// базовые параметры
 	IsDebug      bool
 	InvokeAIPath string
+	HttpPort     string
 
 	// подключения к внешним службам
 	DbDSN                string
@@ -40,6 +41,7 @@ func InitEnv() *Config {
 		// базовые параметры
 		IsDebug:      env["IS_DEBUG"] == "true",
 		InvokeAIPath: env["INVOKEAI_PATH"],
+		HttpPort:     env["HTTP_PORT"],
 
 		// подключения к внешним службам
 		DbDSN:                env["DB_DSN"],

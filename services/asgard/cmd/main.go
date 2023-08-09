@@ -49,6 +49,7 @@ func main() {
 	// внешние связи
 	bifröst := communication.NewBifröst(red)
 	warehouse := communication.NewWarehouse(config.WarehouseFullsizeUrl, config.WarehouseArtUrls)
+	keyhole := communication.NewKeyhole(config.HttpPort, webcam)
 
 	// хранилища сущностей
 	artPile := model.NewArtPile(database)
@@ -59,7 +60,7 @@ func main() {
 	odin := pantheon.NewOdin(config.CreatorActive, freyja, muninn, heimdall, artPile, warehouse)
 
 	// запуск фоновых служб
-	go runServices(ctx, lostEye, huginn, heimdall, webcam)
+	go runServices(ctx, lostEye, huginn, heimdall, webcam, keyhole)
 	// запуск Главного Цикла Архитектора (ГЦА)
 	runArtchitect(ctx, odin)
 }
@@ -80,6 +81,7 @@ func runServices(
 	huginn *pantheon.Huginn,
 	heimdall *pantheon.Heimdallr,
 	webcam *infrastructure.Webcam,
+	keyhole *communication.Keyhole,
 ) {
 	webcamStream := make(chan image.Image)
 	go func() {
@@ -98,6 +100,11 @@ func runServices(
 		// Запуск чтения кадров с веб-камеры
 		if err := webcam.Start(ctx, webcamStream); err != nil {
 			log.Fatal().Err(err).Send()
+		}
+	}()
+	go func() {
+		if err := keyhole.StartHttpServer(ctx); err != nil {
+			log.Fatal().Err(err).Msgf("[keyhole] ПАДЕНИЕ KEYHOLE. СТОП-МАШИНА, АСГАРД!")
 		}
 	}()
 }

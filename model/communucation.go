@@ -1,8 +1,10 @@
 package model
 
 const (
+	ChanTech            = "tech" // технический канал для ненужных уведомлений
 	ChanEntropy         = "entropy"
 	ChanEntropyExtended = "entropy_extended"
+	ChanNewArt          = "new_art"
 )
 
 // Здесь расположены модели, необходимые для передачи рантаймовых событий из Асгарда по остальным мирам

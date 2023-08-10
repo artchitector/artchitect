@@ -11,33 +11,44 @@
 </i18n>
 <template>
   <section>
-  <div>
-    <h3 class="is-size-4 has-text-centered mb-4">{{$t('last99')}}</h3>
-    <div v-if="$fetchState.pending" class="notification has-text-centered">
-      <common-loader size="l"/>
+    <div>
+      <h3 class="is-size-4 has-text-centered mb-4">{{ $t('last99') }}</h3>
+      <div v-if="$fetchState.pending" class="notification has-text-centered">
+        <common-loader size="l"/>
+      </div>
+      <div v-else-if="$fetchState.error" class="notification is-danger">
+        {{ $fetchState.error.message }}
+      </div>
+      <div v-else-if="!this.arts.length" class="notification is-danger">
+        {{ $t('not_loaded') }}
+      </div>
+      <common-art-list :arts="this.arts" row-size="3" initial-visible-count="33"/>
     </div>
-    <div v-else-if="$fetchState.error" class="notification is-danger">
-      {{$fetchState.error.message}}
-    </div>
-    <div v-else-if="!this.arts.length" class="notification is-danger">
-      {{$t('not_loaded')}}
-    </div>
-    <common-art-list :arts="this.arts" row-size="3" initial-visible-count="33"/>
-  </div>
   </section>
 </template>
 <script>
-  export default {
-    name: "common-last99",
-    data () {
-      return {
-        arts: [],
-      }
-    },
-    async fetch() {
-      this.arts = await this.$axios.$get("/arts/last/99")
+import Radio from "@/utils/radio";
+
+export default {
+  name: "common-last99",
+  data() {
+    return {
+      radioPid: null,
+      arts: [],
     }
+  },
+  async fetch() {
+    this.arts = await this.$axios.$get("/arts/last/99")
+  },
+  async mounted() {
+    this.radioPid = await Radio.subscribe("new_art", function (art) {
+      console.log('LAST99 NEW ART', art)
+    })
+  },
+  beforeDestroy() {
+    Radio.unsubscribe(this.radioPid)
   }
+}
 </script>
 <style lang="scss" scoped>
 

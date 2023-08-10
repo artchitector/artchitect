@@ -120,6 +120,12 @@ func (h *Heimdallr) EnrichIdeaWithImages(idea model.Idea) model.Idea {
 	return idea
 }
 
+// SendNewArt
+// Heimdallr: Odin написал новую картину. Я отправлю её по радужному мосту, дабы нижние миры тоже могли порадоваться этому
+func (h *Heimdallr) SendNewArt(ctx context.Context, art model.Art) error {
+	return h.bifröst.SendDrakkarWithPack(ctx, model.ChanNewArt, art)
+}
+
 func (h *Heimdallr) fillEntropyPackWithImages(pack model.EntropyPack) model.EntropyPack {
 	pack.Entropy.ImageEncoded = h.encodeEntropyImage(pack.Entropy.Matrix)
 	pack.Choice.ImageEncoded = h.encodeEntropyImage(pack.Choice.Matrix)

@@ -2,6 +2,7 @@ package communication
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/artchitector/artchitect2/model"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
@@ -31,4 +32,16 @@ func (s *Bifröst) SendDrakkar(ctx context.Context, cargo model.Cargo) error {
 	}
 	//log.Debug().Msgf("[bifröst] ГРУЗ ОТПРАВЛЕН %s", string(cargoData))
 	return nil
+}
+
+func (s *Bifröst) SendDrakkarWithPack(ctx context.Context, channel string, item interface{}) error {
+	j, err := json.Marshal(&item)
+	if err != nil {
+		return errors.Wrap(err, "[bifröst] ОШИБКА УПАКОВКИ ГРУЗА ПЕРЕД ОТПРАВКОЙ ПО РАДУЖНОМУ МОСТУ")
+	}
+	cargo := model.Cargo{
+		Channel: channel,
+		Payload: string(j),
+	}
+	return s.SendDrakkar(ctx, cargo)
 }

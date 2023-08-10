@@ -1,6 +1,7 @@
 package portals
 
 import (
+	"github.com/artchitector/artchitect2/model"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -64,6 +65,6 @@ func (ap *ArtPortal) HandleLast(c *gin.Context) {
 		return
 	}
 
-	flatArts := makeFlatArts(arts)
+	flatArts := model.MakeFlatArts(arts)
 	c.JSON(http.StatusOK, flatArts)
 }

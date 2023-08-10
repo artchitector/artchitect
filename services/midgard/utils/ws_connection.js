@@ -1,3 +1,4 @@
+// DEPRECATED. Use Radio
 class WsConnection {
   constructor(url, logPrefix, events, maxReconnectAttempts) {
     this.url = url;
@@ -40,6 +41,7 @@ class WsConnection {
     this.emit('onreconnecting', this.reconnectAttempts, this.maxReconnectAttempts)
 
     this.connection = new WebSocket(this.url)
+
     this.connection.addEventListener('close', (e) => {
       console.log(`${this.logPrefix}: websocket onclose (clean=${e.wasClean})`, e)
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
@@ -52,9 +54,11 @@ class WsConnection {
       }
       this.emit('onclose', null)
     })
+
     this.connection.addEventListener('error', (e) => {
       console.log(`${this.logPrefix}: websocket onerror`, e)
     })
+
     this.connection.addEventListener('message', (e) => {
       const ev = JSON.parse(e.data);
       if (this.events.includes(ev.channel)) {
@@ -62,7 +66,9 @@ class WsConnection {
         this.emit('onmessage', ev.channel, data)
       }
     })
-    this.connection.addEventListener('open', (e) => {
+
+
+    this.connection.addEventListener('open', () => {
       console.log(`${this.logPrefix}: websocket Successfully connected to the echo websocket server ${this.url}`)
       this.reconnectAttempts = 0
       this.emit('onopen', null)

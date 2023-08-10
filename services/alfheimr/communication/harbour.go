@@ -2,8 +2,10 @@ package communication
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/artchitector/artchitect2/model"
 	"github.com/go-redis/redis/v8"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
 	"sync"
@@ -64,6 +66,7 @@ func (l *Harbour) Run(ctx context.Context) error {
 		ctx,
 		model.ChanEntropy,
 		model.ChanEntropyExtended,
+		model.ChanNewArt,
 	)
 	log.Info().Msgf("[harbour] ГАВАНЬ НАЧИНАЕТ ПРИЁМ ГРУЗОВ")
 	for {
@@ -94,9 +97,39 @@ func (l *Harbour) handle(ctx context.Context, msg *redis.Message) error {
 	idx := slices.IndexFunc(broadcastChannels, func(s string) bool { return msg.Channel == s })
 	if idx != -1 {
 		// нужно отправить это сообщение броадкастом всем подписанным клиентам, которые сейчас слушают websocket
-		l.makeRadioshow(ctx, msg)
+		l.makeRadioshow(ctx, msg.Channel, msg.Payload)
 	}
 
+	switch msg.Channel {
+	case model.ChanNewArt:
+		if err := l.handleNewArt(ctx, msg); err != nil {
+			return errors.Wrapf(err, "[harbour] ОШИБКА ОБРАБОТКИ СОБЫТИЯ %s", msg.Channel)
+		}
+
+	}
+
+	return nil
+}
+
+/*
+handleNewArt - гавань получила груз new_art
+// Odin: структура model.Art со всеми вложениями очень большая, и отправлять её в чистом виде в Мидгард накладно из-за трафика
+// Odin: тут гавань переупакует груз в более лёгкую структуру portals.FlatArt
+*/
+func (l *Harbour) handleNewArt(ctx context.Context, msg *redis.Message) error {
+	var art model.Art
+	if err := json.Unmarshal([]byte(msg.Payload), &art); err != nil {
+		return errors.Wrap(err, "[harbour] ОШИБКА JSON-РАСПАКОВКИ ГРУЗА. ГРУЗ ART ПОВРЕЖДЁН.")
+	}
+
+	flat := model.MakeFlatArt(art)
+	j, err := json.Marshal(flat)
+	if err != nil {
+		return errors.Wrap(err, "[harbour] ОШИБКА УПАКОВКИ РАДИОГРАММЫ ИЗ FLAT-ART СТРУКТУРЫ")
+	}
+
+	log.Debug().Msgf("[harbour] ПЕРЕОТПРАВЛЯЮ FLAT-ART #%d В КАНАЛ %s", flat.ID, model.ChanNewArt)
+	l.makeRadioshow(ctx, model.ChanNewArt, string(j))
 	return nil
 }
 
@@ -104,10 +137,10 @@ func (l *Harbour) handle(ctx context.Context, msg *redis.Message) error {
 // Odin: в этой радиостанции есть лишь одна частота, через которую переваливается всё. Разделение тут излишне
 // Odin: отдельные типы грузов будут отброшены самим слушателем, если мидгардец не выразил намеренье эти грузы получать.
 
-func (l *Harbour) makeRadioshow(ctx context.Context, msg *redis.Message) {
+func (l *Harbour) makeRadioshow(ctx context.Context, channel string, payload string) {
 	event := model.Radiogram{
-		Channel: msg.Channel,
-		Payload: msg.Payload,
+		Channel: channel,
+		Payload: payload,
 	}
 	l.mutex.Lock()
 	subscribers := l.listener[:]
@@ -120,7 +153,7 @@ func (l *Harbour) makeRadioshow(ctx context.Context, msg *redis.Message) {
 			case <-s.ctx.Done():
 				return
 			case <-time.After(time.Second):
-				log.Error().Msgf("[radio] РАДИОГРАММА ПОТЕРЯНА. КАНАЛ:%s", msg.Channel)
+				log.Error().Msgf("[radio] РАДИОГРАММА ПОТЕРЯНА. КАНАЛ:%s", channel)
 			case s.eventCh <- event:
 				//log.Debug().Msgf("[radio] РАДИОГРАММА ОТПРАВЛЕНА. КАНАЛ:%s. УСПЕХ", msg.Channel)
 			}

@@ -141,5 +141,8 @@ func (ap *ArtPile) SaveArt(ctx context.Context, artID uint, art Art, idea Idea) 
 			return Art{}, err
 		}
 	}
+
+	idea.Words = words
+	art.Idea = idea
 	return art, nil
 }

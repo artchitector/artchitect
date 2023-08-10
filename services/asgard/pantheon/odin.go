@@ -13,7 +13,7 @@ import (
 // Odin - Всеотец и создатель картин. Именно его уникальные идеи позволяют писать все эти работы в галерее Artchitect.
 type Odin struct {
 	isActive  bool       // иногда Odin не творит
-	freyja    *Freyja    // Freyja - богиня любви и красоты. помогает Odin рисовать картины из этих идей
+	freyja    *Freyja    // Freyja - богиня любви и красоты. помогает Odin писать картины из этих идей
 	muninn    *Muninn    // ворон-помнящий
 	gungner   *Gungner   // копьё Одина Гунгнир
 	heimdallr *Heimdallr // Heimdallr умеет обогащать данные красивыми картинками (нужно перед сохранением)
@@ -113,7 +113,13 @@ func (o *Odin) create(ctx context.Context) (art model.Art, err error) {
 
 	art, err = o.saveArt(ctx, version, artID, idea, img, tStart, ideaGenerationMs, paintTimeMs)
 	if err != nil {
-		return model.Art{}, errors.Wrap(err, "[odin] Я В ЯРОСТИ! НАРИСОВАННАЯ КАРТИНА УТЕРЯНА!")
+		return model.Art{}, errors.Wrap(err, "[odin] Я В ЯРОСТИ! НАПИСАННАЯ КАРТИНА УТЕРЯНА!")
+	}
+
+	if err := o.heimdallr.SendNewArt(ctx, art); err != nil {
+		log.Error().Err(err).
+			Msgf("[odin] (рявкнул) ХЕЙМДАЛЛЬ!!! ЧТО ТЫ ТВОРИШЬ ТАМ С РАДУЖНЫМ МОСТОМ? ЛЮДИ ДОЛЖНЫ ВИДЕТЬ ВСЕ НОВЫЕ КАРТИНЫ!")
+		// Odin: на самом деле не страшно, т.к. просто утерян один "временный эвент", но сама картина в безопасности (уже во всех надёжных хранилищах)
 	}
 
 	return art, nil
@@ -152,7 +158,7 @@ func (o *Odin) imagineTheIdea(ctx context.Context) (model.Idea, error) {
 	return idea, nil
 }
 
-// saveArt - сохранение нарисованной и готовой картины в хранилища
+// saveArt - сохранение написанной и готовой картины в хранилища
 // Odin: сначала само изображение сохраняется на склады в разных размерах
 // Odin: затем model.Idea и model.Art сохраняются в БД
 func (o *Odin) saveArt(

@@ -18,6 +18,7 @@ type ai interface {
 
 type bifröst interface {
 	SendDrakkar(ctx context.Context, cargo model.Cargo) error
+	SendDrakkarWithPack(ctx context.Context, channel string, item interface{}) error
 }
 
 type warehouse interface {

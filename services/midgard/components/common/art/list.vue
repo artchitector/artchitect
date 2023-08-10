@@ -1,7 +1,11 @@
 <i18n>
 {
-  "en": {},
-  "ru": {}
+  "en": {
+    "show_more": "show more..."
+  },
+  "ru": {
+    "show_more": "показать больше..."
+  }
 }
 </i18n>
 <template>
@@ -10,6 +14,9 @@
       <div class="column" v-for="art in line">
         <common-art-simple :art-id="art.id"/>
       </div>
+    </div>
+    <div v-if="showLoadMore" class="has-text-centered">
+      <button class="button" @click.prevent="showMore">{{$t('show_more')}}</button>
     </div>
   </div>
 </template>
@@ -23,7 +30,7 @@ export default {
   ],
   data() {
     return {
-      visibleCount: this.initialVisibleCount || -1,
+      visibleCount: parseInt(this.initialVisibleCount) || -1,
     }
   },
   computed: {
@@ -53,6 +60,12 @@ export default {
     },
     showLoadMore() {
       return this.visibleCount > 0 && this.visibleCount < this.arts.length
+    }
+  },
+  methods: {
+    showMore() {
+      this.visibleCount += parseInt(this.initialVisibleCount)
+      console.log(this.visibleCount)
     }
   }
 }

@@ -41,8 +41,10 @@ export default {
     this.arts = await this.$axios.$get("/arts/last/99")
   },
   async mounted() {
-    this.radioPid = await Radio.subscribe("new_art", function (art) {
-      console.log('LAST99 NEW ART', art)
+    this.radioPid = await Radio.subscribe("new_art", (art) => {
+      console.log(`[LAST99] НОВАЯ КАРТИНА #${art.id}`)
+      this.arts.pop()
+      this.arts.unshift(art)
     })
   },
   beforeDestroy() {

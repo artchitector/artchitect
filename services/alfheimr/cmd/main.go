@@ -82,6 +82,7 @@ func main() {
 		})
 
 		r.GET("/art/:id", artPortal.HandleArt)
+		r.GET("/art/:id/flat", artPortal.HandleArtFlat)
 		r.GET("/arts/last/:last", artPortal.HandleLast)
 		r.GET("/image/:id/:size", imPortal.HandleImage)
 

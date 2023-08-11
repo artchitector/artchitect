@@ -9,6 +9,7 @@
 </template>
 <script>
 export default {
+  // Индикатор загрузки
   name: "common-loader",
   props: ["size"]
 }

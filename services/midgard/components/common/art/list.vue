@@ -10,13 +10,15 @@
 </i18n>
 <template>
   <div>
+    <common-viewer ref="viewer"/>
     <div class="columns" v-for="line in lines">
       <div class="column" v-for="art in line">
-        <common-art-simple :art-id="art.id"/>
+        <common-art-complex v-if="typeof art === 'object'" :art="art" @select="showViewer(art.id)"/>
+        <common-art-simple v-else :art-id="art" @select="showViewer(art)"/>
       </div>
     </div>
     <div v-if="showLoadMore" class="has-text-centered">
-      <button class="button" @click.prevent="showMore">{{$t('show_more')}}</button>
+      <button class="button" @click.prevent="showMore">{{ $t('show_more') }}</button>
     </div>
   </div>
 </template>
@@ -66,6 +68,17 @@ export default {
     showMore() {
       this.visibleCount += parseInt(this.initialVisibleCount)
       console.log(this.visibleCount)
+    },
+    showViewer(artID) {
+      const ids = [];
+      this.arts.forEach((art) => {
+        if (typeof art === 'object') {
+          ids.push(art.id)
+        } else {
+          ids.push(art)
+        }
+      })
+      this.$refs.viewer.show(ids, artID)
     }
   }
 }

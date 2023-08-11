@@ -17,7 +17,7 @@ export default {
   props: ["artId"],
   methods: {
     select() {
-      console.warn(`need viewer art#${this.artId}`)
+      this.$emit('select')
     }
   }
 }

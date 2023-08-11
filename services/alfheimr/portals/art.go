@@ -48,6 +48,29 @@ func (ap *ArtPortal) HandleArt(c *gin.Context) {
 	c.JSON(http.StatusOK, art)
 }
 
+func (ap *ArtPortal) HandleArtFlat(c *gin.Context) {
+	var request ArtRequest
+	if err := c.ShouldBindUri(&request); err != nil {
+		c.JSON(http.StatusBadRequest, wrapError(err))
+		return
+	}
+	if request.ID < 1 {
+		c.JSON(http.StatusBadRequest, wrapError(errors.Errorf("ID must be positive")))
+		return
+	}
+
+	art, err := ap.artPile.GetArtRecursive(c, request.ID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.JSON(http.StatusNotFound, wrapError(errors.Errorf("not found ID=%d", request.ID)))
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, wrapError(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, model.MakeFlatArt(art))
+}
+
 func (ap *ArtPortal) HandleLast(c *gin.Context) {
 	var request LastRequest
 	if err := c.ShouldBindUri(&request); err != nil {

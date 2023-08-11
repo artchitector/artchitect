@@ -63,7 +63,7 @@
 
     <div class="words">
       <template v-if="current.art">
-        <p>{{ $t('created') }}: {{ formatDate(current.art.CreatedAt) }}</p>
+        <p>{{ $t('created') }}: {{ formatDate(current.art.createdAt) }}</p>
         <p>{{ $t('seed') }}: {{ current.art.ideaSeed }}</p>
         <p class="is-size-7 words-p">{{ $t('words') }}: {{ current.art.ideaWords.join(', ') }}</p>
       </template>

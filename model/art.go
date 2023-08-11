@@ -146,3 +146,15 @@ func (ap *ArtPile) SaveArt(ctx context.Context, artID uint, art Art, idea Idea) 
 	art.Idea = idea
 	return art, nil
 }
+
+func (ap *ArtPile) GetLastPaintTime(ctx context.Context) (uint, error) {
+	id, err := ap.GetMaxArtID(ctx)
+	if err != nil {
+		return 0, err
+	}
+	art, err := ap.GetArt(ctx, id)
+	if err != nil {
+		return 0, err
+	}
+	return art.PaintTime, nil
+}

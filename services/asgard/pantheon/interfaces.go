@@ -10,6 +10,7 @@ import (
 type artPile interface {
 	GetNextArtID(ctx context.Context) (uint, error)
 	SaveArt(ctx context.Context, artID uint, art model.Art, idea model.Idea) (model.Art, error)
+	GetLastPaintTime(ctx context.Context) (uint, error) // в миллисекундах
 }
 
 type ai interface {

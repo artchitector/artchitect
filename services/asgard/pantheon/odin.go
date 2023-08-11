@@ -6,9 +6,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"image"
+	"math"
 	"strings"
 	"time"
 )
+
+const TotalArtSeconds uint = 60
 
 // Odin - Всеотец и создатель картин. Именно его уникальные идеи позволяют писать все эти работы в галерее Artchitect.
 type Odin struct {
@@ -76,26 +79,57 @@ func (o *Odin) Create(ctx context.Context) (worked bool, art model.Art, err erro
 // create внутреннее содержимое публичного метода Create
 // Odin: мудрецы говорили - разделяй и властвуй
 func (o *Odin) create(ctx context.Context) (art model.Art, err error) {
+	creationContext, finish := context.WithCancel(ctx)
+	defer finish()
 	tStart := time.Now()
 	// Odin: Каждая картина должна иметь уникальный порядковый номер.
 	// Odin: Пропускать их нельзя, они по порядку (не autoincrement-поле)
 	artID, err := o.artPile.GetNextArtID(ctx)
 	if err != nil {
-		log.Error().Err(err).Msgf("[odin] НЕ МОГУ ПРИДУМАТЬ НОВЫЙ НОМЕР КАРТИНЫ. НУЖЕН ОТДЫХ")
+		return model.Art{}, errors.Wrap(err, "[odin] НЕ МОГУ ПРИДУМАТЬ НОВЫЙ НОМЕР КАРТИНЫ. НУЖЕН ОТДЫХ")
 	}
+	state := &model.OdinState{
+		ArtID: artID,
+	}
+	o.sendSelfState(ctx, state)
 
 	log.Info().Msgf("[odin] НАЧИНАЮ КАРТИНУ #%d.", artID)
 
 	iStart := time.Now()
-	idea, err := o.imagineTheIdea(ctx)
+	idea, err := o.imagineTheIdea(ctx, state)
 	if err != nil {
 		return model.Art{}, errors.Wrapf(err, "[odin] НЕ СМОГ ПРИДУМАТЬ НИЧЕГО")
 	} else {
 		log.Info().Msgf("[odin] ODIN ПРИДУМАЛ ИДЕЮ КАРТИНЫ #%d: %s", artID, idea.String())
 	}
+
 	// работа Heimdallr занимает ~10мс
 	idea = o.heimdallr.EnrichIdeaWithImages(idea)
 	ideaGenerationMs := time.Now().Sub(iStart).Milliseconds()
+
+	state.Painting = true
+	go func(c context.Context, state *model.OdinState) {
+		paintTime, err := o.artPile.GetLastPaintTime(ctx)
+		if err != nil {
+			log.Error().Err(err).Msgf("[odin] НЕ МОГУ ВСПОМНИТЬ ВРЕМЯ ПОСЛЕДНЕГО РИСОВАНИЯ")
+		} else {
+			state.ExpectedPaintTime = paintTime / 1000
+		}
+		now := time.Now()
+		for {
+			select {
+			case <-c.Done():
+				return
+			case <-time.Tick(time.Second):
+				if state.Enjoying {
+					// рисование картины уже окончено
+					return
+				}
+				state.CurrentPaintTime = uint(time.Now().Sub(now).Seconds())
+				o.sendSelfState(c, state)
+			}
+		}
+	}(creationContext, state)
 
 	var img image.Image
 	version := model.Version1
@@ -116,12 +150,47 @@ func (o *Odin) create(ctx context.Context) (art model.Art, err error) {
 		return model.Art{}, errors.Wrap(err, "[odin] Я В ЯРОСТИ! НАПИСАННАЯ КАРТИНА УТЕРЯНА!")
 	}
 
+	state.Painted = true
+	state.Enjoying = true
+	o.sendSelfState(creationContext, state)
+
 	if err := o.heimdallr.SendNewArt(ctx, art); err != nil {
 		log.Error().Err(err).
 			Msgf("[odin] (рявкнул) ХЕЙМДАЛЛЬ!!! ЧТО ТЫ ТВОРИШЬ ТАМ С РАДУЖНЫМ МОСТОМ? ЛЮДИ ДОЛЖНЫ ВИДЕТЬ ВСЕ НОВЫЕ КАРТИНЫ!")
 		// Odin: на самом деле не страшно, т.к. просто утерян один "временный эвент", но сама картина в безопасности (уже во всех надёжных хранилищах)
 	}
 
+	// теперь картина нарисована
+	currentSeconds := uint(math.Round(time.Now().Sub(tStart).Seconds()))
+	if currentSeconds >= TotalArtSeconds {
+		// no enjoy
+		log.Error().Msgf(
+			"[odin] У МЕНЯ НЕТ ОТДЫХА И НАСЛЕЖДЕНИЯ! КАРТИНА СОЗДАВАЛАСЬ %d СЕКУНД"+
+				", А МЫ ДОЛЖНЫ БЫЛИ УСПЕТЬ В %d СЕКУНД! Я НЕДОВОЛЕН ПРОИСХОДЯЩИМИ СОБЫТИЯМИ!",
+			currentSeconds,
+			TotalArtSeconds,
+		)
+		return art, nil
+	}
+	state.Enjoying = true
+	enjoyTime := time.Second * time.Duration(TotalArtSeconds-currentSeconds)
+	state.ExpectedEnjoyTime = uint(enjoyTime.Seconds())
+
+	go func(c context.Context, state *model.OdinState) {
+		now := time.Now()
+		for {
+			select {
+			case <-c.Done():
+				return
+			case <-time.Tick(time.Second):
+				state.CurrentEnjoyTime = uint(time.Now().Sub(now).Seconds())
+				o.sendSelfState(c, state)
+			}
+		}
+	}(creationContext, state)
+
+	log.Info().Msgf("[odin] НАЧИНАЮ ОТДЫХ %s", enjoyTime)
+	<-time.After(enjoyTime)
 	return art, nil
 }
 
@@ -130,15 +199,25 @@ func (o *Odin) create(ctx context.Context) (art model.Art, err error) {
 // Odin: эта чёртова электронная железяка заставляет Меня смотреть на энтропию с разрешением 8 на 8 пикселей.
 // Odin: Да я могу видеть всё мироздание от основания до вершины, все девять миров!
 // Odin: А тут всего 64 точки... Ограничения эти опять, тьфу.
-func (o *Odin) imagineTheIdea(ctx context.Context) (model.Idea, error) {
+func (o *Odin) imagineTheIdea(ctx context.Context, state *model.OdinState) (model.Idea, error) {
 	seed, seedEntropy, err := o.muninn.RememberSeed(ctx)
 	if err != nil {
 		return model.Idea{}, errors.Wrap(err, "[odin] Я ЗАБЫЛ SEED У ЭТОЙ КАРТИНЫ. МУНИН, ТЫ ЗАБОЛЕЛ?")
 	}
+	seedEntropy = o.heimdallr.fillEntropyPackWithImages(seedEntropy)
+	state.Seed = seed
+	state.SeedEntropyImageEncoded = seedEntropy.Entropy.ImageEncoded
+	state.SeedChoiceImageEncoded = seedEntropy.Choice.ImageEncoded
+	o.sendSelfState(ctx, state)
+
 	numberOfWords, numberEntropy, err := o.muninn.RememberNumberOfWords(ctx)
 	if err != nil {
 		return model.Idea{}, errors.Wrap(err, "[odin] ЗАБЫЛ КОЛИЧЕСТВО СЛОВ У ЭТОЙ КАРТИНЫ. ЭТОЙ КАРТИНЫ УЖЕ НЕ БУДЕТ")
 	}
+	state.NumberOfWords = numberOfWords
+	state.Words = make([]string, 0, numberOfWords)
+	o.sendSelfState(ctx, state)
+
 	words := make([]model.Word, 0, numberOfWords)
 	for i := 0; i < int(numberOfWords); i++ {
 		word, err := o.muninn.RememberWord(ctx)
@@ -146,6 +225,9 @@ func (o *Odin) imagineTheIdea(ctx context.Context) (model.Idea, error) {
 			return model.Idea{}, errors.Wrapf(err, "[odin] ЗАБЫЛ НУЖНОЕ %d-е СЛОВО У ЭТОЙ КАРТИНЫ. СТАРОСТЬ?", i+1)
 		}
 		words = append(words, word)
+
+		state.Words = append(state.Words, word.Word)
+		o.sendSelfState(ctx, state)
 	}
 
 	idea := model.Idea{
@@ -190,4 +272,11 @@ func (o *Odin) saveArt(
 	}
 
 	return art, nil
+}
+
+func (o *Odin) sendSelfState(ctx context.Context, state *model.OdinState) {
+	err := o.heimdallr.SendOdinState(ctx, *state)
+	if err != nil {
+		log.Error().Err(err).Msgf("[odin] ВОЛНЕНИЯ НА РАДУЖНОМ МОСТУ СЛУЧИЛИСЬ. ХЕЙМДАЛЛЬ СЕГОДНЯ НАГНАЛ ТУЧИ.")
+	}
 }

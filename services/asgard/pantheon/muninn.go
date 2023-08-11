@@ -33,12 +33,12 @@ func NewMuninn(huginn *Huginn) *Muninn {
 // Loki: так вот получается, ты изначально знаешь все картины Artchitect и сколько их будет. Сколько их?
 // Odin: лишь одному Odin-у известно, сколько их, так оно и останется.
 func (m *Muninn) RememberSeed(ctx context.Context) (uint, model.EntropyPack, error) {
-	return m.oneOf(ctx, model.MaxSeed)
+	return m.OneOf(ctx, model.MaxSeed)
 }
 
 // RememberNumberOfWords - Odin: сколько ключевых слов я назову, вспомнив эту картину
 func (m *Muninn) RememberNumberOfWords(ctx context.Context) (uint, model.EntropyPack, error) {
-	v, p, e := m.oneOf(ctx, model.MaxKeywords)
+	v, p, e := m.OneOf(ctx, model.MaxKeywords)
 	// количество слов от 1 до 28
 	return v + 1, p, e
 }
@@ -51,7 +51,7 @@ func (m *Muninn) RememberWord(ctx context.Context) (model.Word, error) {
 		// Odin: не ругай себя, малыш. Это всё ПОГРОМисты.
 	} else {
 		count := uint(len(dict))
-		index, pack, err := m.oneOf(ctx, count)
+		index, pack, err := m.OneOf(ctx, count)
 		if err != nil {
 			return model.Word{}, errors.Wrap(err, "[muninn] ВЫБОР НЕ ОСУЩЕСТВЛЁН")
 		}
@@ -63,8 +63,8 @@ func (m *Muninn) RememberWord(ctx context.Context) (model.Word, error) {
 
 }
 
-// oneOf - Muninn: если maxval=100, то могут возвращаться числа от 0 до 99 (безопасно для выбора из массивов)
-func (m *Muninn) oneOf(ctx context.Context, maxval uint) (uint, model.EntropyPack, error) {
+// OneOf - Muninn: если maxval=100, то могут возвращаться числа от 0 до 99 (безопасно для выбора из массивов)
+func (m *Muninn) OneOf(ctx context.Context, maxval uint) (uint, model.EntropyPack, error) {
 	pack, err := m.huginn.GetNextEntropy(ctx)
 	if err != nil {
 		return 0, model.EntropyPack{}, errors.Wrap(err, "[muninn] ХУГИН, ГДЕ ЭНТРОПИЯ?")

@@ -1,20 +1,20 @@
 <i18n>
 {
   "en": {
-    "title": "Artchitect's heart ❤️"
+    "title": "Artchitect's insight 👁"
   },
   "ru": {
-    "title": "Сердце  Artchitect ❤️"
+    "title": "Озарение  Artchitect 👁"
   }
 }
 </i18n>
 <template>
-        <flexheart-core/>
+        <insight-main/>
 </template>
 
 <script>
 export default {
-  name: "heart",
+  name: "insight",
   layout: "simple",
   head() {
     return {

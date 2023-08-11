@@ -1,6 +1,7 @@
 <i18n>
 {
   "en": {
+    "insight": "👁",
     "main": "main",
     "lottery": "lottery",
     "selection": "selection",
@@ -10,6 +11,7 @@
     "entropy": "entropy"
   },
   "ru": {
+    "insight": "👁",
     "main": "главная",
     "lottery": "лотерея",
     "selection": "отборное",
@@ -32,8 +34,8 @@
         </NuxtLink>
       </div>
       <div>
-<!--        <NuxtLink :to="localePath('heart')">❤️</NuxtLink>-->
-<!--        <span> - </span>-->
+        <NuxtLink :to="localePath('insight')">👁</NuxtLink>
+        <span> - </span>
         <NuxtLink :to="localePath('index')">{{$t('main')}}</NuxtLink>
         <span> - </span>
 <!--        <NuxtLink :to="localePath('/idea')">{{$t('idea')}}</NuxtLink>-->

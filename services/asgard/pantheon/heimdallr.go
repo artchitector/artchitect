@@ -126,9 +126,17 @@ func (h *Heimdallr) SendNewArt(ctx context.Context, art model.Art) error {
 	return h.bifröst.SendDrakkarWithPack(ctx, model.ChanNewArt, art)
 }
 
+func (h *Heimdallr) SendOdinState(ctx context.Context, state model.OdinState) error {
+	return h.bifröst.SendDrakkarWithPack(ctx, model.ChanOdinState, state)
+}
+
 func (h *Heimdallr) fillEntropyPackWithImages(pack model.EntropyPack) model.EntropyPack {
-	pack.Entropy.ImageEncoded = h.encodeEntropyImage(pack.Entropy.Matrix)
-	pack.Choice.ImageEncoded = h.encodeEntropyImage(pack.Choice.Matrix)
+	if pack.Entropy.ImageEncoded == "" {
+		pack.Entropy.ImageEncoded = h.encodeEntropyImage(pack.Entropy.Matrix)
+	}
+	if pack.Choice.ImageEncoded == "" {
+		pack.Choice.ImageEncoded = h.encodeEntropyImage(pack.Choice.Matrix)
+	}
 	return pack
 }
 

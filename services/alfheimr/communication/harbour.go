@@ -67,6 +67,8 @@ func (l *Harbour) Run(ctx context.Context) error {
 		model.ChanEntropy,
 		model.ChanEntropyExtended,
 		model.ChanNewArt,
+		model.ChanOdinState,
+		model.ChanGiving,
 	)
 	log.Info().Msgf("[harbour] ГАВАНЬ НАЧИНАЕТ ПРИЁМ ГРУЗОВ")
 	for {
@@ -93,6 +95,8 @@ func (l *Harbour) handle(ctx context.Context, msg *redis.Message) error {
 	broadcastChannels := []string{
 		model.ChanEntropy,
 		model.ChanEntropyExtended,
+		model.ChanOdinState,
+		model.ChanGiving,
 	}
 	idx := slices.IndexFunc(broadcastChannels, func(s string) bool { return msg.Channel == s })
 	if idx != -1 {

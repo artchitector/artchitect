@@ -5,6 +5,8 @@ const (
 	ChanEntropy         = "entropy"
 	ChanEntropyExtended = "entropy_extended"
 	ChanNewArt          = "new_art"
+	ChanOdinState       = "odin_state" // ... сделай глубокий вдох ... ...  сделай глубокий вдох ...
+	ChanGiving          = "giving"
 )
 
 // Здесь расположены модели, необходимые для передачи рантаймовых событий из Асгарда по остальным мирам

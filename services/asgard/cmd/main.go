@@ -54,6 +54,8 @@ func main() {
 	// хранилища сущностей
 	artPile := model.NewArtPile(database)
 
+	giving := communication.NewGiving(artPile, muninn, bifröst)
+
 	heimdall := pantheon.NewHeimdallr(huginn, bifröst)
 	ai := infrastructure.NewAI(config.InvokeAIPath)
 	freyja := pantheon.NewFreyja(ai)
@@ -61,7 +63,7 @@ func main() {
 	odin := pantheon.NewOdin(config.CreatorActive, freyja, muninn, gungner, heimdall, artPile, warehouse)
 
 	// запуск фоновых служб
-	go runServices(ctx, lostEye, huginn, heimdall, webcam, keyhole)
+	go runServices(ctx, lostEye, huginn, heimdall, webcam, keyhole, giving)
 	// запуск Главного Цикла Архитектора (ГЦА)
 	runArtchitect(ctx, odin)
 }
@@ -83,6 +85,7 @@ func runServices(
 	heimdall *pantheon.Heimdallr,
 	webcam *infrastructure.Webcam,
 	keyhole *communication.Keyhole,
+	giving *communication.Giving,
 ) {
 	webcamStream := make(chan image.Image)
 	go func() {
@@ -107,5 +110,9 @@ func runServices(
 		if err := keyhole.StartHttpServer(ctx); err != nil {
 			log.Fatal().Err(err).Msgf("[keyhole] ПАДЕНИЕ KEYHOLE. СТОП-МАШИНА, АСГАРД!")
 		}
+	}()
+	go func() {
+		giving.StartGiving(ctx)
+		log.Debug().Msgf("[main] GIVING ОСТАНОВЛЕН")
 	}()
 }

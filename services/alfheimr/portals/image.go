@@ -27,25 +27,14 @@ func (ip *ImagePortal) HandleImage(c *gin.Context) {
 		return
 	}
 
-	img, err := ip.warehouse.GetArtImage(c, request.ID, request.Size)
-	if errors.Is(err, model.ErrNotFound) {
-		c.JSON(http.StatusNotFound, wrapError(err))
-		return
-	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, wrapError(err))
-		return
-	}
-	c.Data(http.StatusOK, "image/jpeg", img)
-}
-
-func (ip *ImagePortal) HandleOrigin(c *gin.Context) {
-	var request ImageRequest
-	if err := c.ShouldBindUri(&request); err != nil {
-		c.JSON(http.StatusBadRequest, wrapError(err))
-		return
+	var img []byte
+	var err error
+	if request.Size == model.SizeOrigin {
+		img, err = ip.warehouse.GetArtOrigin(c, request.ID)
+	} else {
+		img, err = ip.warehouse.GetArtImage(c, request.ID, request.Size)
 	}
 
-	img, err := ip.warehouse.GetArtOrigin(c, request.ID)
 	if errors.Is(err, model.ErrNotFound) {
 		c.JSON(http.StatusNotFound, wrapError(err))
 		return

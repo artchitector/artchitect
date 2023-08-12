@@ -20,7 +20,7 @@
         <div class="link-container">
           {{ $t('last_art') }}
           <NuxtLink :to="localePath(`/art/${giving.lastArtID}`)" class="has-text-info">
-            #{{ giving.lastArtId }}
+            #{{ giving.lastArtID }}
           </NuxtLink>
           <div class="image-container">
             <NuxtLink :to="localePath(`/art/${giving.lastArtID}`)" class="has-text-info">

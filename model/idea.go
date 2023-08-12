@@ -28,13 +28,13 @@ type Idea struct {
 	ArtID     uint      `json:"id" gorm:"primarykey"` // Odin: идею стоит сохранять после того, как картина нарисована успешно
 	CreatedAt time.Time `json:"createdAt"`
 
-	Seed                 uint        // Odin: Freyja может нарисовать MaxSeed вариантов одной и той же картины. Тут конкретный, который задумал Я.
-	SeedEntropy          EntropyPack `gorm:"embedded;embeddedPrefix:seed_"`       // сохраняем энтропию, которую видел Odin в момент воспоминания seed-числа
-	NumberOfWordsEntropy EntropyPack `gorm:"embedded;embeddedPrefix:nmbrofwrds_"` // сохраняем энтропию, которую видел Odin в момент воспоминания количества слов
-	Words                []Word      // Odin: Это слова, которые будут составлять основу идеи картины. Пример: "brain,smile,by hidari,Archangel,Lucifer,sauron,sharp,fractal,Tanks,moon and other planets and stars,by stanley"
+	Seed                 uint        `json:"seed"`                                                            // Odin: Freyja может нарисовать MaxSeed вариантов одной и той же картины. Тут конкретный, который задумал Я.
+	SeedEntropy          EntropyPack `json:"seedEntropy" gorm:"embedded;embeddedPrefix:seed_"`                // сохраняем энтропию, которую видел Odin в момент воспоминания seed-числа
+	NumberOfWordsEntropy EntropyPack `json:"numberOfWordsEntropy" gorm:"embedded;embeddedPrefix:nmbrofwrds_"` // сохраняем энтропию, которую видел Odin в момент воспоминания количества слов
+	Words                []Word      `json:"words"`                                                           // Odin: Это слова, которые будут составлять основу идеи картины. Пример: "brain,smile,by hidari,Archangel,Lucifer,sauron,sharp,fractal,Tanks,moon and other planets and stars,by stanley"
 	// WordsStr - строка нужна для уменьшения траффика, чтобы не гонять полные данные о словах с энтропией.
 	// Подробная информация о словах нужна только на одной странице /art/:id
-	WordsStr string // Все слова в виде одной строки через запятую "Wōden,Óðinn,Wuodan,Uuôden,Wêda..."
+	WordsStr string `json:"wordsStr"` // Все слова в виде одной строки через запятую "Wōden,Óðinn,Wuodan,Uuôden,Wêda..."
 }
 
 func (l Idea) ExtractWords() []string {

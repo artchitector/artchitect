@@ -13,7 +13,7 @@
     <common-viewer ref="viewer"/>
     <div class="columns" v-for="line in lines">
       <div class="column" v-for="art in line">
-        <common-art-complex v-if="typeof art === 'object'" :art="art" @select="showViewer(art.id)"/>
+        <common-art-complex v-if="!!art && typeof art === 'object'" :art="art" @select="showViewer(art.id)"/>
         <common-art-simple v-else :art-id="art" @select="showViewer(art)"/>
       </div>
     </div>

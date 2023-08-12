@@ -22,12 +22,12 @@ import (
 // Loki: А SOLID можешь расшифровать?) Ты уже прокачался в программировании, как я посмотрю.
 // Loki: Уже боюсь проиграть наше пари...
 type Warehouse struct {
-	storageURL string // хранилище для размера XF. На том конце запущен сервис warehouse для приёма файлов
-	memoryURL  string // хранилище для размеров F, M, S, XS. На том конце запущен сервис warehouse для приёма файлов
+	warehouseOriginURL string // хранилище для размера XF. На том конце запущен сервис warehouse для приёма файлов
+	warehouseArtsURL   string // хранилище для размеров F, M, S, XS. На том конце запущен сервис warehouse для приёма файлов
 }
 
 func NewWarehouse(storageURL string, memoryURL string) *Warehouse {
-	return &Warehouse{storageURL: storageURL, memoryURL: memoryURL}
+	return &Warehouse{warehouseOriginURL: storageURL, warehouseArtsURL: memoryURL}
 }
 
 func (wh *Warehouse) SaveImage(ctx context.Context, artID uint, img image.Image) error {
@@ -55,17 +55,17 @@ func (wh *Warehouse) SaveImage(ctx context.Context, artID uint, img image.Image)
 		Внутри самого memory-сервера картинка будет пережата на остальные размеры, и затем будет доступна для просмотра
 	*/
 
-	if err := wh.saveExtraFull(ctx, artID, img); err != nil {
+	if err := wh.saveOrigin(ctx, artID, img); err != nil {
 		return errors.Wrapf(err, "[warehouse] СОХРАНЕНИЕ XF-КАРТИНКИ ART=%d ПРОВАЛЕНО", artID)
 	}
-	if err := wh.saveToMemory(ctx, artID, img); err != nil {
+	if err := wh.saveArtSizes(ctx, artID, img); err != nil {
 		return errors.Wrapf(err, "[warehouse] СОХРАНЕНИЕ F-КАРТИНКИ ART=%d ПРОВАЛЕНО", artID)
 	}
 
 	return nil
 }
 
-func (wh *Warehouse) saveExtraFull(ctx context.Context, artID uint, img image.Image) error {
+func (wh *Warehouse) saveOrigin(ctx context.Context, artID uint, img image.Image) error {
 	s := time.Now()
 	filename := fmt.Sprintf("art-%d.jpg", artID) // filename не имеет особого значения
 	buf := new(bytes.Buffer)
@@ -73,17 +73,18 @@ func (wh *Warehouse) saveExtraFull(ctx context.Context, artID uint, img image.Im
 		return errors.Wrapf(err, "[warehouse] СЖАТЬ В BIG-JPEG НЕ УДАЛОСЬ. ОТКАЗ")
 	}
 
-	err := wh.makeRequest(ctx, wh.storageURL, map[string]string{
+	url := wh.warehouseOriginURL + "/upload/origin"
+	err := wh.makeRequest(ctx, url, map[string]string{
 		"art_id": fmt.Sprintf("%d", artID),
 	}, filename, buf.Bytes())
 	if err != nil {
-		return errors.Wrapf(err, "[warehouse] ARD_ID=%d. ОШИБКА СВЯЗИ С СЕРВЕРОМ %s", artID, wh.storageURL)
+		return errors.Wrapf(err, "[warehouse] ARD_ID=%d. ОШИБКА СВЯЗИ С СЕРВЕРОМ %s. URL=%s", artID, wh.warehouseOriginURL, url)
 	}
-	log.Info().Msgf("[warehouse] XF-КАРТИНКА #%d СОХРАНЕНА НА СКЛАД. T:%s", artID, time.Now().Sub(s))
+	log.Info().Msgf("[warehouse] ORIGIN-КАРТИНКА #%d СОХРАНЕНА НА СКЛАД. T:%s", artID, time.Now().Sub(s))
 	return nil
 }
 
-func (wh *Warehouse) saveToMemory(ctx context.Context, artID uint, img image.Image) error {
+func (wh *Warehouse) saveArtSizes(ctx context.Context, artID uint, img image.Image) error {
 	s := time.Now()
 	img = wh.downscaleToF(img)
 
@@ -93,11 +94,12 @@ func (wh *Warehouse) saveToMemory(ctx context.Context, artID uint, img image.Ima
 		return errors.Wrapf(err, "[warehouse] СЖАТЬ В JPEG НЕ УДАЛОСЬ. ОТКАЗ")
 	}
 
-	err := wh.makeRequest(ctx, wh.memoryURL, map[string]string{
+	url := wh.warehouseArtsURL + "/upload/art"
+	err := wh.makeRequest(ctx, url, map[string]string{
 		"art_id": fmt.Sprintf("%d", artID),
 	}, filename, buf.Bytes())
 	if err != nil {
-		return errors.Wrapf(err, "[warehouse] ARD_ID=%d. ОШИБКА СВЯЗИ С СЕРВЕРОМ %s", artID, wh.memoryURL)
+		return errors.Wrapf(err, "[warehouse] ARD_ID=%d. ОШИБКА СВЯЗИ С СЕРВЕРОМ %s. URL=%s", artID, wh.warehouseArtsURL, url)
 	}
 	log.Info().Msgf("[warehouse] F-КАРТИНКА #%d СОХРАНЕНА НА СКЛАД. T:%s", artID, time.Now().Sub(s))
 	return nil

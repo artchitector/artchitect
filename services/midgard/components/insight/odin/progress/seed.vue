@@ -1,7 +1,11 @@
 <i18n>
 {
-  "en": {},
-  "ru": {}
+  "en": {
+    "seed": "seed"
+  },
+  "ru": {
+    "seed": "seed"
+  }
 }
 </i18n>
 <template>

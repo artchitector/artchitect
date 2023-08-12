@@ -1,10 +1,11 @@
 package model
 
 const (
-	SizeF  = "f"  // 1024x1536
-	SizeM  = "m"  // 512x768
-	SizeS  = "s"  // 256x384
-	SizeXS = "xs" // 128x192
+	SizeF      = "f"      // 1024x1536
+	SizeM      = "m"      // 512x768
+	SizeS      = "s"      // 256x384
+	SizeXS     = "xs"     // 128x192
+	SizeOrigin = "origin" //исходник (jpeg-изображение в большом разрешении, качество 100%)
 
 	HeightToWidth = float64(3.0 / 2.0) // Все картинки Artchitect в соотношении 2:3. Умножь это на Width и получишь Height
 	WidthF        = 1024               // height=1536

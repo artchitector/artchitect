@@ -16,4 +16,5 @@ type artPile interface {
 
 type warehouse interface {
 	GetArtImage(ctx context.Context, artID uint, size string) ([]byte, error)
+	GetArtOrigin(ctx context.Context, artID uint) ([]byte, error)
 }

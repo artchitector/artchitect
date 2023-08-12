@@ -11,15 +11,25 @@ import (
 )
 
 type Warehouse struct {
-	warehouseURL string
+	artWarehouseURL    string
+	originWarehouseURL string
 }
 
-func NewWarehouse(warehouseURL string) *Warehouse {
-	return &Warehouse{warehouseURL: warehouseURL}
+func NewWarehouse(artWarehouseURL string, originWarehouseURL string) *Warehouse {
+	return &Warehouse{artWarehouseURL: artWarehouseURL, originWarehouseURL: originWarehouseURL}
 }
 
 func (w *Warehouse) GetArtImage(ctx context.Context, artID uint, size string) ([]byte, error) {
-	url := w.warehouseURL + "/" + fmt.Sprintf("art/%d/%s", artID, size)
+	return w.get(ctx, w.artWarehouseURL, artID, size)
+}
+
+func (w *Warehouse) GetArtOrigin(ctx context.Context, artID uint) ([]byte, error) {
+	// Odin: исходник, подлинник, в png-формате
+	return w.get(ctx, w.originWarehouseURL, artID, "origin")
+}
+
+func (w *Warehouse) get(ctx context.Context, warehouseURL string, artID uint, size string) ([]byte, error) {
+	url := warehouseURL + "/" + fmt.Sprintf("art/%d/%s", artID, size)
 	log.Info().Msgf("URL: %s", url)
 	r, err := http.Get(url)
 	if err != nil {

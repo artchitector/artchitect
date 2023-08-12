@@ -38,7 +38,7 @@ func main() {
 	warehouse := warehouse2.Warehouse{
 		config.ArtsPath,
 		config.UnityPath,
-		config.FullsizePath,
+		config.OriginPath,
 	}
 
 	// ЗАПУСК HTTP-СЕРВЕРА
@@ -51,10 +51,10 @@ func main() {
 			log.Fatal().Err(err).Send()
 		}
 
-		r.GET("/art/:id/:size/", warehouse.HandleGetArt)
+		r.GET("/art/:id/:size", warehouse.HandleGetArt)
 
-		r.POST("/upload_art", warehouse.HandleUploadArt)
-		r.POST("/upload_fullsize", warehouse.HandleUploadFullsize)
+		r.POST("/upload/art", warehouse.HandleUploadArt)
+		r.POST("/upload/origin", warehouse.HandleUploadOrigin)
 
 		// запуск http-сервера
 		log.Info().Msgf("[warehouse] HTTP-ВРАТА ВКЛ. ПОРТ:%s", config.HttpPort)

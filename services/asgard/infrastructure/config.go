@@ -12,11 +12,11 @@ type Config struct {
 	HttpPort     string
 
 	// подключения к внешним службам
-	DbDSN                string
-	RedisAddr            string
-	RedisPassword        string
-	WarehouseArtUrls     string
-	WarehouseFullsizeUrl string
+	DbDSN              string
+	RedisAddr          string
+	RedisPassword      string
+	WarehouseArtUrls   string
+	WarehouseOriginUrl string
 
 	// hardware
 	WebcamDeviceID        string
@@ -44,11 +44,11 @@ func InitEnv() *Config {
 		HttpPort:     env["HTTP_PORT"],
 
 		// подключения к внешним службам
-		DbDSN:                env["DB_DSN"],
-		RedisAddr:            env["REDIS_ADDR"],
-		RedisPassword:        env["REDIS_PASSWORD"],
-		WarehouseArtUrls:     env["WAREHOUSE_ART_URL"],
-		WarehouseFullsizeUrl: env["WAREHOUSE_FULLSIZE_URL"],
+		DbDSN:              env["DB_DSN"],
+		RedisAddr:          env["REDIS_ADDR"],
+		RedisPassword:      env["REDIS_PASSWORD"],
+		WarehouseArtUrls:   env["WAREHOUSE_ARTS_URL"],
+		WarehouseOriginUrl: env["WAREHOUSE_ORIGIN_URL"],
 
 		// hardware
 		WebcamDeviceID:        env["WEBCAM_DEVICE_ID"],

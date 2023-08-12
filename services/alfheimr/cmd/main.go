@@ -53,7 +53,7 @@ func main() {
 	artPile := model.NewArtPile(db)
 
 	// WAREHOUSE
-	wh := communication.NewWarehouse(config.WarehouseURL)
+	wh := communication.NewWarehouse(config.ArtWarehouseURL, config.OriginWarehouseURL)
 
 	// СБОРКА ПОРТАЛОВ (ХЕНДЛЕРОВ)
 	radioPortal := portals.NewRadioPortal(harbour)
@@ -84,6 +84,7 @@ func main() {
 		r.GET("/art/:id", artPortal.HandleArt)
 		r.GET("/art/:id/flat", artPortal.HandleArtFlat)
 		r.GET("/arts/last/:last", artPortal.HandleLast)
+		r.GET("/image/origin/:id", imPortal.HandleOrigin)
 		r.GET("/image/:id/:size", imPortal.HandleImage)
 
 		// connection - Портал с постоянной связью c Мидгардом (вебсокете)

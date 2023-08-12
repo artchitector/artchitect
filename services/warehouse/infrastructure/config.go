@@ -6,11 +6,11 @@ import (
 )
 
 type Config struct {
-	IsDebug      bool
-	HttpPort     string
-	ArtsPath     string
-	UnityPath    string
-	FullsizePath string
+	IsDebug    bool
+	HttpPort   string
+	ArtsPath   string
+	UnityPath  string
+	OriginPath string
 }
 
 func InitEnv() *Config {
@@ -25,10 +25,10 @@ func InitEnv() *Config {
 	}
 
 	return &Config{
-		IsDebug:      env["IS_DEBUG"] == "true",
-		HttpPort:     env["HTTP_PORT"],
-		ArtsPath:     env["ARTS_PATH"],
-		UnityPath:    env["UNITY_PATH"],
-		FullsizePath: env["FULLSIZE_PATH"],
+		IsDebug:    env["IS_DEBUG"] == "true",
+		HttpPort:   env["HTTP_PORT"],
+		ArtsPath:   env["ARTS_PATH"],
+		UnityPath:  env["UNITY_PATH"],
+		OriginPath: env["ORIGIN_PATH"],
 	}
 }

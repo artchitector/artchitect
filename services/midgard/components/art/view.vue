@@ -10,7 +10,7 @@
 </i18n>
 <template>
   <div class="card">
-    <div class="card-content">
+    <div class="card-content pb-1">
       <div class="media">
         <div class="columns">
           <div class="column is-one-fifth">
@@ -30,6 +30,9 @@
       <div class="content">
         <art-tags :art="art"/>
       </div>
+    </div>
+    <div class="has-text-centered mb-1">
+      <a :href="`/api/image/${art.id}/origin`" class="is-size-7">полный размер</a>
     </div>
     <div class="card-image">
       <figure class="image is-2by3">
@@ -54,16 +57,21 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  .card .media .columns {
+.card {
+  .media .columns {
     width: 100%;
+
     .column {
       padding-bottom: 0;
     }
+
     figure {
       display: inline-block;
     }
+
     img {
       image-rendering: pixelated;
     }
   }
+}
 </style>

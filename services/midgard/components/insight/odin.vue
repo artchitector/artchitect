@@ -14,7 +14,7 @@
         <insight-odin-progress :odin="odin" :entropy="entropy"/>
       </div>
       <div class="wrapper-cell">
-        <insight-odin-arts :giving="giving"/>
+        <insight-odin-arts v-if="giving" :giving="giving"/>
       </div>
     </template>
   </div>

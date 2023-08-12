@@ -3,12 +3,14 @@
   "en": {
     "seed": "seed",
     "more": "show more",
-    "less": "show less"
+    "less": "show less",
+    "number_of_words": "number of words"
   },
   "ru": {
     "seed": "seed",
     "more": "показать подробнее",
-    "less": "показать меньше"
+    "less": "показать меньше",
+    "number_of_words": "количество слов"
   }
 }
 </i18n>
@@ -38,6 +40,17 @@
           <img class="entropy-image" :src="`data:image/png;base64, ${art.idea.seedEntropy.entropy.image}`"
                alt="odin's mind"/>
           <img class="entropy-image" :src="`data:image/png;base64, ${art.idea.seedEntropy.choice.image}`"
+               alt="odin's mind"/>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          {{$t('number_of_words')}}={{ art.idea.words.length }}
+        </td>
+        <td>
+          <img class="entropy-image" :src="`data:image/png;base64, ${art.idea.numberOfWordsEntropy.entropy.image}`"
+               alt="odin's mind"/>
+          <img class="entropy-image" :src="`data:image/png;base64, ${art.idea.numberOfWordsEntropy.choice.image}`"
                alt="odin's mind"/>
         </td>
       </tr>

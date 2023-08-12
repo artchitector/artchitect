@@ -24,9 +24,9 @@ type artRequest struct {
 }
 
 type Warehouse struct {
-	ArtsPath     string
-	UnityPath    string
-	FullsizePath string
+	ArtsPath   string
+	UnityPath  string
+	OriginPath string
 }
 
 func (w *Warehouse) HandleGetArt(c *gin.Context) {
@@ -37,14 +37,22 @@ func (w *Warehouse) HandleGetArt(c *gin.Context) {
 	}
 
 	unityMask := model.Art{ID: request.Id}.GetUnityMask(model.Unity1K)
-	dirpath := path.Join(w.ArtsPath, fmt.Sprintf("U%s", unityMask))
-	filename := fmt.Sprintf("art-%d-%s.jpg", request.Id, request.Size)
+	var dirpath, filename, contentType string
+	if request.Size == model.SizeOrigin {
+		dirpath = path.Join(w.OriginPath, fmt.Sprintf("U%s", unityMask))
+		filename = fmt.Sprintf("art-%d.jpg", request.Id)
+		contentType = "image/jpeg"
+	} else {
+		dirpath = path.Join(w.ArtsPath, fmt.Sprintf("U%s", unityMask))
+		filename = fmt.Sprintf("art-%d-%s.jpg", request.Id, request.Size)
+		contentType = "image/jpeg"
+	}
 	data, err := w.readFile(dirpath, filename)
 	if err != nil {
 		c.String(http.StatusNotFound, err.Error())
 		return
 	}
-	c.Data(http.StatusOK, "image/jpeg", data)
+	c.Data(http.StatusOK, contentType, data)
 }
 
 func (w *Warehouse) HandleUploadArt(c *gin.Context) {
@@ -96,7 +104,7 @@ func (w *Warehouse) HandleUploadArt(c *gin.Context) {
 	}
 }
 
-func (w *Warehouse) HandleUploadFullsize(c *gin.Context) {
+func (w *Warehouse) HandleUploadOrigin(c *gin.Context) {
 	// а тут приходит JPEG-файл в полном размере
 	data, artID, err := w.parse(c)
 	if err != nil {
@@ -116,7 +124,7 @@ func (w *Warehouse) HandleUploadFullsize(c *gin.Context) {
 	}
 
 	filename := fmt.Sprintf("art-%d.jpg", artID)
-	if err := w.saveFile(c, w.FullsizePath, artID, filename, data); err != nil {
+	if err := w.saveFile(c, w.OriginPath, artID, filename, data); err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		log.Error().Err(err).Msgf("[warehouse:HandleUploadArt] НЕ УДАЛОСЬ СОХРАНИТЬ JPG-ФАЙЛ")
 		return

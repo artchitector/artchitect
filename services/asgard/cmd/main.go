@@ -48,7 +48,7 @@ func main() {
 
 	// внешние связи
 	bifröst := communication.NewBifröst(red)
-	warehouse := communication.NewWarehouse(config.WarehouseFullsizeUrl, config.WarehouseArtUrls)
+	warehouse := communication.NewWarehouse(config.WarehouseOriginUrl, config.WarehouseArtUrls)
 	keyhole := communication.NewKeyhole(config.HttpPort, webcam)
 
 	// хранилища сущностей

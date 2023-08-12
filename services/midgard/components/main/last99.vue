@@ -43,8 +43,10 @@ export default {
   async mounted() {
     this.radioPid = await Radio.subscribe("new_art", (art) => {
       console.log(`[LAST99] НОВАЯ КАРТИНА #${art.id}`)
-      this.arts.pop()
       this.arts.unshift(art)
+      if (this.arts.length > 99) {
+        this.arts.pop()
+      }
     })
   },
   beforeDestroy() {

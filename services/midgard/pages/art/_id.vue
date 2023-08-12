@@ -37,7 +37,7 @@ export default {
         {property: 'og:title', content: `Artchitect - Art #${artId}`},
         {property: 'og:description', content: this.$t('description')},
         {property: 'og:type', content: 'image'},
-        {property: 'og:image', content: `https://artchitect.space/api/image/m/${artId}`}
+        {property: 'og:image', content: `https://artchitect.space/api/image/${artId}/m`}
       ]
     }
   },

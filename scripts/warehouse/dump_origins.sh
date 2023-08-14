@@ -30,6 +30,8 @@ if [ -e "$filename" ]; then
     echo "[!!!] АРХИВ $filename УЖЕ СОБРАН. ПРОПУСКАЮ"
   else
     echo "[!!!] НАЧИНАЮ СОБИРАТЬ АРХИВ $filename"
-    tar -zcvf $filename $preFolder
+    tempfile="<home_path>/tmp/$preFolder.tar.gz"
+    tar -zcvf $tempfile $preFolder
+    mv $tempfile $filename
     echo "[!!!] АРХИВ $filename СОБРАН"
   fi

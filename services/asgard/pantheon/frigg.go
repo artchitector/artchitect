@@ -47,6 +47,10 @@ type Frigg struct {
 	unityPile unityPile
 }
 
+func NewFrigg(unityPile unityPile) *Frigg {
+	return &Frigg{unityPile: unityPile}
+}
+
 /*
 ReunifyArtUnities - когда рисуется очередная картина, то это может вызвать каскадные обновления единств этой картины
 Пример: сотенное единство обновляется каждые 10 картин, тысячное единство обновляется каждые 50 картин... (см константы в model.Unity)
@@ -126,7 +130,7 @@ func (f *Frigg) createNonexistentUnities(ctx context.Context, art model.Art) err
 		if err != nil {
 			return errors.Wrapf(err, "[frigg] МАТЕМАТИЧЕСКИЙ СБОЙ MIN-MAX %s", mask)
 		}
-		unity, err := f.unityPile.Create(ctx, mask, min, max)
+		unity, err := f.unityPile.Create(ctx, mask, rank, min, max)
 		if err != nil {
 			return errors.Wrapf(err, "[frigg] СБОЙ СОЗДАНИЯ ЕДИНСТВА %s", mask)
 		}

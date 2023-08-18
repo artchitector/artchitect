@@ -53,14 +53,16 @@ func main() {
 
 	// хранилища сущностей
 	artPile := model.NewArtPile(database)
+	unityPile := model.NewUnityPile(database)
 
 	giving := communication.NewGiving(artPile, muninn, bifröst)
 
 	heimdall := pantheon.NewHeimdallr(huginn, bifröst)
-	ai := infrastructure.NewAI(config.InvokeAIPath)
+	ai := infrastructure.NewAI(config.UseFakeAI, config.InvokeAIPath)
 	freyja := pantheon.NewFreyja(ai)
 	gungner := pantheon.NewGungner()
-	odin := pantheon.NewOdin(config.CreatorActive, freyja, muninn, gungner, heimdall, artPile, warehouse)
+	frigg := pantheon.NewFrigg(unityPile)
+	odin := pantheon.NewOdin(config.CreatorActive, frigg, freyja, muninn, gungner, heimdall, artPile, warehouse)
 
 	// запуск фоновых служб
 	go runServices(ctx, lostEye, huginn, heimdall, webcam, keyhole, giving, odin, bifröst)

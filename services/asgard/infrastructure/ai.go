@@ -2,10 +2,17 @@ package infrastructure
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/artchitector/artchitect2/model"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"image/jpeg"
+	"image/png"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -35,12 +42,12 @@ type AI struct {
 	pathFinderRegexp *regexp.Regexp
 }
 
-func NewAI(invokeAIPath string) *AI {
+func NewAI(isFake bool, invokeAIPath string) *AI {
 	// регулярное выражение для поиска файла в выводе от InvokeAI выглядит так
 	// .*(\/home\/user\/invoke-ai\/invokeai_v2.3.0\/outputs\/[0-9\.]+png).*
 	regexpPath := strings.ReplaceAll(invokeAIPath, "/", "\\/")
 	fullRegexp := fmt.Sprintf(".*(%s\\/outputs\\/[0-9\\.]+png).*", regexpPath)
-	return &AI{invokeAIPath: invokeAIPath, pathFinderRegexp: regexp.MustCompile(fullRegexp)}
+	return &AI{isFake: isFake, invokeAIPath: invokeAIPath, pathFinderRegexp: regexp.MustCompile(fullRegexp)}
 }
 
 func (ai *AI) GenerateImage(ctx context.Context, seed uint, prompt string) ([]byte, error) {
@@ -188,6 +195,65 @@ func (ai *AI) checkLineAndGetFile(line string) (found bool, filename string) {
 	return false, ""
 }
 
+// getFakeImage - стенд для разработки не использует ИИ по-настоящему, не рисует реальные картины.
+// Тут достаётся одна случайная картина Artchitect. Chosen - специальная ручка в Artchitect, которая позволяет получить
+// эту случайную картину. Картина на самом деле не случайна, её Один выбирает с помощью энтропии.
 func (ai *AI) getFakeImage(ctx context.Context) ([]byte, error) {
-	return []byte{}, errors.Errorf("[ai] НЕ РЕАЛИЗОВАНО")
+	chosenUrl := "https://artchitect.space/api/art/chosen"
+
+	r, err := http.NewRequestWithContext(ctx, http.MethodGet, chosenUrl, nil)
+	if err != nil {
+		return nil, errors.Wrapf(err, "[ai] НЕТ ДОСТУПА К %s", chosenUrl)
+	}
+
+	resp, err := http.DefaultClient.Do(r)
+	defer resp.Body.Close()
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "[ai] ОШИБКА ЗАПРОСА %s", chosenUrl)
+	} else if resp.StatusCode != http.StatusOK {
+		return nil, errors.Errorf("[ai] КОД ОТВЕТА НЕ 200 %s: %s", chosenUrl, resp.Status)
+	}
+
+	artData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Wrapf(err, "[ai] ОШИБКА ЧТЕНИЯ ТЕЛА %s", chosenUrl)
+	}
+
+	var flat model.FlatArt
+	if err := json.Unmarshal(artData, &flat); err != nil {
+		return nil, errors.Wrapf(err, "[ai] ОШИБКА ПАРСИНГА ОТВЕТА FLAT %s", chosenUrl)
+	}
+
+	log.Info().Msgf("[ai] ТЕСТОВАЯ КАРТИНА ВЫБРАНА ВСЕОТЦОМ. ID=%d", flat.ID)
+
+	fullsizeURL := fmt.Sprintf("https://artchitect.space/api/image/%d/origin", flat.ID)
+	r, err = http.NewRequestWithContext(ctx, http.MethodGet, fullsizeURL, nil)
+	if err != nil {
+		return nil, errors.Wrapf(err, "[ai] НЕТ ДОСТУПА К %s", fullsizeURL)
+	}
+	resp, err = http.DefaultClient.Do(r)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, errors.Wrapf(err, "[ai] ОШИБКА ЗАПРОСА %s", fullsizeURL)
+	} else if resp.StatusCode != http.StatusOK {
+		return nil, errors.Wrapf(err, "[ai] КОД ОТВЕТА НЕ 200 %s: %s", fullsizeURL, resp.Status)
+	}
+	imgData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Wrapf(err, "[ai] ОШИБКА ЧТЕНИЯ КАРТИНЫ %s", fullsizeURL)
+	}
+
+	// Так как AI рисует в PNG, а оригиналы хранятся уже в JPEG, то тут нужно перекодировать обратно JPEG->PNG
+	rdr := bytes.NewReader(imgData)
+	img, err := jpeg.Decode(rdr)
+	if err != nil {
+		return nil, errors.Wrapf(err, "[ai] ОШИБКА ЧТЕНИЯ JPEG")
+	}
+	b := bytes.Buffer{}
+	if err := png.Encode(&b, img); err != nil {
+		return nil, errors.Wrapf(err, "[ai] ОШИБКА КОДИРОВАНИЯ PNG")
+	}
+
+	return b.Bytes(), nil
 }

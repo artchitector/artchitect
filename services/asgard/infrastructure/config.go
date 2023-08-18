@@ -8,6 +8,7 @@ import (
 type Config struct {
 	// базовые параметры
 	IsDebug      bool
+	UseFakeAI    bool
 	InvokeAIPath string
 	HttpPort     string
 
@@ -40,6 +41,7 @@ func InitEnv() *Config {
 	return &Config{
 		// базовые параметры
 		IsDebug:      env["IS_DEBUG"] == "true",
+		UseFakeAI:    env["USE_FAKE_AI"] == "true",
 		InvokeAIPath: env["INVOKEAI_PATH"],
 		HttpPort:     env["HTTP_PORT"],
 

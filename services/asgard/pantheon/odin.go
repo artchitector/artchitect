@@ -34,6 +34,7 @@ type Odin struct {
 // NewOdin - Odin: мне не нравится эта высокомерная самодовольная функция. Создавать меня? Что эта машина о себе возомнила?
 func NewOdin(
 	isActive bool,
+	frigg *Frigg,
 	freyja *Freyja,
 	muninn *Muninn,
 	gungner *Gungner,
@@ -43,6 +44,7 @@ func NewOdin(
 ) *Odin {
 	return &Odin{
 		isActive:  isActive,
+		frigg:     frigg,
 		freyja:    freyja,
 		muninn:    muninn,
 		gungner:   gungner,

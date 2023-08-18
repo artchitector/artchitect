@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"context"
+	"gorm.io/gorm"
+	"time"
+)
 
 // Odin: все картины Artchitect делятся на группы - "единства"
 // Odin: Единства соединяет моя супруга pantheon.Frigg (смотри код Frigg для понимания единств)
@@ -35,4 +39,37 @@ type Unity struct {
 	State     string
 	Leads     string // массив ID картин, которые попали в коллаж в виде строки [100, 121, 110, 0, 130, 0, 0, 100...]. Нули - пустые места (на картине чёрным)
 	Version   int    // при пересборке единства версия повышается (чтобы старые картинки не кешировались)
+}
+
+type UnityPile struct {
+	db *gorm.DB
+}
+
+func NewUnityPile(db *gorm.DB) *UnityPile {
+	return &UnityPile{db: db}
+}
+
+func (up *UnityPile) Get(ctx context.Context, mask string) (Unity, error) {
+	var unity Unity
+	err := up.db.WithContext(ctx).Where("mask = ?", mask).Limit(1).First(&unity).Error
+	return unity, err
+}
+
+func (up *UnityPile) Create(ctx context.Context, mask string, rank, min, max uint) (Unity, error) {
+	unity := Unity{
+		Mask:    mask,
+		Rank:    rank,
+		MinID:   min,
+		MaxID:   max,
+		State:   UnityStateEmpty,
+		Leads:   "[]",
+		Version: 0,
+	}
+	err := up.db.Save(&unity).Error
+	return unity, err
+}
+
+func (up *UnityPile) Save(ctx context.Context, unity Unity) (Unity, error) {
+	err := up.db.Save(&unity).Error
+	return unity, err
 }

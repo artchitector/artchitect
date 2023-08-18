@@ -17,7 +17,7 @@ type artPile interface {
 // unityPile - репозиторий единств
 type unityPile interface {
 	Get(ctx context.Context, mask string) (model.Unity, error)
-	Create(ctx context.Context, mask string, min, max uint) (model.Unity, error)
+	Create(ctx context.Context, mask string, rank, min, max uint) (model.Unity, error)
 	Save(ctx context.Context, unity model.Unity) (model.Unity, error)
 }
 

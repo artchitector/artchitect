@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"github.com/artchitector/artchitect2/model"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"image"
 	"image/color"
@@ -142,13 +140,7 @@ func (h *Heimdallr) fillEntropyPackWithImages(pack model.EntropyPack) model.Entr
 
 func (h *Heimdallr) sendDrakkar(ctx context.Context, channel string, pack interface{}) error {
 	// Heimdallr: теперь отправлю этот ценный драккар по волнам Биврёста...
-	var b []byte
-	var err error
-	if b, err = json.Marshal(&pack); err != nil {
-		return errors.Wrap(err, "[heimdallr] ЭНТРОПИЯ ИСПОРЧЕНА. БЛЭКАУТ!")
-	}
-	err = h.bifröst.SendDrakkar(ctx, channel, string(b))
-	return err
+	return h.bifröst.SendDrakkar(ctx, channel, pack)
 }
 
 // makeEntropyImage - матрица сил пикселей в энтропии становится 8х8 PNG картинкой

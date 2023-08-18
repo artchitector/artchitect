@@ -46,7 +46,7 @@ Unity1K = U012XXX
 Unity100 = U0123XX
 Всего во множестве 6 символов, вплоть до картины #999999
 */
-func (a Art) GetUnityMask(unityType int) string {
+func (a Art) GetUnityMask(unityType uint) string {
 	if a.ID > 999999 {
 		// Числа более 999999 не поддерживаются. Artchitect не собирается рисовать 1млн.
 		// краш Artchitect. Дальше #999999 уже ничего не будет нарисовано, пока тут не исправить.

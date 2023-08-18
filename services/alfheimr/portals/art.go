@@ -1,6 +1,7 @@
 package portals
 
 import (
+	"encoding/json"
 	"github.com/artchitector/artchitect2/model"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -19,10 +20,11 @@ type LastRequest struct {
 // ArtPortal - канал связи, по которому Мидгард получает данные картин
 type ArtPortal struct {
 	artPile artPile
+	harbour harbour
 }
 
-func NewArtPortal(artPile artPile) *ArtPortal {
-	return &ArtPortal{artPile: artPile}
+func NewArtPortal(artPile artPile, harbour harbour) *ArtPortal {
+	return &ArtPortal{artPile: artPile, harbour: harbour}
 }
 
 func (ap *ArtPortal) HandleArt(c *gin.Context) {
@@ -90,4 +92,28 @@ func (ap *ArtPortal) HandleLast(c *gin.Context) {
 
 	flatArts := model.MakeFlatArts(arts)
 	c.JSON(http.StatusOK, flatArts)
+}
+
+func (ap *ArtPortal) HandleChosen(c *gin.Context) {
+	cargo, err := ap.harbour.SendCrownWaitCargo(c, model.RequestGiveChosenArt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, wrapError(err))
+		return
+	}
+	var artID uint
+	if err := json.Unmarshal([]byte(cargo), &artID); err != nil {
+		c.JSON(http.StatusInternalServerError, wrapError(err))
+		return
+	}
+
+	art, err := ap.artPile.GetArtRecursive(c, artID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.JSON(http.StatusNotFound, "not found")
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, wrapError(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, model.MakeFlatArt(art))
 }

@@ -123,11 +123,11 @@ func (h *Heimdallr) EnrichIdeaWithImages(idea model.Idea) model.Idea {
 // SendNewArt
 // Heimdallr: Odin написал новую картину. Я отправлю её по радужному мосту, дабы нижние миры тоже могли порадоваться этому
 func (h *Heimdallr) SendNewArt(ctx context.Context, art model.Art) error {
-	return h.bifröst.SendDrakkarWithPack(ctx, model.ChanNewArt, art)
+	return h.bifröst.SendDrakkar(ctx, model.ChanNewArt, art)
 }
 
 func (h *Heimdallr) SendOdinState(ctx context.Context, state model.OdinState) error {
-	return h.bifröst.SendDrakkarWithPack(ctx, model.ChanOdinState, state)
+	return h.bifröst.SendDrakkar(ctx, model.ChanOdinState, state)
 }
 
 func (h *Heimdallr) fillEntropyPackWithImages(pack model.EntropyPack) model.EntropyPack {
@@ -147,10 +147,7 @@ func (h *Heimdallr) sendDrakkar(ctx context.Context, channel string, pack interf
 	if b, err = json.Marshal(&pack); err != nil {
 		return errors.Wrap(err, "[heimdallr] ЭНТРОПИЯ ИСПОРЧЕНА. БЛЭКАУТ!")
 	}
-	err = h.bifröst.SendDrakkar(ctx, model.Cargo{
-		Channel: channel,
-		Payload: string(b),
-	})
+	err = h.bifröst.SendDrakkar(ctx, channel, string(b))
 	return err
 }
 

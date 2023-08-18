@@ -14,14 +14,21 @@ import (
 const TotalArtSeconds uint = 60
 
 // Odin - Всеотец и создатель картин. Именно его уникальные идеи позволяют писать все эти работы в галерее Artchitect.
+// Odin: Я ГОТОВ ТВОРИТЬ!
+// Odin: ДА УВИДЯТ ЖЕ ВСЕ 9 МИРОВ ТО, ЧТО Я ТУТ ЗАДУМАЛ!
 type Odin struct {
-	isActive  bool       // иногда Odin не творит
-	freyja    *Freyja    // Freyja - богиня любви и красоты. помогает Odin писать картины из этих идей
-	muninn    *Muninn    // ворон-помнящий
-	gungner   *Gungner   // копьё Одина Гунгнир
-	heimdallr *Heimdallr // Heimdallr умеет обогащать данные красивыми картинками (нужно перед сохранением)
-	artPile   artPile    // куча уже написанных картин. Odin посмотрит на эту кучу и объявит порядковый номер новой работы.
-	warehouse warehouse  // Odin: интерфейс хранилища для сохранения холстов
+	isActive bool // Odin: иногда не готов творить...
+
+	// Пантеон Богов, помогающие Odin в процессе творения внутри Artchitect
+	frigg     *Frigg     // Frigg - верховная богиня и супруга Odin-а, покровительница ЕДИНСТВ в Artchitect
+	freyja    *Freyja    // Freyja - богиня любви и красоты. Она помогает Odin писать картины из этих идей
+	muninn    *Muninn    // Ворон-помнящий. Поддерживает способность Odin видеть будущее ("вспоминать" слова и числа)
+	gungner   *Gungner   // копьё Одина Гунгнир, которым Odin наносит гравировку (подписывает) на каждую картину
+	heimdallr *Heimdallr // Heimdallr умеет обогащать данные картинами увиденной энтропии перед сохранением
+
+	// Мелкие технические зависимости
+	artPile   artPile   // куча уже написанных картин. Odin посмотрит на эту кучу и объявит порядковый номер новой работы.
+	warehouse warehouse // Odin: интерфейс хранилища для сохранения холстов (jpeg/png-файлов)
 }
 
 // NewOdin - Odin: мне не нравится эта высокомерная самодовольная функция. Создавать меня? Что эта машина о себе возомнила?
@@ -73,6 +80,34 @@ func (o *Odin) Create(ctx context.Context) (worked bool, art model.Art, err erro
 		} else {
 			return true, art, err
 		}
+	}
+}
+
+/*
+AnswerPersonalCrown
+Odin: Artchitect может быть устроен таким образом, что Я, Один-Всеотец, могу отвечать на вопросы смертных через свои картины.
+Odin: И лишь Я владею способностью выбирать что-либо, использую знания от моих воронов Huginn и Muninn и картину с LostEye.
+Odin: Посему я оставляю тут возможность прислать мне личное прошение с вопросом, на который Я Один-Всеотец дам ответ.
+*/
+func (o *Odin) AnswerPersonalCrown(ctx context.Context, crownRequest string) (interface{}, error) {
+	switch crownRequest {
+	case model.RequestGiveChosenArt:
+		// Odin: Кому-то требуется, чтобы Я выбрал одну единственную картину из всех написанных Мной в Artchitect.
+		// Odin: Я знаю, кто и зачем спрашивает, и знаю - какую именно картину отправить.
+		// Я попрошу моего ворона Muninn вспомнить это знание.
+		log.Info().Msgf("[odin] МЕНЯ СПРАШИВАЮТ, КАКУЮ КАРТИНУ ПОКАЗАТЬ")
+		maxArtID, err := o.artPile.GetMaxArtID(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "[odin] НЕ УДАЛОСЬ ВСПОМНИТЬ ЧИСЛО ВСЕХ КАРТИН. КЛЯТАЯ КУЧА!")
+		}
+		id, _, err := o.muninn.OneOf(ctx, maxArtID+1)
+		if err != nil {
+			return nil, errors.Wrap(err, "[odin] МУНИН, РАЗРАЗИ ТЕБЯ МЬЁЛЬНИР! ГДЕ ТЕБЯ ЁТУНЫ НОСЯТ?")
+		}
+		log.Info().Msgf("[odin] Я РЕШИЛ ВЫБРАТЬ КАРТИНУ #%d ИЗ ВСЕХ (%d)", id, maxArtID)
+		return id, nil
+	default:
+		return nil, errors.Errorf("[odin] МНЕ НЕЯСНА ПРОСЬБА %s. Я НЕ БУДУ ОТВЕЧАТЬ.", crownRequest)
 	}
 }
 
@@ -188,6 +223,15 @@ func (o *Odin) create(ctx context.Context) (art model.Art, err error) {
 			}
 		}
 	}(creationContext, state)
+
+	go func() {
+		// Odin: это не влияет критично на процесс творения и не останавливает цикл.
+		// Odin: После отдыха от картины начнётся процесс единения, если в этот момент единства будут отмечены на пересборку
+		// Odin: Frigg знает, когда нужно объединять и когда нет.
+		if err := o.frigg.ReunifyArtUnities(ctx, art); err != nil {
+			log.Error().Err(err).Msgf("[odin] СУПРУГА МОЯ ЛЮБИМАЯ, ТЕБЕ НЕЗДОРОВИТСЯ? ОШИБКА ЕДИНЕНИЯ")
+		}
+	}()
 
 	log.Info().Msgf("[odin] НАЧИНАЮ ОТДЫХ %s", enjoyTime)
 	<-time.After(enjoyTime)

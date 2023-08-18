@@ -63,13 +63,13 @@ func (m *Muninn) RememberWord(ctx context.Context) (model.Word, error) {
 
 }
 
-// OneOf - Muninn: если maxval=100, то могут возвращаться числа от 0 до 99 (безопасно для выбора из массивов)
-func (m *Muninn) OneOf(ctx context.Context, maxval uint) (uint, model.EntropyPack, error) {
+// OneOf - Muninn: если limit=100, то могут возвращаться числа от 0 до 99 (безопасно для выбора из массивов)
+func (m *Muninn) OneOf(ctx context.Context, limit uint) (uint, model.EntropyPack, error) {
 	pack, err := m.huginn.GetNextEntropy(ctx)
 	if err != nil {
 		return 0, model.EntropyPack{}, errors.Wrap(err, "[muninn] ХУГИН, ГДЕ ЭНТРОПИЯ?")
 	}
-	result := uint(math.Round(pack.Choice.FloatValue * float64(maxval-1)))
+	result := uint(math.Round(pack.Choice.FloatValue * float64(limit-1)))
 	return result, pack, nil
 }
 

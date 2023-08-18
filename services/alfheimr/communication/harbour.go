@@ -50,9 +50,10 @@ Odin: некоторые грузы не будут переданы в мидг
 Odin: некоторые грузы будут ретранслированы по внешнему радио (websocket), которое доступно из Мидгарда (браузера)
 */
 type Harbour struct {
-	mutex    sync.Mutex
-	red      *redis.Client
-	listener []*subscriber // слушатели радио
+	mutex       sync.Mutex
+	red         *redis.Client
+	listener    []*subscriber // слушатели радио
+	lastCrownID uint
 }
 
 func NewHarbour(red *redis.Client) *Harbour {
@@ -87,6 +88,58 @@ func (l *Harbour) Run(ctx context.Context) error {
 				log.Error().Err(err).Msgf("[harbour] ОШИБКА ОБРАБОТКИ ГРУЗА")
 			}
 		}
+	}
+}
+
+// SendCrownWaitCargo - отправка почтового ворона с личной просьбой к Одину-Всеотцу
+// и ожидание специального груза с Его ответом
+// TODO: Odin: точно ли этот метод можно вызывать параллельно? Это надо протестировать.
+func (l *Harbour) SendCrownWaitCargo(ctx context.Context, request string) (string, error) {
+	id := l.lastCrownID + 1
+	crown := model.Crown{
+		ID:      id,
+		Request: request,
+	}
+
+	innerCtx, cancel := context.WithCancel(ctx)
+	innerCtx, cancel = context.WithTimeout(innerCtx, model.OdinResponseTimeoutSec*time.Second)
+
+	go func(id uint) {
+		time.Sleep(time.Millisecond * 10) // небольшой лаг
+		jsn, err := json.Marshal(crown)
+		if err != nil {
+			cancel()
+			log.Error().Err(err).Msgf("[harbour] ПРОБЛЕМА ОТПРАВКИ ВОРОНА - JSON. ID=%d", id)
+			return
+		}
+		if err := l.red.Publish(innerCtx, model.ChanCrown, jsn).Err(); err != nil {
+			cancel()
+			log.Error().Err(err).Msgf("[harbour] СБОЙ В ОТПРАВКЕ ВОРОНА ID=%d", id)
+			return
+		}
+		log.Info().Msgf("[harbour] ВОРОН С ЛИЧНЫМ ПРОШЕНИЕМ К ОДИНУ ID=%d ОТПРАВИЛСЯ В АСГАРД", id)
+	}(id)
+
+	// Odin: тут организуется временный слушатель канала с моими личными поручениями model.ChanOdin
+	subscriber := l.red.Subscribe(innerCtx, model.ChanOdin)
+	defer subscriber.Close()
+	log.Info().Msgf("[harbour] НАЧИНАЮ ОЖИДАТЬ ЛИЧНЫЙ ГРУЗ ОТ ОДИНА. ID=%d", id)
+	l.lastCrownID = id
+	for {
+		msg, err := subscriber.ReceiveMessage(innerCtx)
+		if err != nil {
+			return "", errors.Wrapf(err, "[harbour] ОШИБКА ПРИНЯТИЯ ЛИЧНОГО КОРАБЛЯ ОДИНА ID=%d", id)
+		}
+		var response model.OdinResponse
+		if err := json.Unmarshal([]byte(msg.Payload), &response); err != nil {
+			return "", errors.Wrapf(err, "[harbour] ОШИБКА РАСШИФРОВКИ ОТВЕТА. ЗАПРОС ID=%d", id)
+		}
+		if response.ID != id {
+			log.Info().Msgf("[harbour] НЕ СОВПАДАЕТ ID ОТВЕТА. ПРОПУСКАЮ.")
+			continue
+		}
+		log.Info().Msgf("[harbour] ОТВЕТ НА ПРОШЕНИЕ ID=%d ПОЛУЧЕН", id)
+		return response.Response, nil
 	}
 }
 

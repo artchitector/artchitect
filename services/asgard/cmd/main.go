@@ -63,7 +63,7 @@ func main() {
 	odin := pantheon.NewOdin(config.CreatorActive, freyja, muninn, gungner, heimdall, artPile, warehouse)
 
 	// запуск фоновых служб
-	go runServices(ctx, lostEye, huginn, heimdall, webcam, keyhole, giving)
+	go runServices(ctx, lostEye, huginn, heimdall, webcam, keyhole, giving, odin, bifröst)
 	// запуск Главного Цикла Архитектора (ГЦА)
 	runArtchitect(ctx, odin)
 }
@@ -86,6 +86,8 @@ func runServices(
 	webcam *infrastructure.Webcam,
 	keyhole *communication.Keyhole,
 	giving *communication.Giving,
+	odin *pantheon.Odin,
+	bifröst *communication.Bifröst,
 ) {
 	webcamStream := make(chan image.Image)
 	go func() {
@@ -114,5 +116,9 @@ func runServices(
 	go func() {
 		giving.StartGiving(ctx)
 		log.Debug().Msgf("[main] GIVING ОСТАНОВЛЕН")
+	}()
+	go func() {
+		bifröst.ListenPrivateOdinRequests(ctx, odin)
+		log.Debug().Msgf("[main] ОСТАНОВЛЕНО ЧТЕНИЕ ЛИЧНЫХ ПРОШЕНИЙ К ОДИНУ")
 	}()
 }

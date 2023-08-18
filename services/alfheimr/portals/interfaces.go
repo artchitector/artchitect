@@ -18,3 +18,7 @@ type warehouse interface {
 	GetArtImage(ctx context.Context, artID uint, size string) ([]byte, error)
 	GetArtOrigin(ctx context.Context, artID uint) ([]byte, error)
 }
+
+type harbour interface {
+	SendCrownWaitCargo(ctx context.Context, request string) (string, error)
+}

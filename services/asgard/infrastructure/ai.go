@@ -30,6 +30,7 @@ const (
 
 // AI - обёртка над Invoke.AI (который обёртка над Stable Diffusion), дающая создание картинок по prompt
 type AI struct {
+	isFake           bool // Odin: при локальной разработке ИИ не задействуется, а скачивается одна случайная картина с сайта artchitect.space
 	invokeAIPath     string
 	pathFinderRegexp *regexp.Regexp
 }
@@ -43,6 +44,9 @@ func NewAI(invokeAIPath string) *AI {
 }
 
 func (ai *AI) GenerateImage(ctx context.Context, seed uint, prompt string) ([]byte, error) {
+	if ai.isFake {
+		return ai.getFakeImage(ctx)
+	}
 	if err := ai.prepareListTxt(seed, prompt); err != nil {
 		return nil, errors.Wrap(err, "[ai] ОШИБКА СОЗДАНИЯ TXT-ФАЙЛА")
 	}
@@ -182,4 +186,8 @@ func (ai *AI) checkLineAndGetFile(line string) (found bool, filename string) {
 		return true, match[1]
 	}
 	return false, ""
+}
+
+func (ai *AI) getFakeImage(ctx context.Context) ([]byte, error) {
+	return []byte{}, errors.Errorf("[ai] НЕ РЕАЛИЗОВАНО")
 }

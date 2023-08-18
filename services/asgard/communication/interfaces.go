@@ -17,3 +17,7 @@ type artPile interface {
 type muninn interface {
 	OneOf(ctx context.Context, maxval uint) (uint, model.EntropyPack, error)
 }
+
+type odin interface {
+	AnswerPersonalCrown(ctx context.Context, crownRequest string) (interface{}, error)
+}

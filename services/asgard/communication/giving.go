@@ -49,14 +49,14 @@ func (g *Giving) step(ctx context.Context, state *model.GivingState) error {
 			return errors.Wrap(err, "[giving] ОШИБКА НАПОЛНЕНИЯ СОСТОЯНИЯ")
 		}
 
-		err := g.bifröst.SendDrakkarWithPack(ctx, model.ChanGiving, state)
+		err := g.bifröst.SendDrakkar(ctx, model.ChanGiving, state)
 		return err
 	}
 
 	if err := g.updateState(ctx, state); err != nil {
 		return errors.Wrap(err, "[giving] ОШИБКА ОБНОВЛЕНИЯ СОСТОЯНИЯ")
 	}
-	err := g.bifröst.SendDrakkarWithPack(ctx, model.ChanGiving, state)
+	err := g.bifröst.SendDrakkar(ctx, model.ChanGiving, state)
 	return err
 }
 

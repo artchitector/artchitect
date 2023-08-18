@@ -57,7 +57,7 @@ func main() {
 
 	// СБОРКА ПОРТАЛОВ (ХЕНДЛЕРОВ)
 	radioPortal := portals.NewRadioPortal(harbour)
-	artPortal := portals.NewArtPortal(artPile)
+	artPortal := portals.NewArtPortal(artPile, harbour)
 	imPortal := portals.NewImagePortal(wh)
 
 	// ЗАПУСК HTTP-СЕРВЕРА
@@ -81,6 +81,7 @@ func main() {
 			c.JSON(200, gin.H{"message": "pong"})
 		})
 
+		r.GET("/art/chosen", artPortal.HandleChosen)
 		r.GET("/art/:id", artPortal.HandleArt)
 		r.GET("/art/:id/flat", artPortal.HandleArtFlat)
 		r.GET("/arts/last/:last", artPortal.HandleLast)

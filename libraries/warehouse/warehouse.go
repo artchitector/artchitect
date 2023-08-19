@@ -1,4 +1,4 @@
-package communication
+package warehouse
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 )
 
 type Warehouse struct {
-	artWarehouseURL    string
-	originWarehouseURL string
+	artWarehouseURL    string // Odin: На этом сервере хранятся оперативные картинки в обычных разрешениях для сайта
+	originWarehouseURL string // Odin: На этом сервере хранятся большие JPEG-файлы (оригиналы) для печати
 }
 
 func NewWarehouse(artWarehouseURL string, originWarehouseURL string) *Warehouse {

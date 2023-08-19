@@ -25,8 +25,9 @@ type Config struct {
 	WebcamFrameResolution string
 
 	// службы
-	CreatorActive      bool
-	CreateTotalTimeSec uint
+	CreatorActive        bool
+	CreateTotalTimeSec   uint
+	UnificationEnjoyTime uint
 }
 
 func InitEnv() *Config {
@@ -44,6 +45,12 @@ func InitEnv() *Config {
 	totalTime, err := strconv.ParseUint(totalTimeStr, 10, 64)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("[config] ОШИБКА ЧТЕНИЯ CREATE_TOTAL_TIME")
+	}
+
+	unificationEnjoyTimeStr := env["UNIFICATION_ENJOY_TIME"]
+	unificationEnjoyTime, err := strconv.ParseUint(unificationEnjoyTimeStr, 10, 64)
+	if err != nil {
+		log.Fatal().Err(err).Msgf("[config] ОШИБКА ЧТЕНИЯ UNIFICATION_ENJOY_TIME")
 	}
 
 	return &Config{
@@ -65,7 +72,8 @@ func InitEnv() *Config {
 		WebcamFrameResolution: env["WEBCAM_FRAME_RESOLUTION"],
 
 		// службы
-		CreatorActive:      env["CREATOR_ACTIVE"] == "true",
-		CreateTotalTimeSec: uint(totalTime),
+		CreatorActive:        env["CREATOR_ACTIVE"] == "true",
+		CreateTotalTimeSec:   uint(totalTime),
+		UnificationEnjoyTime: uint(unificationEnjoyTime),
 	}
 }

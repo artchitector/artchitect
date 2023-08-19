@@ -58,7 +58,7 @@ export default {
       for (let i = 0; i < arts.length; i += chunkSize) {
         let chunk = arts.slice(i, i + chunkSize)
         for (let j = chunk.length; j < this.rowSize; j++) {
-          chunk.push(null)
+          chunk.push(null) // TODO Odin: тут какой-то баг. эти элементы отображаются как art_null
         }
         chunks.push(chunk)
       }

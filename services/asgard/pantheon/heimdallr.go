@@ -128,6 +128,10 @@ func (h *Heimdallr) SendOdinState(ctx context.Context, state model.OdinState) er
 	return h.bifröst.SendDrakkar(ctx, model.ChanOdinState, state)
 }
 
+func (h *Heimdallr) SendFriggState(ctx context.Context, state model.FriggState) error {
+	return h.bifröst.SendDrakkar(ctx, model.ChanFriggState, state)
+}
+
 func (h *Heimdallr) fillEntropyPackWithImages(pack model.EntropyPack) model.EntropyPack {
 	if pack.Entropy.ImageEncoded == "" {
 		pack.Entropy.ImageEncoded = h.encodeEntropyImage(pack.Entropy.Matrix)

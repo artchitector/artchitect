@@ -19,6 +19,10 @@
                 :entropy="state.entropy"
                 :giving="state.giving"
                 ref="odin"/>
+  <insight-frigg v-else-if="activeComponent === 'frigg'"
+                 :frigg="state.frigg"
+                 :entropy="state.entropy"
+                 ref="frigg"/>
 
 </template>
 
@@ -33,11 +37,13 @@ export default {
       radioPid: {
         entropy: null,
         odin: null,
-        giving: null // givin - выдаёт 4 случайные картины из всех написанных, меняя одну картину в выборке раз в 3 секунды
+        frigg: null,
+        giving: null, // giving - выдаёт 4 случайные картины из всех написанных, меняя одну картину в выборке раз в 3 секунды
       },
       state: {
         entropy: null,
         odin: null,
+        frigg: null,
         giving: null,
       }
     }
@@ -49,6 +55,10 @@ export default {
     this.radioPid.odin = await Radio.subscribe("odin_state", (odinState) => {
       this.onMessage("odin", odinState)
     })
+    this.radioPid.frigg = await Radio.subscribe("frigg_state", (friggState) => {
+      console.log(friggState)
+      this.onMessage("frigg", friggState)
+    })
     this.radioPid.giving = await Radio.subscribe("giving", (giving) => {
       this.state.giving = giving
     })
@@ -56,6 +66,7 @@ export default {
   beforeDestroy() {
     Radio.unsubscribe(this.radioPid.entropy)
     Radio.unsubscribe(this.radioPid.odin)
+    Radio.unsubscribe(this.radioPid.frigg)
     Radio.unsubscribe(this.radioPid.giving)
   },
   methods: {
@@ -65,6 +76,11 @@ export default {
           this.activeComponent = 'odin'
         }
         this.state.odin = state
+      } else if (stateType === "frigg") {
+        if (this.activeComponent !== "frigg") {
+          this.activeComponent = "frigg"
+        }
+        this.state.frigg = state
       }
     }
   }

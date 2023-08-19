@@ -61,13 +61,13 @@ func main() {
 
 	giving := communication.NewGiving(artPile, muninn, bifröst)
 
-	heimdall := pantheon.NewHeimdallr(huginn, bifröst)
+	heimdallr := pantheon.NewHeimdallr(huginn, bifröst)
 	ai := infrastructure.NewAI(config.UseFakeAI, config.InvokeAIPath)
 	freyja := pantheon.NewFreyja(ai)
 	gungner := pantheon.NewGungner()
 
 	friggCollage := frigg2.NewFriggCollage(wh, gungner)
-	frigg := pantheon.NewFrigg(friggCollage, muninn, unityPile, artPile)
+	frigg := pantheon.NewFrigg(friggCollage, muninn, heimdallr, unityPile, artPile, config.UnificationEnjoyTime)
 
 	odin := pantheon.NewOdin(
 		config.CreatorActive,
@@ -76,13 +76,13 @@ func main() {
 		freyja,
 		muninn,
 		gungner,
-		heimdall,
+		heimdallr,
 		artPile,
 		wh,
 	)
 
 	// запуск фоновых служб
-	go runServices(ctx, lostEye, huginn, heimdall, webcam, keyhole, giving, odin, bifröst)
+	go runServices(ctx, lostEye, huginn, heimdallr, webcam, keyhole, giving, odin, bifröst)
 
 	// запуск временных сервисов, которые обрабатывают задачи. Artchitect будет запущен лишь после их выполнения
 	runTemporary(ctx, artPile, frigg)

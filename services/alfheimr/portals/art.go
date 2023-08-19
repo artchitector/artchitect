@@ -80,7 +80,7 @@ func (ap *ArtPortal) HandleLast(c *gin.Context) {
 		return
 	}
 	if request.Last < 1 || request.Last > 100 {
-		c.JSON(http.StatusBadRequest, wrapError(errors.Errorf("Last must be 0-100")))
+		c.JSON(http.StatusBadRequest, wrapError(errors.Errorf("Active must be 0-100")))
 		return
 	}
 

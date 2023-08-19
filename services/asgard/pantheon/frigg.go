@@ -8,8 +8,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
+	"math"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var unityRanks = []uint{model.Unity100, model.Unity1K, model.Unity10K, model.Unity100K}
@@ -46,14 +48,30 @@ Frigg: как мать семейства собирает всех под од�
 Frigg: как Великая Мать собирает всё сущее в единую ойкумену непрерывно.
 */
 type Frigg struct {
-	collage   *frigg.Collage // вспомогательная структура для разделения кода
-	muninn    *Muninn        // Мунин подсказывает, какую картину выбрать для коллажа
-	unityPile unityPile
-	artPile   artPile
+	collage                 *frigg.Collage // вспомогательная структура для разделения кода
+	muninn                  *Muninn        // Мунин подсказывает, какую картину выбрать для коллажа
+	heimdallr               *Heimdallr     // Хеймдалль поможет мне отправлять состояние единения в Мидгард
+	unityPile               unityPile
+	artPile                 artPile
+	unificationEnjoyTimeSec uint
 }
 
-func NewFrigg(collage *frigg.Collage, muninn *Muninn, unityPile unityPile, artPile artPile) *Frigg {
-	return &Frigg{collage: collage, muninn: muninn, unityPile: unityPile, artPile: artPile}
+func NewFrigg(
+	collage *frigg.Collage,
+	muninn *Muninn,
+	heimdallr *Heimdallr,
+	unityPile unityPile,
+	artPile artPile,
+	unificationEnjoyTimeSec uint,
+) *Frigg {
+	return &Frigg{
+		collage:                 collage,
+		muninn:                  muninn,
+		heimdallr:               heimdallr,
+		unityPile:               unityPile,
+		artPile:                 artPile,
+		unificationEnjoyTimeSec: unificationEnjoyTimeSec,
+	}
 }
 
 /*
@@ -124,7 +142,7 @@ func (f *Frigg) HandleUnification(ctx context.Context) (worked bool, err error) 
 		return false, errors.Wrap(err, "[frigg] ПРОБЛЕМЫ С ПОЛУЧЕНИЕМ ЕДИНСТВА ДЛЯ ОБЪЕДИНЕНИЯ")
 	}
 
-	workUnity, err = f.reunifyUnity(ctx, workUnity)
+	workUnity, err = f.reunifyUnity(ctx, workUnity, nil)
 	if err != nil {
 		return false, errors.Wrapf(err, "[frigg] АВАРИЯ. ОБЪЕДИНЕНИЕ МНОЖЕСТВА %s", workUnity.Mask)
 	}
@@ -205,8 +223,15 @@ Frigg: картина единства начинает собираться п�
 Frigg: Каждую картину для коллажа единства выбирает лично Odin. Odin может указывать и на отсутствующие в данный момент картины,
 и вместо них и будет видна чёрная пустая область. Чем больше заполнено единство картинами, тем меньше чёрных пропусков.
 */
-func (f *Frigg) reunifyUnity(ctx context.Context, unity model.Unity) (model.Unity, error) {
+func (f *Frigg) reunifyUnity(ctx context.Context, unity model.Unity, state *model.FriggState) (model.Unity, error) {
 	log.Info().Msgf("[frigg] НАЧИНАЮ ОБЪЕДИНЯТЬ ЕДИНСТВО %s", unity.Mask)
+
+	if state == nil {
+		state = model.NewFriggState(unity)
+		f.sendState(ctx, state)
+	} else {
+		state.AddSubprocess(unity)
+	}
 
 	// Frigg: при сборке единства сначала надо пройти по его дочерним единствам и объединить их
 	if unity.Rank != model.Unity100 {
@@ -214,18 +239,31 @@ func (f *Frigg) reunifyUnity(ctx context.Context, unity model.Unity) (model.Unit
 		if children, err := f.unityPile.GetChildren(ctx, unity); err != nil {
 			return model.Unity{}, errors.Wrapf(err, "[frigg] ОШИБКА ДОСТУПА К ДЕТЯМ ЕДИНСТВА %s", unity.Mask)
 		} else {
+			// Frigg: Сначала я набью шкурку содержимым
 			for _, child := range children {
+				ch := child
+				state.Active().Children = append(state.Active().Children, &ch)
+			}
+			f.sendState(ctx, state)
+
+			// Frigg: Сначала я набью шкурку содержимым, а только затем и её закончу
+			for idx, child := range children {
 				if child.State == model.UnityStateReunification {
 					// рекурсивная сборка
 					log.Info().Msgf("[frigg] НАЧИНАЮ ОБЪЕДИНЯТЬ ДОЧЕРНЕЕ ЕДИНСТВО %s", child.Mask)
-					child, err = f.reunifyUnity(ctx, child)
+					child, err = f.reunifyUnity(ctx, child, state)
 					if err != nil {
 						return model.Unity{}, errors.Wrapf(err, "[frigg] ОШИБКА ОБЪЕДИНЕНИЯ ДОЧЕРНЕГО ЕДИНСТВА %s", child.Mask)
 					}
+
+					ch := child
+					state.Active().Children[idx] = &ch
 				}
 			}
 		}
 	}
+
+	f.sendState(ctx, state)
 
 	// Frigg: картинки, которые составляю коллаж, хранятся в массиве Leads у model.Unity.
 	// Frigg: для сотенного единства картинки выбираются из всей сотни, но вот единства уровнем выше выбирают не любые картины,
@@ -235,6 +273,9 @@ func (f *Frigg) reunifyUnity(ctx context.Context, unity model.Unity) (model.Unit
 	if err != nil {
 		return model.Unity{}, errors.Wrapf(err, "[frigg] ОШИБКА СБОРА ПРЕТЕНДЕНТОВ ДЛЯ ЕДИНСТВА %s", unity.Mask)
 	}
+
+	state.Active().TotalApplicants = uint(len(applicants))
+	f.sendState(ctx, state)
 
 	leadsCount := 0
 	switch unity.Rank {
@@ -250,6 +291,9 @@ func (f *Frigg) reunifyUnity(ctx context.Context, unity model.Unity) (model.Unit
 		log.Fatal().Msgf("[frigg] НЕПОНЯТНЫЙ УРОВЕНЬ ЕДИНСТВА %s - %d", unity.Mask, unity.Rank)
 	}
 
+	state.Active().TotalLeads = uint(leadsCount)
+	f.sendState(ctx, state)
+
 	leads := make([]uint, 0, leadsCount)
 	for i := 0; i < leadsCount; i++ {
 		lead, _, err := f.muninn.RememberUnityLead(ctx, applicants)
@@ -258,6 +302,8 @@ func (f *Frigg) reunifyUnity(ctx context.Context, unity model.Unity) (model.Unit
 				errors.Wrapf(err, "[frigg] ОШИБКА ВЫБОРА ЛИДЕРА %d/%d ДЛЯ ЕДИНСТВА %s", i+1, leadsCount, unity.Mask)
 		}
 		leads = append(leads, lead)
+		state.Active().Leads = append(state.Active().Leads, lead)
+		f.sendState(ctx, state)
 	}
 
 	log.Info().Msgf("[frigg] ДЛЯ ЕДИНСТВА %s ВЫБРАНЫ ЛИДЕРЫ %v", unity.Mask, leads)
@@ -276,6 +322,10 @@ func (f *Frigg) reunifyUnity(ctx context.Context, unity model.Unity) (model.Unit
 	unity.Leads = string(leadsB)
 	unity.Version = unity.Version + 1
 
+	state.Active().CollageStarted = true
+	state.Active().Unity = &unity
+	f.sendState(ctx, state)
+
 	img, err := f.collage.MakeCollage(ctx, unity.Mask, leads, maxArtID)
 	if err != nil {
 		return model.Unity{}, errors.Wrapf(err, "[frigg] ОШИБКА СБОРКИ КОЛЛАЖА ДЛЯ %s", unity.Mask)
@@ -284,6 +334,9 @@ func (f *Frigg) reunifyUnity(ctx context.Context, unity model.Unity) (model.Unit
 	if err := f.collage.SaveCollage(ctx, unity, img); err != nil {
 		return model.Unity{}, errors.Wrapf(err, "[frigg] ОШИБКА СОХРАНЕНИЯ КОЛЛАЖА ДЛЯ %s", unity.Mask)
 	}
+
+	state.Active().CollageFinished = true
+	f.sendState(ctx, state)
 
 	if maxArtID >= unity.MaxID {
 		unity.State = model.UnityStateUnified
@@ -295,6 +348,37 @@ func (f *Frigg) reunifyUnity(ctx context.Context, unity model.Unity) (model.Unit
 		return model.Unity{}, errors.Wrapf(err, "[frigg] СБОЙ СОХРАНЕНИЯ ОБЪЕДИНЁННОГО ЕДИНСТВА %s", unity.Mask)
 	}
 	log.Info().Msgf("[frigg] ЕДИНСТВО %s ОБЪЕДИНЕНО. СТАТУС: %s. НОВАЯ ВЕРСИЯ: %d", unity.Mask, unity.State, unity.Version)
+
+	state.Active().Unity = &unity
+	f.sendState(ctx, state)
+
+	s := time.Now()
+	state.Active().CurrentEnjoyTime = 0
+	state.Active().ExpectedEnjoyTime = f.unificationEnjoyTimeSec
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.Tick(time.Second):
+				state.Active().CurrentEnjoyTime = uint(math.Ceil(time.Now().Sub(s).Seconds()))
+				f.sendState(ctx, state)
+				if state.Active().CurrentEnjoyTime >= state.Active().ExpectedEnjoyTime {
+					return // цикл окончен
+				}
+			}
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		log.Info().Msgf("[frigg] ПРЕЖДЕВРЕМЕННЫЙ ОСТАНОВ ПО КОНТЕКСТУ")
+		return unity, nil
+	case <-time.After(time.Second * time.Duration(f.unificationEnjoyTimeSec)):
+	}
+
+	state.ClearSubprocess()
+
 	return unity, nil
 }
 
@@ -324,4 +408,10 @@ func (f *Frigg) collectApplicants(ctx context.Context, unity model.Unity) ([]uin
 	}
 	log.Info().Msgf("[frigg] ДЛЯ ЕДИНСТВА %s ВЫБРАНЫ ПРЕДЕНТЕНДЫ: %+v", unity.Mask, applicants)
 	return applicants, nil
+}
+
+func (f *Frigg) sendState(ctx context.Context, state *model.FriggState) {
+	if err := f.heimdallr.SendFriggState(ctx, *state); err != nil {
+		log.Error().Err(err).Msgf("[frigg] ХЕЙМДАЛЛЬ НЕ МОЖЕТ ОТПРАВИТЬ ДРАККАР В АЛЬВХЕЙМ!")
+	}
 }

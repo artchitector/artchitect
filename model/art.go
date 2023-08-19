@@ -97,6 +97,18 @@ func (ap *ArtPile) GetArtRecursive(ctx context.Context, ID uint) (Art, error) {
 	return art, err
 }
 
+func (ap *ArtPile) GetArtsInterval(ctx context.Context, min, max uint) ([]Art, error) {
+	var arts []Art
+	err := ap.db.WithContext(ctx).
+		Preload("Idea").
+		Preload("Idea.Words").
+		Where("id between ? and ?", min, max).
+		Order("id asc").
+		Find(&arts).
+		Error
+	return arts, err
+}
+
 func (ap *ArtPile) GetMaxArtID(ctx context.Context) (uint, error) {
 	var id uint
 	err := ap.db.

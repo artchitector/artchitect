@@ -24,22 +24,22 @@
         {{ $fetchState.error.message }}
       </div>
     </template>
-    <template v-else-if="data.Type === 'unity'">
-      <unity-list :unities="data.Unities" visible-count="10" cards-in-column="2"/>
+    <template v-else-if="data.children.length">
+      <!--   TODO Unity надо переписать заново. Все страницы и компоненты-->
+      <unity-list :unities="data.children" visible-count="10" cards-in-column="2"/>
     </template>
-    <template v-else-if="data.Type === 'cards'">
-      <p class="has-text-centered">total: {{data.Cards.length}}</p>
-      <artlist :arts="data.Cards" cards-in-column="5" card-size="s" visible-count="50" no-tags="true"/>
+    <template v-else-if="data.arts.length">
+      <p class="has-text-centered">total: {{ data.arts.length }}</p>
+      <common-art-list :arts="data.arts" row-size="5" initial-visible-count="100" :show-words="false"/>
     </template>
   </section>
 </template>
 
 <script>
 import UnityList from "@/components/unity/unity-list.vue";
-import Artlist from "@/components/list/artlist.vue";
 
 export default {
-  components: {Artlist, UnityList},
+  components: {UnityList},
   head() {
     let mask = this.$route.params.mask
     return {

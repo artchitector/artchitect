@@ -1,9 +1,9 @@
 <template>
   <div class="image-container">
-    <NuxtLink :to="localePath(`/unity/${unity.Mask}`)">
-      <img :src="`/api/image/unity/${unity.Mask}/${unity.Version}/f`"/>
+    <NuxtLink :to="localePath(`/unity/${unity.mask}`)">
+      <img :src="`/api/uimage/${unity.mask}/${unity.version}/m`"/>
     </NuxtLink>
-    <p class="unity-title">U{{ unity.Mask }}</p>
+    <p class="unity-title">U{{ unity.mask }}</p>
   </div>
 </template>
 

@@ -67,7 +67,7 @@ func (g *Giving) initState(ctx context.Context, state *model.GivingState) error 
 	}
 	state.LastArtID = maxArtID
 	for i := 0; i < GivenArtsLen; i++ {
-		oneOf, _, err := g.muninn.OneOf(ctx, maxArtID)
+		oneOf, _, err := g.muninn.RememberArtNo(ctx, 1, maxArtID)
 		if err != nil {
 			return errors.Wrap(err, "[giving] МУНИН НЕ ДАЛ ЯСНОГО ОТВЕТА")
 		}
@@ -91,7 +91,7 @@ func (g *Giving) updateState(ctx context.Context, state *model.GivingState) erro
 		if currentIndex >= GivenArtsLen {
 			currentIndex = 0
 		}
-		oneOf, _, err := g.muninn.OneOf(ctx, maxArtID)
+		oneOf, _, err := g.muninn.RememberArtNo(ctx, 1, maxArtID)
 		if err != nil {
 			return errors.Wrap(err, "[giving] МУНИН НЕ ДАЛ ЯСНОГО ОТВЕТА")
 		}

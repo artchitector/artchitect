@@ -15,12 +15,12 @@ Intention или Стремление - это намерение Одина ч�
 	и выполнять другие события из жизни Artchitect.
 */
 type Intention struct {
-	odin *Odin // Один-Всеотец рисует картины
-
+	odin  *Odin  // Один-Всеотец рисует картины
+	frigg *Frigg // Frigg, супруга Odin, объединяет картины в множества
 }
 
-func NewArtchitect(odin *Odin) *Intention {
-	return &Intention{odin: odin}
+func NewIntention(odin *Odin, frigg *Frigg) *Intention {
+	return &Intention{odin: odin, frigg: frigg}
 }
 
 func (a *Intention) Run(ctx context.Context) {
@@ -33,8 +33,13 @@ func (a *Intention) Run(ctx context.Context) {
 
 		case <-time.Tick(time.Millisecond):
 			if err := a.WorkOnce(ctx); err != nil {
-				log.Error().Err(err).Msgf("[СТРЕМЛЕНИЕ] ГЦТ - СБОЙ")
-				continue
+				log.Error().Err(err).Msgf("[СТРЕМЛЕНИЕ] ГЦТ - СБОЙ. СПЛЮ 10 СЕКУНД")
+				select {
+				case <-ctx.Done():
+					continue
+				case <-time.After(time.Second * 10):
+					continue
+				}
 			}
 		}
 	}
@@ -45,6 +50,14 @@ func (a *Intention) Run(ctx context.Context) {
 // Другие операции не всегда доступны для работы и они идут первыми в списке,
 // а операция рисования доступна всегда, она завершает список.
 func (a *Intention) WorkOnce(ctx context.Context) error {
+	worked, err := a.frigg.HandleUnification(ctx)
+	if err != nil {
+		return errors.Wrap(err, "[СТРЕМЛЕНИЕ] FRIGG НЕ СМОГЛА ЗАВЕРШИТЬ ОБЪЕДИНЕНИЕ")
+	} else if worked {
+		log.Info().Msgf("[СТРЕМЛЕНИЕ] FRIGG В ЭТОТ РАЗ ВЫПОЛНИЛА РАБОТУ")
+		return nil
+	}
+
 	if a.odin.HasDesire() {
 		if worked, art, err := a.odin.Create(ctx); err != nil {
 			return errors.Wrap(err, "[СТРЕМЛЕНИЕ] ОДИН НЕ СОЗДАЛ КАРТИНУ. ОДИН В ЯРОСТИ")

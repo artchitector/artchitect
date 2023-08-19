@@ -17,8 +17,10 @@ type artPile interface {
 // unityPile - репозиторий единств
 type unityPile interface {
 	Get(ctx context.Context, mask string) (model.Unity, error)
-	Create(ctx context.Context, mask string, rank, min, max uint) (model.Unity, error)
+	Create(ctx context.Context, mask, state string, rank, min, max uint) (model.Unity, error)
 	Save(ctx context.Context, unity model.Unity) (model.Unity, error)
+	GetNextUnityForReunification(ctx context.Context) (model.Unity, error)
+	GetChildren(ctx context.Context, unity model.Unity) ([]model.Unity, error)
 }
 
 type ai interface {
@@ -30,5 +32,5 @@ type bifröst interface {
 }
 
 type warehouse interface {
-	SaveImage(ctx context.Context, artID uint, img image.Image) error
+	SaveArtImage(ctx context.Context, artID uint, img image.Image) error
 }

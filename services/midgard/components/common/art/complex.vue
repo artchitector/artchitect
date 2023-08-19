@@ -6,7 +6,7 @@
     <div class="version">
       <span class="tag is-primary is-light">{{ art.version }}</span>
     </div>
-    <p class="is-size-7 words">
+    <p class="is-size-7 words" v-if="showWords">
       {{ art.ideaWords.join(',') }}
     </p>
     <p class="is-size-7 info">
@@ -21,7 +21,7 @@
 // - complex.vue (с доп. данными, словами, seed-номером)
 export default {
   name: "common-art-complex",
-  props: ['art'],
+  props: ['art', 'showWords'],
   methods: {
     select() {
       this.$emit('select')

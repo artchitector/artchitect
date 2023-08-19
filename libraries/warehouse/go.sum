@@ -1,3 +1,5 @@
+github.com/artchitector/artchitect2/libraries/resizer v0.0.0-20230818151811-c8f78c5df613 h1:ABpZrE5RC3ZHhbGJnNSIuPyh9O3dsvWwB8hZWJi7q/4=
+github.com/artchitector/artchitect2/libraries/resizer v0.0.0-20230818151811-c8f78c5df613/go.mod h1:bRY3ky57C3FoRBXjgv5vFyokOLQDunPsNLckTTN9jrI=
 github.com/artchitector/artchitect2/model v0.0.0-20230818151811-c8f78c5df613 h1:PmzZBHGiHaAudb1YgE5rvKLGZ8EmzVmJ+/mM+q8f+HQ=
 github.com/artchitector/artchitect2/model v0.0.0-20230818151811-c8f78c5df613/go.mod h1:OV77sDvpf+35hP9VjSwepl7n4weFtGhEmZoTwYY4258=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
@@ -13,6 +15,8 @@ github.com/mattn/go-isatty v0.0.14/go.mod h1:7GGIvUiUoEMVVmxf/4nioHXj79iQHKdU27k
 github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
 github.com/mattn/go-isatty v0.0.19 h1:JITubQf0MOLdlGRuRq+jtsDlekdYPia9ZFsB8h/APPA=
 github.com/mattn/go-isatty v0.0.19/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
+github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 h1:zYyBkD/k9seD2A7fsi6Oo2LfFZAehjjQMERAvZLEDnQ=
+github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646/go.mod h1:jpp1/29i3P1S/RLdc7JQKbRpFeM1dOBd8T9ki5s+AY8=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/rs/xid v1.5.0/go.mod h1:trrq9SKmegXys3aeAKXMUTdJsYXVwGY3RLcfgqegfbg=

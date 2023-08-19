@@ -52,8 +52,10 @@ func main() {
 		}
 
 		r.GET("/art/:id/:size", warehouse.HandleGetArt)
+		r.GET("/unity/:mask/:version/:size", warehouse.HandleGetUnity)
 
 		r.POST("/upload/art", warehouse.HandleUploadArt)
+		r.POST("/upload/unity", warehouse.HandleUploadUnity)
 		r.POST("/upload/origin", warehouse.HandleUploadOrigin)
 
 		// запуск http-сервера

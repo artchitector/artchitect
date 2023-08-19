@@ -1,4 +1,4 @@
-package communication
+package warehouse
 
 import (
 	"bytes"
@@ -16,28 +16,13 @@ import (
 	"time"
 )
 
-// Warehouse - склад бинарных картинок
-// Odin: Картинки хранятся не в Асгарде, а на серверах файловых-хранилищах.
-// Odin: Warehouse инкапсулирует сложную логику сохранения на файловые серверы, скрывая её от слоя Асгарда, и от Меня pantheon.Odin.
-// Loki: А SOLID можешь расшифровать?) Ты уже прокачался в программировании, как я посмотрю.
-// Loki: Уже боюсь проиграть наше пари...
-type Warehouse struct {
-	warehouseOriginURL string // хранилище для размера XF. На том конце запущен сервис warehouse для приёма файлов
-	warehouseArtsURL   string // хранилище для размеров F, M, S, XS. На том конце запущен сервис warehouse для приёма файлов
-}
-
-func NewWarehouse(storageURL string, memoryURL string) *Warehouse {
-	return &Warehouse{warehouseOriginURL: storageURL, warehouseArtsURL: memoryURL}
-}
-
-func (wh *Warehouse) SaveImage(ctx context.Context, artID uint, img image.Image) error {
+func (wh *Warehouse) SaveArtImage(ctx context.Context, artID uint, img image.Image) error {
 	/*
 		Odin:
 		Ну чтож, дети мои, слушайте мой рассказ.
-		Архитектор рисует большие изображения 3328 × 5120 пикселов (PNG ~10-15Мб). Это настроено в infrastructure.AI
-		Этот размер называется XF - extra full.
-		Extra full - всегда максимально доступное качество. Оригинал.
-		Такие размеры нужны для того, чтобы картина могла быть ОТПЕЧАТАНА на холсте 40x60 в физическом мире.
+		Архитектор рисует большие изображения 3328 × 5120 пикселов (PNG ~21Мб, JPEG ~5МБ). Это настроено в asgard.infrastructure.AI
+		Этот размер называется Origin (исходник, оригинал) - всегда максимально доступное качество. Оригинал.
+		Такие размеры нужны для того, чтобы картина могла быть ОТПЕЧАТАНА на холсте 40x60 в мире Мидгарда и была повешена над камином.
 
 		Но на сайте такие объёмы просто не нужны, там нужны 4 других размера в формате Jpeg
 
@@ -48,10 +33,9 @@ func (wh *Warehouse) SaveImage(ctx context.Context, artID uint, img image.Image)
 		SizeXS = "xs" // 128x192   Jpeg-Quality: 75
 
 		Задачи склада:
-		- отправить XF на долговременный сервер-хранилище HDD, где лежат оригиналы
+		- отправить origin на долговременный сервер-хранилище HDD, где лежат оригиналы
 		- ужать до размера F и отправить сжатую картинку на быстрый memory-сервер. Оттуда их забирает Alfheimr, который передаёт картинки на Midgard.
-		(это для безопасности memory-сервер скрыт за api-gateway)
-
+		(memory-сервер скрыт за api-gateway)
 		Внутри самого memory-сервера картинка будет пережата на остальные размеры, и затем будет доступна для просмотра
 	*/
 
@@ -65,6 +49,25 @@ func (wh *Warehouse) SaveImage(ctx context.Context, artID uint, img image.Image)
 	return nil
 }
 
+func (wh *Warehouse) SaveUnityCollage(ctx context.Context, mask string, version uint, img image.Image) error {
+	s := time.Now()
+	filename := fmt.Sprintf("unity-%s-%d", mask, version)
+	buf := new(bytes.Buffer)
+	if err := jpeg.Encode(buf, img, &jpeg.Options{Quality: model.QualityTransfer}); err != nil {
+		return errors.Wrapf(err, "[warehouse] СЖАТЬ КОЛЛАЖ U%s-%d В JPEG НЕ УДАЛОСЬ. ОТКАЗ", mask, version)
+	}
+	url := wh.artWarehouseURL + "/upload/unity"
+	err := wh.makeRequest(ctx, url, map[string]string{
+		"mask":    mask,
+		"version": fmt.Sprintf("%d", version),
+	}, filename, buf.Bytes())
+	if err != nil {
+		return errors.Wrapf(err, "[warehouse] ОШИБКА ЗАГРУЗКИ КОЛЛАЖА ЕДИНСТВА U%s/%d", mask, version)
+	}
+	log.Info().Msgf("[warehouse] КОЛЛАЖ ЕДИНСТВА U%s/%d СОХРАНЁН НА СКЛАД. T:%s", mask, version, time.Now().Sub(s))
+	return nil
+}
+
 func (wh *Warehouse) saveOrigin(ctx context.Context, artID uint, img image.Image) error {
 	s := time.Now()
 	filename := fmt.Sprintf("art-%d.jpg", artID) // filename не имеет особого значения
@@ -73,12 +76,12 @@ func (wh *Warehouse) saveOrigin(ctx context.Context, artID uint, img image.Image
 		return errors.Wrapf(err, "[warehouse] СЖАТЬ В BIG-JPEG НЕ УДАЛОСЬ. ОТКАЗ")
 	}
 
-	url := wh.warehouseOriginURL + "/upload/origin"
+	url := wh.originWarehouseURL + "/upload/origin"
 	err := wh.makeRequest(ctx, url, map[string]string{
 		"art_id": fmt.Sprintf("%d", artID),
 	}, filename, buf.Bytes())
 	if err != nil {
-		return errors.Wrapf(err, "[warehouse] ARD_ID=%d. ОШИБКА СВЯЗИ С СЕРВЕРОМ %s. URL=%s", artID, wh.warehouseOriginURL, url)
+		return errors.Wrapf(err, "[warehouse] ART_ID=%d. ОШИБКА СВЯЗИ С СЕРВЕРОМ %s. URL=%s", artID, wh.originWarehouseURL, url)
 	}
 	log.Info().Msgf("[warehouse] ORIGIN-КАРТИНКА #%d СОХРАНЕНА НА СКЛАД. T:%s", artID, time.Now().Sub(s))
 	return nil
@@ -94,12 +97,12 @@ func (wh *Warehouse) saveArtSizes(ctx context.Context, artID uint, img image.Ima
 		return errors.Wrapf(err, "[warehouse] СЖАТЬ В JPEG НЕ УДАЛОСЬ. ОТКАЗ")
 	}
 
-	url := wh.warehouseArtsURL + "/upload/art"
+	url := wh.artWarehouseURL + "/upload/art"
 	err := wh.makeRequest(ctx, url, map[string]string{
 		"art_id": fmt.Sprintf("%d", artID),
 	}, filename, buf.Bytes())
 	if err != nil {
-		return errors.Wrapf(err, "[warehouse] ARD_ID=%d. ОШИБКА СВЯЗИ С СЕРВЕРОМ %s. URL=%s", artID, wh.warehouseArtsURL, url)
+		return errors.Wrapf(err, "[warehouse] ARD_ID=%d. ОШИБКА СВЯЗИ С СЕРВЕРОМ %s. URL=%s", artID, wh.artWarehouseURL, url)
 	}
 	log.Info().Msgf("[warehouse] F-КАРТИНКА #%d СОХРАНЕНА НА СКЛАД. T:%s", artID, time.Now().Sub(s))
 	return nil

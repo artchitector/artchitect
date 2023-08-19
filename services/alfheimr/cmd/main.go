@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/artchitector/artchitect2/libraries/warehouse"
 	"github.com/artchitector/artchitect2/model"
 	"github.com/artchitector/artchitect2/services/alfheimr/communication"
 	"github.com/artchitector/artchitect2/services/alfheimr/infrastructure"
@@ -51,14 +52,16 @@ func main() {
 
 	// КУЧИ ДАННЫХ
 	artPile := model.NewArtPile(db)
+	unityPile := model.NewUnityPile(db)
 
 	// WAREHOUSE
-	wh := communication.NewWarehouse(config.ArtWarehouseURL, config.OriginWarehouseURL)
+	wh := warehouse.NewWarehouse(config.ArtWarehouseURL, config.OriginWarehouseURL)
 
 	// СБОРКА ПОРТАЛОВ (ХЕНДЛЕРОВ)
 	radioPortal := portals.NewRadioPortal(harbour)
 	artPortal := portals.NewArtPortal(artPile, harbour)
 	imPortal := portals.NewImagePortal(wh)
+	unityPortal := portals.NewUnityPortal(unityPile, artPile)
 
 	// ЗАПУСК HTTP-СЕРВЕРА
 	go func() {
@@ -85,7 +88,11 @@ func main() {
 		r.GET("/art/:id", artPortal.HandleArt)
 		r.GET("/art/:id/flat", artPortal.HandleArtFlat)
 		r.GET("/arts/last/:last", artPortal.HandleLast)
-		r.GET("/image/:id/:size", imPortal.HandleImage)
+		r.GET("/image/:id/:size", imPortal.HandleArtImage)
+		r.GET("/uimage/:mask/:version/:size", imPortal.HandleUnityImage)
+		// http://localhost/api/ uimage 0XXXXX 0 f
+		r.GET("/unity", unityPortal.HandleMain)
+		r.GET("/unity/:mask", unityPortal.HandleUnity)
 
 		// connection - Портал с постоянной связью c Мидгардом (вебсокете)
 		r.GET("/radio", func(c *gin.Context) {

@@ -9,7 +9,7 @@ import (
 func TestArt_GetUnityMask(t *testing.T) {
 	testCases := []struct {
 		ID        uint
-		UnityType int
+		UnityType uint
 		Result    string
 	}{
 		{

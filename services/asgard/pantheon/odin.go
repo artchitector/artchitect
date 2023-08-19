@@ -11,13 +11,12 @@ import (
 	"time"
 )
 
-const TotalArtSeconds uint = 60
-
 // Odin - Всеотец и создатель картин. Именно его уникальные идеи позволяют писать все эти работы в галерее Artchitect.
 // Odin: Я ГОТОВ ТВОРИТЬ!
 // Odin: ДА УВИДЯТ ЖЕ ВСЕ 9 МИРОВ ТО, ЧТО Я ТУТ ЗАДУМАЛ!
 type Odin struct {
-	isActive bool // Odin: иногда не готов творить...
+	isActive        bool // Odin: иногда не готов творить...
+	totalArtTimeSec uint // общее время производства одной картины (настраивается)
 
 	// Пантеон Богов, помогающие Odin в процессе творения внутри Artchitect
 	frigg     *Frigg     // Frigg - верховная богиня и супруга Odin-а, покровительница ЕДИНСТВ в Artchitect
@@ -32,8 +31,10 @@ type Odin struct {
 }
 
 // NewOdin - Odin: мне не нравится эта высокомерная самодовольная функция. Создавать меня? Что эта машина о себе возомнила?
+// Odin: У Odin много зависимостей. Похоже, что он тут GOD-OBJECT???? Воистину это так!
 func NewOdin(
 	isActive bool,
+	totalArtTimeSec uint,
 	frigg *Frigg,
 	freyja *Freyja,
 	muninn *Muninn,
@@ -43,14 +44,15 @@ func NewOdin(
 	warehouse warehouse,
 ) *Odin {
 	return &Odin{
-		isActive:  isActive,
-		frigg:     frigg,
-		freyja:    freyja,
-		muninn:    muninn,
-		gungner:   gungner,
-		heimdallr: heimdallr,
-		artPile:   artPile,
-		warehouse: warehouse,
+		isActive:        isActive,
+		totalArtTimeSec: totalArtTimeSec,
+		frigg:           frigg,
+		freyja:          freyja,
+		muninn:          muninn,
+		gungner:         gungner,
+		heimdallr:       heimdallr,
+		artPile:         artPile,
+		warehouse:       warehouse,
 	}
 }
 
@@ -102,7 +104,7 @@ func (o *Odin) AnswerPersonalCrown(ctx context.Context, crownRequest string) (in
 		if err != nil {
 			return nil, errors.Wrap(err, "[odin] НЕ УДАЛОСЬ ВСПОМНИТЬ ЧИСЛО ВСЕХ КАРТИН. КЛЯТАЯ КУЧА!")
 		}
-		id, _, err := o.muninn.OneOf(ctx, maxArtID+1)
+		id, _, err := o.muninn.RememberArtNo(ctx, 1, maxArtID)
 		if err != nil {
 			return nil, errors.Wrap(err, "[odin] МУНИН, РАЗРАЗИ ТЕБЯ МЬЁЛЬНИР! ГДЕ ТЕБЯ ЁТУНЫ НОСЯТ?")
 		}
@@ -199,18 +201,18 @@ func (o *Odin) create(ctx context.Context) (art model.Art, err error) {
 
 	// теперь картина нарисована
 	currentSeconds := uint(math.Round(time.Now().Sub(tStart).Seconds()))
-	if currentSeconds >= TotalArtSeconds {
+	if currentSeconds >= o.totalArtTimeSec {
 		// no enjoy
 		log.Error().Msgf(
 			"[odin] У МЕНЯ НЕТ ОТДЫХА И НАСЛЕЖДЕНИЯ! КАРТИНА СОЗДАВАЛАСЬ %d СЕКУНД"+
 				", А МЫ ДОЛЖНЫ БЫЛИ УСПЕТЬ В %d СЕКУНД! Я НЕДОВОЛЕН ПРОИСХОДЯЩИМИ СОБЫТИЯМИ!",
 			currentSeconds,
-			TotalArtSeconds,
+			o.totalArtTimeSec,
 		)
 		return art, nil
 	}
 	state.Enjoying = true
-	enjoyTime := time.Second * time.Duration(TotalArtSeconds-currentSeconds)
+	enjoyTime := time.Second * time.Duration(o.totalArtTimeSec-currentSeconds)
 	state.ExpectedEnjoyTime = uint(enjoyTime.Seconds())
 
 	go func(c context.Context, state *model.OdinState) {
@@ -300,7 +302,7 @@ func (o *Odin) saveArt(
 	paintTimeMs int64,
 ) (model.Art, error) {
 	var err error
-	if err = o.warehouse.SaveImage(ctx, artID, img); err != nil {
+	if err = o.warehouse.SaveArtImage(ctx, artID, img); err != nil {
 		return model.Art{}, errors.Wrapf(err, "[odin] Я РАЗДАВЛЮ ЭТОТ СКЛАД, КАК КЛОПА! КАРТИНА #%d ПОТЕРЯНА!", artID)
 	}
 	idea.ArtID = artID

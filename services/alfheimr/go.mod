@@ -3,7 +3,9 @@ module github.com/artchitector/artchitect2/services/alfheimr
 go 1.20
 
 require (
-	github.com/artchitector/artchitect2/model v0.0.0-20230804163809-811d29871d48 // indirect
+	github.com/artchitector/artchitect2/libraries/resizer v0.0.0-20230819093634-3a18e65db5f3 // indirect
+	github.com/artchitector/artchitect2/libraries/warehouse v0.0.0-20230819093634-3a18e65db5f3 // indirect
+	github.com/artchitector/artchitect2/model v0.0.0-20230819093634-3a18e65db5f3 // indirect
 	github.com/bytedance/sonic v1.10.0-rc3 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
@@ -32,6 +34,7 @@ require (
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.9 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/zerolog v1.30.0 // indirect
@@ -46,7 +49,9 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.5.2 // indirect
-	gorm.io/gorm v1.25.2 // indirect
+	gorm.io/gorm v1.25.3 // indirect
 )
 
 replace github.com/artchitector/artchitect2/model => ../../model
+
+replace github.com/artchitector/artchitect2/libraries/warehouse => ../../libraries/warehouse

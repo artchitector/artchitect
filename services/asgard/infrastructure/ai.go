@@ -126,7 +126,8 @@ func (ai *AI) execute(ctx context.Context) (string, error) {
 			<invokeAIPath>/.venv/bin/invoke.py \
 			--from_file <invokeAIPath>/list.txt
 	*/
-	cmd := exec.Command(
+	cmd := exec.CommandContext(
+		ctx,
 		fmt.Sprintf("%s/.venv/bin/python", ai.invokeAIPath),
 		fmt.Sprintf("%s/.venv/bin/invoke.py", ai.invokeAIPath),
 		fmt.Sprintf(`--from_file`),

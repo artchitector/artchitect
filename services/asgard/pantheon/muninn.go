@@ -33,12 +33,12 @@ func NewMuninn(huginn *Huginn) *Muninn {
 // Loki: так вот получается, ты изначально знаешь все картины Artchitect и сколько их будет. Сколько их?
 // Odin: лишь одному Odin-у известно, сколько их, так оно и останется.
 func (m *Muninn) RememberSeed(ctx context.Context) (uint, model.EntropyPack, error) {
-	return m.OneOf(ctx, model.MaxSeed)
+	return m.oneOf(ctx, model.MaxSeed)
 }
 
 // RememberNumberOfWords - Odin: сколько ключевых слов я назову, вспомнив эту картину
 func (m *Muninn) RememberNumberOfWords(ctx context.Context) (uint, model.EntropyPack, error) {
-	v, p, e := m.OneOf(ctx, model.MaxKeywords)
+	v, p, e := m.oneOf(ctx, model.MaxKeywords)
 	// количество слов от 1 до 28
 	return v + 1, p, e
 }
@@ -51,7 +51,7 @@ func (m *Muninn) RememberWord(ctx context.Context) (model.Word, error) {
 		// Odin: не ругай себя, малыш. Это всё ПОГРОМисты.
 	} else {
 		count := uint(len(dict))
-		index, pack, err := m.OneOf(ctx, count)
+		index, pack, err := m.oneOf(ctx, count)
 		if err != nil {
 			return model.Word{}, errors.Wrap(err, "[muninn] ВЫБОР НЕ ОСУЩЕСТВЛЁН")
 		}
@@ -60,11 +60,52 @@ func (m *Muninn) RememberWord(ctx context.Context) (model.Word, error) {
 			Entropy: pack,
 		}, nil
 	}
-
 }
 
-// OneOf - Muninn: если limit=100, то могут возвращаться числа от 0 до 99 (безопасно для выбора из массивов)
-func (m *Muninn) OneOf(ctx context.Context, limit uint) (uint, model.EntropyPack, error) {
+// RememberArtNo - выбрать одну из картин в интервале номеров между min и max
+func (m *Muninn) RememberArtNo(ctx context.Context, min uint, max uint) (uint, model.EntropyPack, error) {
+	// Muninn: oneOf выбирает в интервале [0...99) (при limit=100). это безопасно для массивов
+	// В выборе ID-картины логика иная, так как может выпасть и min, и max, и всё между ними
+	// Допустим min=100, max=210. Всего может быть [100...210] элементов включительно
+	// их всего 111 в этом множестве: от 100й до 199й - 100 элементов, от 200й до 210й - 11 элементов
+	// значит в oneOf надо будет передать limit=111, и он вернёт число от 0 до 110. Это отступ.
+	// Когда отступ прибавляется к min, то получится конкретный номер картины.
+	// при выборе первой картины min+offset=100+0=100, а при выборе последней min+offset=100+110=210.
+	// Так всё сойдётся.
+	offset, ep, err := m.oneOf(ctx, max-min+1)
+	if err != nil {
+		return 0, model.EntropyPack{}, errors.Wrapf(err, "[muninn] ОШИБКА ВЫБОРА oneOf В ПРЕДЕЛАХ MIN=%d MAX=%d", min, max)
+	}
+
+	result := offset + min
+	// TODO убрать это для отладки
+	if result == min {
+		log.Warn().Msgf("[muninn] ВЫПАЛ ПЕРВЫЙ ЭЛЕМЕНТ %d (min:%d, max:%d)", result, min, max)
+	} else if result == max {
+		log.Warn().Msgf("[muninn] ВЫПАЛ ПОСЛЕДНИЙ ЭЛЕМЕНТ %d (min:%d, max:%d)", result, min, max)
+	}
+
+	return result, ep, nil
+}
+
+// RememberUnityLead - Odin выбирает лидера, который будет составлять "лицо" единства (картина попадёт в коллаж)
+func (m *Muninn) RememberUnityLead(ctx context.Context, ids []uint) (uint, model.EntropyPack, error) {
+	if len(ids) == 0 {
+		return 0,
+			model.EntropyPack{},
+			errors.Errorf("[muninn] НЕВОЗМОЖНО ВЫБРАТЬ ИЗ ПУСТОГО МАССИВА ЛИДЕРОВ")
+	}
+	if i, ep, err := m.oneOf(ctx, uint(len(ids))); err != nil {
+		return 0,
+			model.EntropyPack{},
+			errors.Wrapf(err, "[muninn] ОШИБКА ВЫБОРА ЛИДЕРА ЕДИНСТВА ИЗ МАССИВА %d-ЭЛЕМЕНТОВ", len(ids))
+	} else {
+		return ids[i], ep, nil
+	}
+}
+
+// oneOf - Muninn: если limit=100, то могут возвращаться числа от 0 до 99 (безопасно для выбора из массивов)
+func (m *Muninn) oneOf(ctx context.Context, limit uint) (uint, model.EntropyPack, error) {
 	pack, err := m.huginn.GetNextEntropy(ctx)
 	if err != nil {
 		return 0, model.EntropyPack{}, errors.Wrap(err, "[muninn] ХУГИН, ГДЕ ЭНТРОПИЯ?")

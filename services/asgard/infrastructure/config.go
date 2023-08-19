@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
+	"strconv"
 )
 
 type Config struct {
@@ -24,7 +25,8 @@ type Config struct {
 	WebcamFrameResolution string
 
 	// службы
-	CreatorActive bool
+	CreatorActive      bool
+	CreateTotalTimeSec uint
 }
 
 func InitEnv() *Config {
@@ -36,6 +38,12 @@ func InitEnv() *Config {
 	env, err := godotenv.Read()
 	if err != nil {
 		log.Fatal().Err(err).Send()
+	}
+
+	totalTimeStr := env["CREATE_TOTAL_TIME"]
+	totalTime, err := strconv.ParseUint(totalTimeStr, 10, 64)
+	if err != nil {
+		log.Fatal().Err(err).Msgf("[config] ОШИБКА ЧТЕНИЯ CREATE_TOTAL_TIME")
 	}
 
 	return &Config{
@@ -57,6 +65,7 @@ func InitEnv() *Config {
 		WebcamFrameResolution: env["WEBCAM_FRAME_RESOLUTION"],
 
 		// службы
-		CreatorActive: env["CREATOR_ACTIVE"] == "true",
+		CreatorActive:      env["CREATOR_ACTIVE"] == "true",
+		CreateTotalTimeSec: uint(totalTime),
 	}
 }

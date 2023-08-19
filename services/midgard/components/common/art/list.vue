@@ -13,8 +13,14 @@
     <common-viewer ref="viewer"/>
     <div class="columns" v-for="line in lines">
       <div class="column" v-for="art in line">
-        <common-art-complex v-if="!!art && typeof art === 'object'" :art="art" @select="showViewer(art.id)"/>
-        <common-art-simple v-else :art-id="art" @select="showViewer(art)"/>
+        <common-art-complex v-if="!!art && typeof art === 'object'"
+                            :art="art"
+                            @select="showViewer(art.id)"
+                            :show-words="showWords"/>
+
+        <common-art-simple v-else
+                           :art-id="art"
+                           @select="showViewer(art)"/>
       </div>
     </div>
     <div v-if="showLoadMore" class="has-text-centered">
@@ -28,7 +34,8 @@ export default {
   props: [
     'arts',
     'rowSize',
-    'initialVisibleCount'
+    'initialVisibleCount',
+    'showWords',
   ],
   data() {
     return {

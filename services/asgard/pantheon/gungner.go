@@ -3,6 +3,7 @@ package pantheon
 import (
 	"bytes"
 	"fmt"
+	"github.com/artchitector/artchitect2/model"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"github.com/pkg/errors"
@@ -53,6 +54,15 @@ func (g *Gungner) MakeArtWatermark(img image.Image, artID uint) (image.Image, er
 	return g.addWatermark(img, text), nil
 }
 
+func (g *Gungner) MakeUnityWatermark(img image.Image, mask string) (image.Image, error) {
+	// Odin: Логика для нанесения номера единства повторяет нанесение номера картины
+	if err := g.loadResources(); err != nil {
+		return nil, errors.Wrap(err, "[gungner] ТРЕБУЕМЫЕ РЕСУРСЫ НЕ ЗАГРУЖЕНЫ")
+	}
+	text := fmt.Sprintf("U%s", mask)
+	return g.addWatermark(img, text), nil
+}
+
 func (g *Gungner) addWatermark(img image.Image, text string) image.Image {
 	// Odin: начинаю наносить подпись на картину своим копьём!
 	//rgba := img.(*image.RGBA)
@@ -76,6 +86,11 @@ func (g *Gungner) addWatermark(img image.Image, text string) image.Image {
 func (g *Gungner) prepareWatermark(bounds image.Rectangle, text string) image.Image {
 	// Odin: создаю маленькую картинку с подписью, которая нанесётся поверх картины
 	size := 86.0 // Odin: размер шрифта
+	isSmallImage := bounds.Dx() <= model.WidthF
+	if isSmallImage {
+		size /= 2 // Odin: для картинок малых размеров (а это не оригинал картины, а коллаж множества) и размер подписи уменьшается
+	}
+
 	fontDrawer := font.Drawer{
 		Src: image.NewUniform(color.RGBA{200, 200, 200, 255}), // серый шрифт
 		Face: truetype.NewFace(g.font, &truetype.Options{

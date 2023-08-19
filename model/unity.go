@@ -2,6 +2,8 @@ package model
 
 import (
 	"context"
+	"fmt"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 	"time"
 )
@@ -24,21 +26,28 @@ const (
 
 	UnityStateEmpty         = "empty"         // пустое единство. Только создано. Коллаж еще не создавался.
 	UnityStateUnified       = "unified"       // окончательно сформированное единство, где уже все картины на писаны. Больше не изменяется.
-	UnityStatePartial       = "partial"       // частично заполненное единство. Внутри него написаны еще не все картины. Коллаж частичный.
+	UnityStatePreUnified    = "pre-unified"   // частично заполненное единство. Внутри него написаны еще не все картины. Коллаж частичный.
 	UnityStateReunification = "reunification" // специальный статус, который указывает Архитектору перезаполнить единство
 	// Когда коллаж единства нужно обновить, то ставится статус reunification и в следующем цикле Архитектор его пересоберёт.
+
+	// размер сетки -  NxN элементов
+	CollageSize100K = 7 * 7
+	CollageSize10K  = 6 * 6
+	CollageSize1K   = 5 * 5
+	CollageSize100  = 4 * 4
 )
 
 type Unity struct {
-	Mask      string `gorm:"primaryKey"`
-	Rank      uint   // тип единства
-	MinID     uint
-	MaxID     uint
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	State     string
-	Leads     string // массив ID картин, которые попали в коллаж в виде строки [100, 121, 110, 0, 130, 0, 0, 100...]. Нули - пустые места (на картине чёрным)
-	Version   int    // при пересборке единства версия повышается (чтобы старые картинки не кешировались)
+	Mask      string    `gorm:"primaryKey" json:"mask"`
+	Parent    string    `json:"parent"` // маска родительского единства
+	Rank      uint      `json:"rank"`   // тип единства
+	MinID     uint      `json:"minID"`
+	MaxID     uint      `json:"maxID"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	State     string    `json:"state"`
+	Leads     string    `json:"leads"`   // массив ID картин, которые попали в коллаж в виде строки [100, 121, 110, 0, 130, 0, 0, 100...]. Нули - пустые места (на картине чёрным)
+	Version   uint      `json:"version"` // при пересборке единства версия повышается (чтобы старые картинки не кешировались)
 }
 
 type UnityPile struct {
@@ -55,21 +64,66 @@ func (up *UnityPile) Get(ctx context.Context, mask string) (Unity, error) {
 	return unity, err
 }
 
-func (up *UnityPile) Create(ctx context.Context, mask string, rank, min, max uint) (Unity, error) {
+// GetRoot - получение всех корневых единств
+func (up *UnityPile) GetRoot(ctx context.Context) ([]Unity, error) {
+	var unities []Unity
+	err := up.db.WithContext(ctx).Where("rank = ?", Unity100K).Order("mask ASC").Find(&unities).Error
+	return unities, err
+}
+
+func (up *UnityPile) Create(ctx context.Context, mask, state string, rank, min, max uint) (Unity, error) {
 	unity := Unity{
 		Mask:    mask,
+		Parent:  getParentMask(mask),
 		Rank:    rank,
 		MinID:   min,
 		MaxID:   max,
-		State:   UnityStateEmpty,
+		State:   state,
 		Leads:   "[]",
 		Version: 0,
 	}
-	err := up.db.Save(&unity).Error
+	err := up.db.WithContext(ctx).Save(&unity).Error
 	return unity, err
 }
 
 func (up *UnityPile) Save(ctx context.Context, unity Unity) (Unity, error) {
-	err := up.db.Save(&unity).Error
+	err := up.db.WithContext(ctx).Save(&unity).Error
 	return unity, err
+}
+
+func (up *UnityPile) GetNextUnityForReunification(ctx context.Context) (Unity, error) {
+	var unity Unity
+	err := up.db.WithContext(ctx).
+		Where("state = ?", UnityStateReunification).
+		Order("rank DESC, mask ASC"). // Первыми в процесс объединения попадают большие единства
+		Limit(1).
+		First(&unity).
+		Error
+	return unity, err
+}
+
+func (up *UnityPile) GetChildren(ctx context.Context, unity Unity) ([]Unity, error) {
+	var unities []Unity
+	err := up.db.WithContext(ctx).
+		Where("parent = ?", unity.Mask).
+		Order("mask ASC").
+		Find(&unities).
+		Error
+	return unities, err
+}
+
+// getParentMask - 91XXXX превращает в 9XXXXX (добавляется один X).
+// Если родителя выше уже нет (верхний уровень единства), то возвращается пустая строка
+func getParentMask(mask string) string {
+	for i := len(mask) - 1; i >= 0; i-- {
+		if string(mask[i]) == "X" {
+			continue
+		}
+		if i == 0 { // Ведущее число маски не может быть заменено на X. Это уже самое верхнее единство
+			return ""
+		}
+		return fmt.Sprintf("%sX%s", mask[:i], mask[i+1:])
+	}
+	log.Fatal().Msgf("[model:unity] ОШИБКА С ПРЕОБРАЗОВАНИЕМ МАСКИ %s В РОДИТЕЛЬСКУЮ", mask)
+	return ""
 }

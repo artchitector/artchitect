@@ -2,7 +2,9 @@ package pantheon
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/artchitector/artchitect2/model"
+	"github.com/artchitector/artchitect2/services/asgard/pantheon/frigg"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
@@ -44,11 +46,14 @@ Frigg: как мать семейства собирает всех под од�
 Frigg: как Великая Мать собирает всё сущее в единую ойкумену непрерывно.
 */
 type Frigg struct {
+	collage   *frigg.Collage // вспомогательная структура для разделения кода
+	muninn    *Muninn        // Мунин подсказывает, какую картину выбрать для коллажа
 	unityPile unityPile
+	artPile   artPile
 }
 
-func NewFrigg(unityPile unityPile) *Frigg {
-	return &Frigg{unityPile: unityPile}
+func NewFrigg(collage *frigg.Collage, muninn *Muninn, unityPile unityPile, artPile artPile) *Frigg {
+	return &Frigg{collage: collage, muninn: muninn, unityPile: unityPile, artPile: artPile}
 }
 
 /*
@@ -112,7 +117,25 @@ func (f *Frigg) ReunifyArtUnities(ctx context.Context, art model.Art) error {
 }
 
 func (f *Frigg) HandleUnification(ctx context.Context) (worked bool, err error) {
-	return false, errors.Errorf("[frigg] ОБЪЕДИНЕНИЕ ЕЩЕ НЕ ГОТОВО")
+	workUnity, err := f.unityPile.GetNextUnityForReunification(ctx)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, nil // Frigg: для меня нет работы в этот раз.
+	} else if err != nil {
+		return false, errors.Wrap(err, "[frigg] ПРОБЛЕМЫ С ПОЛУЧЕНИЕМ ЕДИНСТВА ДЛЯ ОБЪЕДИНЕНИЯ")
+	}
+
+	workUnity, err = f.reunifyUnity(ctx, workUnity)
+	if err != nil {
+		return false, errors.Wrapf(err, "[frigg] АВАРИЯ. ОБЪЕДИНЕНИЕ МНОЖЕСТВА %s", workUnity.Mask)
+	}
+
+	log.Info().Msgf(
+		"[frigg] ОБЪЕДИНЕНИЕ МНОЖЕСТВА %s ЗАВЕРШЕНО. STATE=%s, VERSION=%d",
+		workUnity.Mask,
+		workUnity.State,
+		workUnity.Version,
+	)
+	return true, nil
 }
 
 func (f *Frigg) createNonexistentUnities(ctx context.Context, art model.Art) error {
@@ -123,18 +146,26 @@ func (f *Frigg) createNonexistentUnities(ctx context.Context, art model.Art) err
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return errors.Wrapf(err, "[frigg] СБОЙ ПОИСКА ЕДИНСТВА %s", mask)
 		} else if err == nil {
-			log.Debug().Msgf("[frigg] ЕДИНСТВО %s УЖЕ СОЗДАНО. ПРОПУСК", mask)
 			continue
 		}
 		min, max, err := f.getMinMaxID(mask)
 		if err != nil {
 			return errors.Wrapf(err, "[frigg] МАТЕМАТИЧЕСКИЙ СБОЙ MIN-MAX %s", mask)
 		}
-		unity, err := f.unityPile.Create(ctx, mask, rank, min, max)
+
+		state := model.UnityStateEmpty
+		if art.ID >= max {
+			state = model.UnityStateReunification
+		}
+		unity, err := f.unityPile.Create(ctx, mask, state, rank, min, max)
 		if err != nil {
 			return errors.Wrapf(err, "[frigg] СБОЙ СОЗДАНИЯ ЕДИНСТВА %s", mask)
 		}
 		log.Debug().Msgf("[frigg] СОЗДАНО ЕДИНСТВО %s", unity.Mask)
+
+		if err := f.collage.MakeNSaveBlankCollage(ctx, unity); err != nil {
+			return errors.Wrapf(err, "[frigg] СБОЙ СОХРАНЕНИЯ ПЕРВОЙ КАРТИНКИ ЕДИНСТВА %s", mask)
+		}
 	}
 
 	return nil
@@ -144,7 +175,7 @@ func (f *Frigg) getMinMaxID(mask string) (min uint, max uint, err error) {
 	var min64, max64 uint64
 	min64, err = strconv.ParseUint(
 		strings.ReplaceAll(strings.ReplaceAll(mask, "X", "0"), "U", ""),
-		0,
+		10,
 		64,
 	)
 	if err != nil {
@@ -152,8 +183,145 @@ func (f *Frigg) getMinMaxID(mask string) (min uint, max uint, err error) {
 	}
 	max64, err = strconv.ParseUint(
 		strings.ReplaceAll(strings.ReplaceAll(mask, "X", "9"), "U", ""),
-		0,
+		10,
 		64,
 	)
 	return uint(min64), uint(max64), nil
+}
+
+/*
+reunifyUnity
+
+Frigg: теперь я расскажу, как множества будут объединяться и что это за процесс.
+Frigg: чтобы понять, что такое единство, нужно посетить страницу https://artchitect/unity и посмотреть единства.
+Frigg: Множество с внешней точки зрения выглядит как набор карточек (коллаж из картин), входящий в это множество.
+Frigg: Можно будет взглянуть на картинку множества U001XXX и увидеть сетку 5x5 из картин с номерами от 1000 до 1999
+Frigg: Если углубиться в это множество, то там будут дочерние множества - сотни.
+Frigg: так человек из Мидгарда сможет просматривать единства, и перемещаться по ним и вглубь, и вдоль.
+Frigg: единства - удобный браузер картин Artchitect. Этих картин будут сотни тысяч, и нужна удобная форма для просмотра всего.
+
+Frigg: картина единства начинает собираться почти сначала жизни единства, и в незаполненных единствах вместо картин будут
+чёрные поля в местах пропуска.
+Frigg: Каждую картину для коллажа единства выбирает лично Odin. Odin может указывать и на отсутствующие в данный момент картины,
+и вместо них и будет видна чёрная пустая область. Чем больше заполнено единство картинами, тем меньше чёрных пропусков.
+*/
+func (f *Frigg) reunifyUnity(ctx context.Context, unity model.Unity) (model.Unity, error) {
+	log.Info().Msgf("[frigg] НАЧИНАЮ ОБЪЕДИНЯТЬ ЕДИНСТВО %s", unity.Mask)
+
+	// Frigg: при сборке единства сначала надо пройти по его дочерним единствам и объединить их
+	if unity.Rank != model.Unity100 {
+		// Frigg: внутри сотенного единства нет дочерних для объединения
+		if children, err := f.unityPile.GetChildren(ctx, unity); err != nil {
+			return model.Unity{}, errors.Wrapf(err, "[frigg] ОШИБКА ДОСТУПА К ДЕТЯМ ЕДИНСТВА %s", unity.Mask)
+		} else {
+			for _, child := range children {
+				if child.State == model.UnityStateReunification {
+					// рекурсивная сборка
+					log.Info().Msgf("[frigg] НАЧИНАЮ ОБЪЕДИНЯТЬ ДОЧЕРНЕЕ ЕДИНСТВО %s", child.Mask)
+					child, err = f.reunifyUnity(ctx, child)
+					if err != nil {
+						return model.Unity{}, errors.Wrapf(err, "[frigg] ОШИБКА ОБЪЕДИНЕНИЯ ДОЧЕРНЕГО ЕДИНСТВА %s", child.Mask)
+					}
+				}
+			}
+		}
+	}
+
+	// Frigg: картинки, которые составляю коллаж, хранятся в массиве Leads у model.Unity.
+	// Frigg: для сотенного единства картинки выбираются из всей сотни, но вот единства уровнем выше выбирают не любые картины,
+	// Frigg: а лишь уже выбранные в дочерних сотнях. Это нужно, чтобы если человек увидел интересную картину у множества U01XXXX,
+	// Frigg: то человек может зайти внутрь и найти дочернее единство с этой картинкой, и так дойти до сотни с той самой первой картинкой
+	applicants, err := f.collectApplicants(ctx, unity)
+	if err != nil {
+		return model.Unity{}, errors.Wrapf(err, "[frigg] ОШИБКА СБОРА ПРЕТЕНДЕНТОВ ДЛЯ ЕДИНСТВА %s", unity.Mask)
+	}
+
+	leadsCount := 0
+	switch unity.Rank {
+	case model.Unity100:
+		leadsCount = model.CollageSize100
+	case model.Unity1K:
+		leadsCount = model.CollageSize1K
+	case model.Unity10K:
+		leadsCount = model.CollageSize10K
+	case model.Unity100K:
+		leadsCount = model.CollageSize100K
+	default:
+		log.Fatal().Msgf("[frigg] НЕПОНЯТНЫЙ УРОВЕНЬ ЕДИНСТВА %s - %d", unity.Mask, unity.Rank)
+	}
+
+	leads := make([]uint, 0, leadsCount)
+	for i := 0; i < leadsCount; i++ {
+		lead, _, err := f.muninn.RememberUnityLead(ctx, applicants)
+		if err != nil {
+			return model.Unity{},
+				errors.Wrapf(err, "[frigg] ОШИБКА ВЫБОРА ЛИДЕРА %d/%d ДЛЯ ЕДИНСТВА %s", i+1, leadsCount, unity.Mask)
+		}
+		leads = append(leads, lead)
+	}
+
+	log.Info().Msgf("[frigg] ДЛЯ ЕДИНСТВА %s ВЫБРАНЫ ЛИДЕРЫ %v", unity.Mask, leads)
+	// Frigg: лидеры выбраны, нужно составить из картинок коллаж и затем сохранить его на warehouse
+	// Frigg: само единство будет сохранено в БД последним
+
+	maxArtID, err := f.artPile.GetMaxArtID(ctx)
+	if err != nil {
+		return model.Unity{}, errors.Wrapf(err, "[frigg] ОШИБКА ДОСТУПА К МАКСИМАЛЬНОМУ ID, %s", unity.Mask)
+	}
+
+	leadsB, err := json.Marshal(leads)
+	if err != nil {
+		return model.Unity{}, errors.Wrapf(err, "[frigg] ОШИБКА УПАКОВКИ ЛИДЕРОВ %s", unity.Mask)
+	}
+	unity.Leads = string(leadsB)
+	unity.Version = unity.Version + 1
+
+	img, err := f.collage.MakeCollage(ctx, unity.Mask, leads, maxArtID)
+	if err != nil {
+		return model.Unity{}, errors.Wrapf(err, "[frigg] ОШИБКА СБОРКИ КОЛЛАЖА ДЛЯ %s", unity.Mask)
+	}
+
+	if err := f.collage.SaveCollage(ctx, unity, img); err != nil {
+		return model.Unity{}, errors.Wrapf(err, "[frigg] ОШИБКА СОХРАНЕНИЯ КОЛЛАЖА ДЛЯ %s", unity.Mask)
+	}
+
+	if maxArtID >= unity.MaxID {
+		unity.State = model.UnityStateUnified
+	} else {
+		unity.State = model.UnityStatePreUnified
+	}
+	unity, err = f.unityPile.Save(ctx, unity)
+	if err != nil {
+		return model.Unity{}, errors.Wrapf(err, "[frigg] СБОЙ СОХРАНЕНИЯ ОБЪЕДИНЁННОГО ЕДИНСТВА %s", unity.Mask)
+	}
+	log.Info().Msgf("[frigg] ЕДИНСТВО %s ОБЪЕДИНЕНО. СТАТУС: %s. НОВАЯ ВЕРСИЯ: %d", unity.Mask, unity.State, unity.Version)
+	return unity, nil
+}
+
+// collectApplicants
+// Frigg: Выбор всех возможных претендентов на лидерство в виде массива ID-номеров. Далее Один (Мунин) выберет конкретных
+// Frigg: если это сотенное единство, то тут появится массив всех возможных ID [100, 101, 102,... 199]
+func (f *Frigg) collectApplicants(ctx context.Context, unity model.Unity) ([]uint, error) {
+	var applicants []uint
+	if unity.Rank == model.Unity100 {
+		for i := unity.MinID; i <= unity.MaxID; i++ {
+			applicants = append(applicants, i)
+		}
+		return applicants, nil
+	}
+
+	children, err := f.unityPile.GetChildren(ctx, unity)
+	if err != nil {
+		return applicants, errors.Wrapf(err, "[frigg] ОШИБКА ВЫБОРА ДОЧЕРНИХ ЕДИНСТВ ДЛЯ %s", unity.Mask)
+	}
+
+	for _, child := range children {
+		var leads []uint
+		if err := json.Unmarshal([]byte(child.Leads), &leads); err != nil {
+			return applicants, errors.Wrapf(err, "[frigg] ОШИБКА РАСШИФРОВКИ ЛИДЕРОВ ЕДИНСТВА %s", child.Mask)
+		}
+		applicants = append(applicants, leads...)
+	}
+	log.Info().Msgf("[frigg] ДЛЯ ЕДИНСТВА %s ВЫБРАНЫ ПРЕДЕНТЕНДЫ: %+v", unity.Mask, applicants)
+	return applicants, nil
 }

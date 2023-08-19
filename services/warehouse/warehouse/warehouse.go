@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"image"
 	"image/jpeg"
 	"io"
 	"mime/multipart"
@@ -21,6 +22,12 @@ import (
 type artRequest struct {
 	Id   uint   `uri:"id" binding:"required,numeric"`
 	Size string `uri:"size" binding:"required"`
+}
+
+type unityRequest struct {
+	Mask    string `uri:"mask" binding:"required"`
+	Version uint   `uri:"version" binding:"numeric"`
+	Size    string `uri:"size" binding:"required"`
 }
 
 type Warehouse struct {
@@ -37,27 +44,46 @@ func (w *Warehouse) HandleGetArt(c *gin.Context) {
 	}
 
 	unityMask := model.Art{ID: request.Id}.GetUnityMask(model.Unity1K)
-	var dirpath, filename, contentType string
+	var dirpath, filename string
 	if request.Size == model.SizeOrigin {
 		dirpath = path.Join(w.OriginPath, fmt.Sprintf("U%s", unityMask))
 		filename = fmt.Sprintf("art-%d.jpg", request.Id)
-		contentType = "image/jpeg"
 	} else {
 		dirpath = path.Join(w.ArtsPath, fmt.Sprintf("U%s", unityMask))
 		filename = fmt.Sprintf("art-%d-%s.jpg", request.Id, request.Size)
-		contentType = "image/jpeg"
 	}
 	data, err := w.readFile(dirpath, filename)
 	if err != nil {
+		log.Error().Err(err).Msgf("[warehouse] ОШИБКА ЧТЕНИЯ ФАЙЛА %s/%s", dirpath, filename)
 		c.String(http.StatusNotFound, err.Error())
 		return
 	}
-	c.Data(http.StatusOK, contentType, data)
+	c.Data(http.StatusOK, "image/jpeg", data)
+}
+
+func (w *Warehouse) HandleGetUnity(c *gin.Context) {
+	var request unityRequest
+	if err := c.ShouldBindUri(&request); err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	parentMask := fmt.Sprintf("U%sXXXXX", string(request.Mask[0]))
+	dirpath := path.Join(w.UnityPath, parentMask)
+	filename := fmt.Sprintf("U%s-%d-%s.jpg", request.Mask, request.Version, request.Size)
+
+	data, err := w.readFile(dirpath, filename)
+	if err != nil {
+		log.Error().Err(err).Msgf("[warehouse] ОШИБКА ЧТЕНИЯ ФАЙЛА %s/%s", dirpath, filename)
+		c.String(http.StatusNotFound, err.Error())
+		return
+	}
+	c.Data(http.StatusOK, "image/jpeg", data)
 }
 
 func (w *Warehouse) HandleUploadArt(c *gin.Context) {
 	// тут приходит jpeg файл в размере F
-	data, artID, err := w.parse(c)
+	data, artID, err := w.parseArt(c)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		log.Warn().Err(err).Msgf("[warehouse:HandleUploadArt] БИТЫЕ ДАННЫЕ")
@@ -74,39 +100,51 @@ func (w *Warehouse) HandleUploadArt(c *gin.Context) {
 		return
 	}
 
-	for _, size := range []string{model.SizeF, model.SizeM, model.SizeS, model.SizeXS} {
-		img := resizer.ResizeImage(decoded, size)
-		var quality int
-		switch size {
-		case model.SizeF:
-			quality = model.QualityF
-		case model.SizeM:
-			quality = model.QualityM
-		case model.SizeS:
-			quality = model.QualityS
-		case model.SizeXS:
-			quality = model.QualityXS
-		}
-		b := new(bytes.Buffer)
-		err := jpeg.Encode(b, img, &jpeg.Options{Quality: quality})
-		if err != nil {
-			c.String(http.StatusInternalServerError, err.Error())
-			log.Error().Err(err).Msgf("[warehouse:HandleUploadArt] НЕ СМОГ СОЗДАТЬ JPEG")
-			return
-		}
+	unityMask := model.Art{ID: uint(artID)}.GetUnityMask(model.Unity1K)
+	subdir := fmt.Sprintf("U%s", unityMask)
+	filename := fmt.Sprintf("art-%d-%s.jpg", artID, "%s")
+	if err := w.resizeAndSave(c, decoded, w.ArtsPath, subdir, filename); err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		log.Error().Err(err).Msgf("[warehouse:HandleUploadArt] НЕ УДАЛОСЬ СОХРАНИТЬ JPEG-ФАЙЛ")
+		return
+	} else {
+		c.String(http.StatusOK, "ok")
+	}
+}
 
-		filename := fmt.Sprintf("art-%d-%s.jpg", artID, size)
-		if err := w.saveFile(c, w.ArtsPath, artID, filename, b.Bytes()); err != nil {
-			c.String(http.StatusInternalServerError, err.Error())
-			log.Error().Err(err).Msgf("[warehouse:HandleUploadArt] НЕ УДАЛОСЬ СОХРАНИТЬ JPEG-ФАЙЛ")
-			return
-		}
+func (w *Warehouse) HandleUploadUnity(c *gin.Context) {
+	fileData, mask, version, err := w.parseUnity(c)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		log.Warn().Err(err).Msgf("[warehouse:HandleUploadUnity] БИТЫЕ ДАННЫЕ")
+		return
+	}
+
+	log.Info().Msgf("[warehouse:HandleUploadArt] ВХОДЯЩИЙ UNITY-ЗАПРОС U%s/%d", mask, version)
+
+	b := bytes.NewReader(fileData)
+	decoded, err := jpeg.Decode(b)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		log.Warn().Err(err).Msgf("[warehouse:HandleUploadUnity] БИТЫЙ JPEG. U%s/%d", mask, version)
+		return
+	}
+
+	// Frigg: все единства делятся на папки по ведущему знаку, Каждое 100К-единство окажется в папке вместе со всеми его детьми
+	subdir := fmt.Sprintf("U%sXXXXX", string(mask[0]))
+	filename := fmt.Sprintf("U%s-%s-%s.jpg", mask, version, "%s")
+	if err := w.resizeAndSave(c, decoded, w.UnityPath, subdir, filename); err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		log.Error().Err(err).Msgf("[warehouse:HandleUploadUnity] НЕ УДАЛОСЬ СОХРАНИТЬ JPEG-ФАЙЛ")
+		return
+	} else {
+		c.String(http.StatusOK, "ok")
 	}
 }
 
 func (w *Warehouse) HandleUploadOrigin(c *gin.Context) {
 	// а тут приходит JPEG-файл в полном размере
-	data, artID, err := w.parse(c)
+	data, artID, err := w.parseArt(c)
 	if err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		log.Warn().Err(err).Msgf("[warehouse:HandleUploadArt] БИТЫЕ ДАННЫЕ")
@@ -123,15 +161,20 @@ func (w *Warehouse) HandleUploadOrigin(c *gin.Context) {
 		return
 	}
 
+	unityMask := model.Art{ID: uint(artID)}.GetUnityMask(model.Unity1K)
+	subDir := fmt.Sprintf("U%s", unityMask)
 	filename := fmt.Sprintf("art-%d.jpg", artID)
-	if err := w.saveFile(c, w.OriginPath, artID, filename, data); err != nil {
+
+	if err := w.saveFile(c, w.OriginPath, subDir, filename, data); err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		log.Error().Err(err).Msgf("[warehouse:HandleUploadArt] НЕ УДАЛОСЬ СОХРАНИТЬ JPG-ФАЙЛ")
 		return
 	}
+
+	c.String(http.StatusOK, "ok")
 }
 
-func (w *Warehouse) parse(c *gin.Context) (data []byte, artID int, err error) {
+func (w *Warehouse) parseArt(c *gin.Context) (data []byte, artID int, err error) {
 	var file *multipart.FileHeader
 	file, err = c.FormFile("file")
 	if err != nil {
@@ -150,6 +193,72 @@ func (w *Warehouse) parse(c *gin.Context) (data []byte, artID int, err error) {
 
 	var f multipart.File
 	f, err = file.Open()
+	defer f.Close()
+	if err != nil {
+		return
+	}
+
+	data, err = io.ReadAll(f)
+	return
+}
+
+func (w *Warehouse) resizeAndSave(
+	c *gin.Context,
+	decoded image.Image,
+	path string,
+	subdir string,
+	filemask string,
+) error {
+	for _, size := range []string{model.SizeF, model.SizeM, model.SizeS, model.SizeXS} {
+		img := resizer.ResizeImage(decoded, size)
+		var quality int
+		switch size {
+		case model.SizeF:
+			quality = model.QualityF
+		case model.SizeM:
+			quality = model.QualityM
+		case model.SizeS:
+			quality = model.QualityS
+		case model.SizeXS:
+			quality = model.QualityXS
+		}
+		b := new(bytes.Buffer)
+		err := jpeg.Encode(b, img, &jpeg.Options{Quality: quality})
+		if err != nil {
+			return err
+		}
+
+		filename := fmt.Sprintf(filemask, size)
+		if err := w.saveFile(c, path, subdir, filename, b.Bytes()); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (w *Warehouse) parseUnity(c *gin.Context) (data []byte, unityMask string, unityVersion string, err error) {
+	var file *multipart.FileHeader
+	file, err = c.FormFile("file")
+	if err != nil {
+		return
+	}
+
+	unityMask = c.PostForm("mask")
+	if unityMask == "" {
+		err = errors.Errorf("[warehouse] MASK ОБЯЗАТЕЛЕН")
+		return
+	}
+
+	unityVersion = c.PostForm("version")
+	if unityVersion == "" {
+		err = errors.Errorf("[warehouse] VERSION ОБЯЗАТЕЛЕН")
+		return
+	}
+
+	var f multipart.File
+	f, err = file.Open()
+	defer f.Close()
 	if err != nil {
 		return
 	}
@@ -160,14 +269,12 @@ func (w *Warehouse) parse(c *gin.Context) (data []byte, artID int, err error) {
 
 func (w *Warehouse) saveFile(
 	ctx context.Context,
-	dir string,
-	artID int,
+	baseDir string,
+	subDir string,
 	filename string,
 	data []byte,
 ) error {
-	unityMask := model.Art{ID: uint(artID)}.GetUnityMask(model.Unity1K)
-
-	dirpath := path.Join(dir, fmt.Sprintf("U%s", unityMask))
+	dirpath := path.Join(baseDir, subDir)
 	if err := os.MkdirAll(dirpath, 0774); err != nil {
 		return err
 	}

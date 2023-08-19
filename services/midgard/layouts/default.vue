@@ -42,8 +42,8 @@
 <!--        <span> - </span>-->
         <NuxtLink :to="localePath('/entropy')">{{$t('entropy')}}</NuxtLink>
         <span> - </span>
-<!--        <NuxtLink :to="localePath('/unity')">{{$t('unity')}}</NuxtLink>-->
-<!--        <span> - </span>-->
+        <NuxtLink :to="localePath('/unity')">{{$t('unity')}}</NuxtLink>
+        <span> - </span>
 <!--        <NuxtLink :to="localePath('lottery')">{{$t('lottery')}}</NuxtLink>-->
 <!--        <span> - </span>-->
 <!--        <NuxtLink :to="localePath('selection')">{{$t('selection')}}</NuxtLink>-->

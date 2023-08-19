@@ -15,7 +15,7 @@ type artPile interface {
 }
 
 type muninn interface {
-	OneOf(ctx context.Context, maxval uint) (uint, model.EntropyPack, error)
+	RememberArtNo(ctx context.Context, min uint, max uint) (uint, model.EntropyPack, error)
 }
 
 type odin interface {

@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"github.com/artchitector/artchitect2/libraries/warehouse"
 	"github.com/artchitector/artchitect2/model"
 	"github.com/artchitector/artchitect2/services/asgard/communication"
 	"github.com/artchitector/artchitect2/services/asgard/infrastructure"
 	"github.com/artchitector/artchitect2/services/asgard/pantheon"
+	frigg2 "github.com/artchitector/artchitect2/services/asgard/pantheon/frigg"
+	"github.com/artchitector/artchitect2/services/asgard/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"image"
@@ -48,7 +51,8 @@ func main() {
 
 	// внешние связи
 	bifröst := communication.NewBifröst(red)
-	warehouse := communication.NewWarehouse(config.WarehouseOriginUrl, config.WarehouseArtUrls)
+	//warehouse := communication.NewWarehouse(config.WarehouseOriginUrl, config.WarehouseArtUrls)
+	wh := warehouse.NewWarehouse(config.WarehouseArtUrls, config.WarehouseOriginUrl)
 	keyhole := communication.NewKeyhole(config.HttpPort, webcam)
 
 	// хранилища сущностей
@@ -61,21 +65,39 @@ func main() {
 	ai := infrastructure.NewAI(config.UseFakeAI, config.InvokeAIPath)
 	freyja := pantheon.NewFreyja(ai)
 	gungner := pantheon.NewGungner()
-	frigg := pantheon.NewFrigg(unityPile)
-	odin := pantheon.NewOdin(config.CreatorActive, frigg, freyja, muninn, gungner, heimdall, artPile, warehouse)
+
+	friggCollage := frigg2.NewFriggCollage(wh, gungner)
+	frigg := pantheon.NewFrigg(friggCollage, muninn, unityPile, artPile)
+
+	odin := pantheon.NewOdin(
+		config.CreatorActive,
+		config.CreateTotalTimeSec,
+		frigg,
+		freyja,
+		muninn,
+		gungner,
+		heimdall,
+		artPile,
+		wh,
+	)
 
 	// запуск фоновых служб
 	go runServices(ctx, lostEye, huginn, heimdall, webcam, keyhole, giving, odin, bifröst)
+
+	// запуск временных сервисов, которые обрабатывают задачи. Artchitect будет запущен лишь после их выполнения
+	runTemporary(ctx, artPile, frigg)
+
 	// запуск Главного Цикла Архитектора (ГЦА)
-	runArtchitect(ctx, odin)
+	runArtchitect(ctx, odin, frigg)
 }
 
 // runArtchitect - запуск Главного Цикла Архитектора (ГЦА)
 func runArtchitect(
 	ctx context.Context,
 	odin *pantheon.Odin,
+	frigg *pantheon.Frigg,
 ) {
-	artchitect := pantheon.NewArtchitect(odin)
+	artchitect := pantheon.NewIntention(odin, frigg)
 	artchitect.Run(ctx)
 }
 
@@ -123,4 +145,11 @@ func runServices(
 		bifröst.ListenPrivateOdinRequests(ctx, odin)
 		log.Debug().Msgf("[main] ОСТАНОВЛЕНО ЧТЕНИЕ ЛИЧНЫХ ПРОШЕНИЙ К ОДИНУ")
 	}()
+}
+
+func runTemporary(ctx context.Context, artPile *model.ArtPile, frigg *pantheon.Frigg) {
+	ui := utils.NewUnityInitializer(artPile, frigg)
+	if err := ui.Init(ctx); err != nil {
+		log.Fatal().Err(err).Send()
+	}
 }

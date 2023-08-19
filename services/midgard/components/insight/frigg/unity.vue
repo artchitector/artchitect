@@ -52,7 +52,7 @@
       </div>
     </div>
 
-    <div v-else-if="state.collageFinished">
+    <div v-else-if="state.collageFinished" class="has-text-centered">
       <b-progress v-if="this.state.expectedEnjoyTime" :value="progress" type="is-info" show-value class="mb-1">
         {{$t('rest')}} {{state.currentEnjoyTime}}/{{state.expectedEnjoyTime}}
       </b-progress>

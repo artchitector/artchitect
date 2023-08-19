@@ -121,7 +121,7 @@ export default {
       }
     },
     formatDate(d) {
-      return format(d)
+      return format(d, this.$i18n.locale)
     },
     setIndex (index) {
       this.current.index = index

@@ -3,7 +3,10 @@ package portals
 import (
 	"github.com/artchitector/artchitect2/model"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
+	"gorm.io/gorm"
 	"net/http"
+	"time"
 )
 
 type UnityPortal struct {
@@ -20,9 +23,11 @@ type unityRequest struct {
 }
 
 type unityResponse struct {
-	Unity    model.Unity     `json:"unity"`
-	Arts     []model.FlatArt `json:"arts"`
-	Children []model.Unity   `json:"children"`
+	Unity        model.Unity     `json:"unity"`
+	FirstArtTime *time.Time      `json:"firstArtTime"`
+	LastArtTime  *time.Time      `json:"lastArtTime"`
+	Arts         []model.FlatArt `json:"arts"`
+	Children     []model.Unity   `json:"children"`
 }
 
 func (up *UnityPortal) HandleMain(c *gin.Context) {
@@ -46,10 +51,13 @@ func (up *UnityPortal) HandleUnity(c *gin.Context) {
 		return
 	}
 
+	firstArtTime, lastArtTime, err := up.getFirstLastTimes(c, parent)
 	response := unityResponse{
-		Unity:    parent,
-		Arts:     []model.FlatArt{},
-		Children: []model.Unity{},
+		Unity:        parent,
+		Arts:         []model.FlatArt{},
+		Children:     []model.Unity{},
+		FirstArtTime: firstArtTime,
+		LastArtTime:  lastArtTime,
 	}
 
 	if parent.Rank == model.Unity100 {
@@ -73,4 +81,26 @@ func (up *UnityPortal) HandleUnity(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+func (up *UnityPortal) getFirstLastTimes(c *gin.Context, parent model.Unity) (*time.Time, *time.Time, error) {
+	var firstArtTime, lastArtTime *time.Time
+	minID := parent.MinID
+	if minID == 0 {
+		minID = 1
+	}
+	first, err := up.artPile.GetArt(c, minID)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil, errors.Wrapf(err, "[unity_portal] ОШИБКА")
+	} else if err == nil {
+		firstArtTime = &first.CreatedAt
+	}
+
+	last, err := up.artPile.GetArt(c, parent.MaxID)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil, errors.Wrapf(err, "[unity_portal] ОШИБКА")
+	} else if err == nil {
+		lastArtTime = &last.CreatedAt
+	}
+	return firstArtTime, lastArtTime, nil
 }

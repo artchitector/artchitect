@@ -33,14 +33,13 @@
       <b>Шаг 1. Исходный кадр (Frame)</b>
       <br/>
       Энтропия (в форме светового шума) получается из разницы двух соседних кадров. Текущий кадр виден ниже, его
-      содержание не имеет принципиального
-      значения. Красным отмечена область, с которой будет сниматься фоновый шум.
+      содержание не имеет принципиального значения, так как учитывается <b>разница между кадрами</b>.
     </p>
     <p v-else>
       <b>Step 1. Original frame (Frame)</b>
       <br/>
       Entropy (in the form of light noise) is obtained from the difference of two adjacent frames. The current frame is
-      visible below, its content does not matter. The area from which background noise will be removed is marked in red.
+      visible below, its content does not matter, because only difference between frames useful.
     </p>
     <div class="has-text-centered">
       <img :src="`data:image/jpeg;base64, ${images.frame}`"

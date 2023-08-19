@@ -50,7 +50,9 @@ export default {
     })
   },
   beforeDestroy() {
-    Radio.unsubscribe(this.radioPid)
+    if (this.radioPid) {
+      Radio.unsubscribe(this.radioPid)
+    }
   }
 }
 </script>

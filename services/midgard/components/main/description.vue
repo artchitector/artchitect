@@ -22,8 +22,12 @@
     <p class="has-text-centered">
       <NuxtLink :to="localePath('idea') + `#how_to_draw`">Как Artchitect рисует картину?</NuxtLink>
     </p>
+    <div v-if="entropy">
+      <common-entropy :entropy="entropy"/>
+    </div>
     <p>
-      <b>Архитектор</b> считывает случайные кванты света из окружающего пространства, преобразует их в числа, а затем
+      <b>Архитектор</b> считывает случайные кванты света из окружающего пространства - <b>энтропию</b>, преобразует её в
+      числа, а затем
       числа превращаются в идеи для создания картины. Каждая созданная картина уникальна и
       неповторима, так как её источником является уникальное состояние Вселенной в определенный момент времени.
       <b>Архитектор</b> использует простейшие данные, "распакованные" из квантов света, чтобы создать сложную
@@ -67,6 +71,9 @@
     <p class="has-text-centered">
       <NuxtLink :to="localePath('idea') + `#how_to_draw`">How Artchitect draw each picture?</NuxtLink>
     </p>
+    <div v-if="entropy">
+      <common-entropy :entropy="entropy"/>
+    </div>
     <p>
       <b>Artchitect</b> reads random quanta of light from the surrounding space, converts them into numbers, and then
       numbers turn into ideas to create a picture. Every artwork that arises is unique and
@@ -101,11 +108,29 @@
   </section>
 </template>
 <script>
+import Radio from "@/utils/radio";
+
 export default {
   name: "common-description",
   computed: {
     locale() {
       return this.$i18n.locale
+    }
+  },
+  data() {
+    return {
+      radioPid: null,
+      entropy: null,
+    }
+  },
+  async mounted() {
+    this.radioPid = await Radio.subscribe("entropy", (entropy) => {
+      this.entropy = entropy
+    })
+  },
+  beforeDestroy() {
+    if (this.radioPid !== null) {
+      Radio.unsubscribe(this.radioPid)
     }
   }
 }

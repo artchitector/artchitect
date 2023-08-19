@@ -33,8 +33,8 @@ class Radio {
   async subscribe(channel, cb) {
     if (!this.connection) {
       this.connect()
-      await this.waitConnection()
     }
+    await this.waitConnection()
 
     if (this.activeChannels.indexOf(channel) !== -1) {
       // Слушатель уже подписан

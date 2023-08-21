@@ -17,6 +17,9 @@ func NewUnityInitializer(artPile artPile, frigg frigg) *UnityInitializer {
 }
 
 func (ui *UnityInitializer) Init(ctx context.Context) error {
+	log.Info().Msgf("UnityInitializer ОТКЛЮЧЕН")
+	return nil
+
 	maxArtID, err := ui.artPile.GetMaxArtID(ctx)
 	if err != nil {
 		return errors.Wrap(err, "[unity_initializer] НЕ ПОЛУЧЕН MAX_ART_ID")

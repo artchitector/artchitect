@@ -14,7 +14,7 @@
   <section class="content">
     <h3 class="is-size-5">{{ $t('title') }}</h3>
     <div v-if="loading" class="has-text-centered">
-      <loader/>
+      <common-loader/>
       <br/>
     </div>
     <template v-else-if="!isLocal && !isServer && !isLoggedIn">
@@ -35,7 +35,7 @@
     </div>
     <div v-else>
       <div class="has-text-centered">
-        <loader/>
+        <common-loader/>
       </div>
     </div>
   </section>

@@ -56,7 +56,7 @@
       </p>
     </div>
     <div class="img">
-      <loader v-if="loading"/>
+      <common-loader v-if="loading"/>
       <div v-else-if="error">
         <div class="notification is-danger">
           <p>{{$t('error')}}:</p>
@@ -81,11 +81,9 @@
   </div>
 </template>
 <script>
-import Loader from "@/components/loader";
 import moment from "moment/moment";
 
 export default {
-  components: {Loader},
   data () {
     return {
       isVisible: false,

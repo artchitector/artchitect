@@ -24,7 +24,7 @@
     <h3 class="has-text-centered is-size-4 mb-4">{{ $t('subtitle') }}</h3>
     <template v-if="$fetchState.pending">
       <div class="has-text-centered">
-        <loader/>
+        <common-loader/>
       </div>
     </template>
     <template v-else-if="$fetchState.error">

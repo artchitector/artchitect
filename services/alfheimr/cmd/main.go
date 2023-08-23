@@ -62,6 +62,7 @@ func main() {
 	artPortal := portals.NewArtPortal(artPile, harbour)
 	imPortal := portals.NewImagePortal(wh)
 	unityPortal := portals.NewUnityPortal(unityPile, artPile)
+	authPortal := portals.NewAuthPortal(config.AllowFakeAuth, config.JwtSecret)
 
 	// ЗАПУСК HTTP-СЕРВЕРА
 	go func() {
@@ -93,6 +94,7 @@ func main() {
 		// http://localhost/api/ uimage 0XXXXX 0 f
 		r.GET("/unity", unityPortal.HandleMain)
 		r.GET("/unity/:mask", unityPortal.HandleUnity)
+		r.GET("/me", authPortal.HandleMe)
 
 		// connection - Портал с постоянной связью c Мидгардом (вебсокете)
 		r.GET("/radio", func(c *gin.Context) {

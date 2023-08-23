@@ -16,6 +16,10 @@ type Config struct {
 	DbDSN         string
 	RedisAddr     string
 	RedisPassword string
+
+	// auth
+	JwtSecret     string
+	AllowFakeAuth bool
 }
 
 func InitEnv() *Config {
@@ -40,5 +44,9 @@ func InitEnv() *Config {
 		DbDSN:         env["DB_DSN"],
 		RedisAddr:     env["REDIS_ADDR"],
 		RedisPassword: env["REDIS_PASSWORD"],
+
+		// auth
+		JwtSecret:     env["JWT_SECRET"],
+		AllowFakeAuth: env["ALLOW_FAKE_AUTH"] == "true",
 	}
 }

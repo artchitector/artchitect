@@ -38,16 +38,10 @@
         <span> - </span>
         <NuxtLink :to="localePath('index')">{{$t('main')}}</NuxtLink>
         <span> - </span>
-<!--        <NuxtLink :to="localePath('/idea')">{{$t('idea')}}</NuxtLink>-->
-<!--        <span> - </span>-->
         <NuxtLink :to="localePath('/entropy')">{{$t('entropy')}}</NuxtLink>
         <span> - </span>
         <NuxtLink :to="localePath('/unity')">{{$t('unity')}}</NuxtLink>
         <span> - </span>
-<!--        <NuxtLink :to="localePath('lottery')">{{$t('lottery')}}</NuxtLink>-->
-<!--        <span> - </span>-->
-<!--        <NuxtLink :to="localePath('selection')">{{$t('selection')}}</NuxtLink>-->
-<!--        <span> - </span>-->
 <!--        <template v-if="loggedIn">-->
 <!--          <NuxtLink :to="localePath('/liked')">{{$t('liked')}}</NuxtLink>-->
 <!--          <span> - </span>-->
@@ -56,7 +50,7 @@
         <NuxtLink :to="switchLocalePath('ru')">ru</NuxtLink>
       </div>
 
-      <div v-if="false" class="security-block">
+      <div class="security-block">
         <NuxtLink :to="localePath('login')">
           <figure v-if="avatar" class="image is-32x32">
             <img :src="avatar" class="is-rounded" alt="userpic"/>

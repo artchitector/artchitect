@@ -14,13 +14,12 @@
   <section class="content">
     <h3 class="is-size-5">{{ $t('title') }}</h3>
     <div v-if="loading" class="has-text-centered">
-      <common-loader/>
-      <br/>
+      <common-loader />
+      <br />
     </div>
     <template v-else-if="!isLocal && !isServer && !isLoggedIn">
-      <script async src="https://telegram.org/js/telegram-widget.js?21"
-              data-telegram-login="ArtchitectBot" data-size="large" data-auth-url="https://artchitect.space/api/login"
-              data-request-access="write"></script>
+      <script async src="https://telegram.org/js/telegram-widget.js?21" data-telegram-login="ArtchitectBot"
+        data-size="large" data-auth-url="https://artchitect.space/api/login" data-request-access="write"></script>
     </template>
     <template v-else-if="isLocal && !isServer && !isLoggedIn">
       <button @click.prevent="fakeLogin">Fake login</button>
@@ -28,14 +27,17 @@
 
     <div v-else-if="isLoggedIn">
       <figure class="image is-128x128">
-        <img class="is-rounded" :src="photoUrl"/>
+        <img class="is-rounded" :src="photoUrl" />
       </figure>
-      <p>Вы вошли как @{{ username }}</p>
+      <p>
+        Вы вошли как @{{ username }} (id={{ serverLoggedUserId }})
+        <span v-if="loadedId">(ID={{ loadedId }})</span>
+      </p>
       <button class="button" @click="logout()">Выйти</button>
     </div>
     <div v-else>
       <div class="has-text-centered">
-        <common-loader/>
+        <common-loader />
       </div>
     </div>
   </section>
@@ -54,7 +56,9 @@ export default {
       return !process.client
     },
     isLoggedIn() {
-      return process.client ? !!localStorage.getItem("token") : false
+      return process.client
+        ? this.serverLoggedUserId && !!localStorage.getItem("token")
+        : false
     },
     username() {
       return process.client ? localStorage.getItem("username") : null
@@ -66,10 +70,11 @@ export default {
   data() {
     return {
       loading: false,
+      serverLoggedUserId: null,
       isLocal: false,
     }
   },
-  mounted() {
+  async mounted() {
     if (process.env.IS_LOCAL === 'true') {
       this.isLocal = true
     }
@@ -80,6 +85,13 @@ export default {
       localStorage.setItem("photo_url", this.$route.query.photo_url)
       if (process.client) {
         window.location.href = this.localePath(`/login`)
+      }
+    } else {
+      try {
+        this.loading = true
+        this.serverLoggedUserId = await this.$axios.$get("/me")
+      } finally {
+        this.loading = false
       }
     }
   },
@@ -93,6 +105,9 @@ export default {
       }
     },
     fakeLogin() {
+      if (!this.isLocal) {
+        return
+      }
       this.loading = true
       localStorage.setItem("token", "FAKE_LOCAL_TOKEN")
       localStorage.setItem("username", "fake_artchitect")

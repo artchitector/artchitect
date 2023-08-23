@@ -1,17 +1,26 @@
 <i18n>
 {
   "en": {
-    "rest": "finished. make rest"
+    "rest": "finished. make rest",
+    "unification": "Unification of",
+    "making_collage": "Making collage",
+    "leads_collecting": "Selecting leads",
+    "applicants": "Applicants"
   },
   "ru": {
-    "rest": "завершено. отдых"
+    "rest": "завершено. отдых",
+    "unification": "Объединение единства",
+    "making_collage": "Создаётся коллаж",
+    "leads_collecting": "Отбор лидеров",
+    "applicants": "Претендентов"
+
   }
 }
 </i18n>
 <template>
   <div>
     <h3 class="is-size-6 has-text-centered has-text-primary mb-0">
-      Объединение единства {{ state.unity.mask }}
+       {{ $t('unification') }} {{ state.unity.mask }}
     </h3>
 
     <div v-if="state.children.length" class="tags mb-0 has-text-centered">
@@ -33,12 +42,12 @@
     <div v-else-if="!state.collageFinished && state.totalLeads > 0" class="has-text-centered">
       <template v-if="state.collageStarted">
         <div class="is-size-7" v-if="state.collageStarted">
-          Создаётся коллаж
+          {{ $t('making_collage') }}
         </div>
       </template>
       <div class="is-size-7" v-else>
-        Сбор лидеров ({{ state.leads.length }}/{{ state.totalLeads }}).
-        Претендентов: {{ state.totalApplicants }}
+        {{ $t('leads_collecting') }} ({{ state.leads.length }}/{{ state.totalLeads }}).
+        {{ $t('applicants') }}: {{ state.totalApplicants }}
       </div>
 
       <div class="is-relative">

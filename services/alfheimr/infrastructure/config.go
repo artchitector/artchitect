@@ -18,8 +18,10 @@ type Config struct {
 	RedisPassword string
 
 	// auth
-	JwtSecret     string
-	AllowFakeAuth bool
+	JwtSecret      string
+	AllowFakeAuth  bool
+	ArtchitectHost string
+	BotToken       string
 }
 
 func InitEnv() *Config {
@@ -46,7 +48,9 @@ func InitEnv() *Config {
 		RedisPassword: env["REDIS_PASSWORD"],
 
 		// auth
-		JwtSecret:     env["JWT_SECRET"],
-		AllowFakeAuth: env["ALLOW_FAKE_AUTH"] == "true",
+		JwtSecret:      env["JWT_SECRET"],
+		AllowFakeAuth:  env["ALLOW_FAKE_AUTH"] == "true",
+		ArtchitectHost: env["ARTCHITECT_HOST"],
+		BotToken:       env["BOT_TOKEN"],
 	}
 }

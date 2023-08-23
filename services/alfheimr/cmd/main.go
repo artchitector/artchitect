@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/artchitector/artchitect2/libraries/warehouse"
 	"github.com/artchitector/artchitect2/model"
 	"github.com/artchitector/artchitect2/services/alfheimr/communication"
@@ -11,9 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
@@ -62,7 +63,12 @@ func main() {
 	artPortal := portals.NewArtPortal(artPile, harbour)
 	imPortal := portals.NewImagePortal(wh)
 	unityPortal := portals.NewUnityPortal(unityPile, artPile)
-	authPortal := portals.NewAuthPortal(config.AllowFakeAuth, config.JwtSecret)
+	authPortal := portals.NewAuthPortal(
+		config.AllowFakeAuth,
+		config.JwtSecret,
+		config.ArtchitectHost,
+		config.BotToken,
+	)
 
 	// ЗАПУСК HTTP-СЕРВЕРА
 	go func() {
@@ -95,6 +101,7 @@ func main() {
 		r.GET("/unity", unityPortal.HandleMain)
 		r.GET("/unity/:mask", unityPortal.HandleUnity)
 		r.GET("/me", authPortal.HandleMe)
+		r.GET("/login", authPortal.HandleLogin)
 
 		// connection - Портал с постоянной связью c Мидгардом (вебсокете)
 		r.GET("/radio", func(c *gin.Context) {

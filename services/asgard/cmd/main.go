@@ -2,6 +2,11 @@ package main
 
 import (
 	"context"
+	"image"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/artchitector/artchitect2/libraries/warehouse"
 	"github.com/artchitector/artchitect2/model"
 	"github.com/artchitector/artchitect2/services/asgard/communication"
@@ -11,10 +16,6 @@ import (
 	"github.com/artchitector/artchitect2/services/asgard/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"image"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {

@@ -34,13 +34,17 @@ type Huginn struct {
 
 	// Через эти каналы Muninn будет получать энтропию разовыми вызовами (без подписки)
 	internalEntropyRetranslators []chan model.EntropyPackExtended
+
+	// Для логирования подписчиков, для дебага зависшей отправки
+	counter int
 }
 
 // Heimdallr подписывается на данные от Huginn и получает энтропию по подписке на go-канал
 // huSubscriber - механизм подписок
 type huSubscriber struct {
-	ctx context.Context
-	ch  chan model.EntropyPackExtended
+	ctx  context.Context
+	name string
+	ch   chan model.EntropyPackExtended
 }
 
 func NewHuginn(lostEye *LostEye) *Huginn {
@@ -92,11 +96,14 @@ func (h *Huginn) StartEntropyRealize(ctx context.Context) {
 
 // Subscribe - отдаёт канал, из которого подписчик читает сообщения.
 // Если подписчик закрывает контекст, то отправка прерывается.
-func (h *Huginn) Subscribe(subscriberCtx context.Context) chan model.EntropyPackExtended {
+func (h *Huginn) Subscribe(subscriberCtx context.Context, name string) chan model.EntropyPackExtended {
 	ch := make(chan model.EntropyPackExtended)
+	h.counter += 1
+	name = fmt.Sprintf("%s-%d", name, h.counter)
 	sub := huSubscriber{
-		ctx: subscriberCtx,
-		ch:  ch,
+		ctx:  subscriberCtx,
+		name: name,
+		ch:   ch,
 	}
 	h.sMutex.Lock()
 	defer h.sMutex.Unlock()
@@ -144,7 +151,7 @@ func (h *Huginn) notifyListeners(ctx context.Context, pack model.EntropyPackExte
 			case <-s.ctx.Done():
 				return
 			case <-time.After(time.Second):
-				log.Error().Msgf("[huginn] ОТПРАВКА ЗАВИСЛА, ЭНТРОПИЯ ПОТЕРЯНА")
+				log.Error().Msgf("[huginn] ОТПРАВКА ЗАВИСЛА, ЭНТРОПИЯ ПОТЕРЯНА, ПОДПИСЧИК: %s", s.name)
 			case s.ch <- pack:
 				//log.Debug().Msgf("[huginn] ЭНТРОПИЯ ОТПРАВЛЕНА")
 			}

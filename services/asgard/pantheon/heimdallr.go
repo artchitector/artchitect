@@ -59,7 +59,7 @@ Odin: этот поток критически важен, его нельзя �
 Heimdallr: проооще простооого... (протяжно и безразлично)
 */
 func (h *Heimdallr) StartStream(ctx context.Context) {
-	entropyCh := h.huginn.Subscribe(ctx)
+	entropyCh := h.huginn.Subscribe(ctx, "heimdallr_transfer_stream")
 
 	for {
 		select {

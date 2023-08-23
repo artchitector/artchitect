@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"github.com/artchitector/artchitect2/model"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"image"
 	"image/color"
@@ -68,43 +69,11 @@ func (h *Heimdallr) StartStream(ctx context.Context) {
 			return
 		case entropy := <-entropyCh:
 			//log.Debug().Msgf("[heimdallr] ВИЖУ ЭНТРОПИЮ ОТ ХУГИНА %+v", entropy)
-
-			// Heimdallr: так. Моя задача из матрицы силы пикселей сделать видимую картинку
-			var err error
-			h.updateColorScheme(entropy)
-			entropy.Entropy.ImageEncoded = h.encodeEntropyImage(entropy.Entropy.Matrix)
-			entropy.Choice.ImageEncoded = h.encodeEntropyImage(entropy.Choice.Matrix)
-			entropy.ImageFrameEncoded, err = h.encodeJpeg(entropy.ImageFrame, model.EntropyJpegQualityFrame)
-			if err != nil {
-				log.Error().Msgf("[heimdallr] НЕ СМОГ СДЕЛАТЬ JPEG ЭНТРОПИИ")
-			}
-			entropy.ImageNoiseEncoded, err = h.encodeJpeg(entropy.ImageNoise, model.EntropyJpegQualityNoise)
-			if err != nil {
-				log.Error().Msgf("[heimdallr] НЕ СМОГ СДЕЛАТЬ JPEG ОБРАТНОЙ ЭНТРОПИИ")
-			}
-
-			if err = h.sendDrakkar(ctx, model.ChanEntropyExtended, entropy); err != nil {
-				log.Error().Msgf("[heimdallr] BIFRÖST СЛОМАН, ДРАККАР С ГРУЗОМ ЭНТРОПИИ УТЕРЯН В ТКАНИ ПРОСТРАНСТВА")
-				// Heimdallr: поток не прерываю. Проблема может быть сетевая из-за Redis
-				continue
-			}
-
-			// Odin: в Альфхейм и Мидгард отправятся две посылки с энтропией
-			// Odin: model.EntropyPackExtended содержит еще и кадр с шумом, большие jpeg-картинки. Это тяжёлая модель,
-			// и она нужна лишь в одном месте - на странице entropy
-			// Odin: model.EntropyPack содержит только минимальные картинки 8х8 (весом по 200байт), это лёгкая модель, и
-			// она используется везде в Artchitect для отображения текущей энтропии
-			// Heimdallr: я отправлю два разные пакета в разные каналы. Читатели разберутся, кому какой нужен.
-			miniEntropy := model.EntropyPack{
-				Timestamp: entropy.Timestamp,
-				Entropy:   entropy.Entropy,
-				Choice:    entropy.Choice,
-			}
-			if err = h.sendDrakkar(ctx, model.ChanEntropy, miniEntropy); err != nil {
-				log.Error().Msgf("[heimdallr] BIFRÖST СЛОМАН, ДРАККАР С ГРУЗОМ ЭНТРОПИИ УТЕРЯН В ТКАНИ ПРОСТРАНСТВА")
-				// Heimdallr: поток не прерываю. Проблема может быть сетевая из-за Redis
-				continue
-			}
+			go func(entropy model.EntropyPackExtended) {
+				if err := h.transferEntropy(ctx, entropy); err != nil {
+					log.Error().Err(err).Msgf("[heimdallr] ОТПРАВКА ЭНТРОПИИ НЕ СЛУЧИЛАСЬ, К СОЖАЛЕНИЮ!")
+				}
+			}(entropy)
 		}
 	}
 }
@@ -130,6 +99,45 @@ func (h *Heimdallr) SendOdinState(ctx context.Context, state model.OdinState) er
 
 func (h *Heimdallr) SendFriggState(ctx context.Context, state model.FriggState) error {
 	return h.bifröst.SendDrakkar(ctx, model.ChanFriggState, state)
+}
+
+// transferEntropy
+// Heimdallr: так. Моя задача из матрицы силы пикселей сделать видимую картинку, раскрасить её как мне нравится
+// Heimdallr: и далее отправить в нижние миры по радужному мосту, до наших любимый людей из Мидгарда.
+func (h *Heimdallr) transferEntropy(ctx context.Context, entropy model.EntropyPackExtended) error {
+	var err error
+	h.updateColorScheme(entropy)
+	entropy.Entropy.ImageEncoded = h.encodeEntropyImage(entropy.Entropy.Matrix)
+	entropy.Choice.ImageEncoded = h.encodeEntropyImage(entropy.Choice.Matrix)
+	entropy.ImageFrameEncoded, err = h.encodeJpeg(entropy.ImageFrame, model.EntropyJpegQualityFrame)
+	if err != nil {
+		log.Error().Msgf("[heimdallr] НЕ СМОГ СДЕЛАТЬ JPEG ЭНТРОПИИ")
+	}
+	entropy.ImageNoiseEncoded, err = h.encodeJpeg(entropy.ImageNoise, model.EntropyJpegQualityNoise)
+	if err != nil {
+		log.Error().Msgf("[heimdallr] НЕ СМОГ СДЕЛАТЬ JPEG ОБРАТНОЙ ЭНТРОПИИ")
+	}
+
+	if err = h.sendDrakkar(ctx, model.ChanEntropyExtended, entropy); err != nil {
+		return errors.Wrap(err, "[heimdallr] BIFRÖST СЛОМАН, ДРАККАР С ГРУЗОМ ЭНТРОПИИ УТЕРЯН В ТКАНИ ПРОСТРАНСТВА")
+	}
+
+	// Odin: в Альфхейм и Мидгард отправятся две посылки с энтропией
+	// Odin: model.EntropyPackExtended содержит еще и кадр с шумом, большие jpeg-картинки. Это тяжёлая модель,
+	// и она нужна лишь в одном месте - на странице entropy
+	// Odin: model.EntropyPack содержит только минимальные картинки 8х8 (весом по 200байт), это лёгкая модель, и
+	// она используется везде в Artchitect для отображения текущей энтропии
+	// Heimdallr: я отправлю два разные пакета в разные каналы. Читатели разберутся, кому какой нужен.
+	miniEntropy := model.EntropyPack{
+		Timestamp: entropy.Timestamp,
+		Entropy:   entropy.Entropy,
+		Choice:    entropy.Choice,
+	}
+	if err = h.sendDrakkar(ctx, model.ChanEntropy, miniEntropy); err != nil {
+		return errors.Wrap(err, "[heimdallr] BIFRÖST СЛОМАН, ДРАККАР С ГРУЗОМ ЭНТРОПИИ УТЕРЯН В ТКАНИ ПРОСТРАНСТВА")
+	}
+
+	return nil
 }
 
 func (h *Heimdallr) fillEntropyPackWithImages(pack model.EntropyPack) model.EntropyPack {

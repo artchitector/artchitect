@@ -23,7 +23,7 @@ const FakeUserID = 999
 
 type AuthPortal struct {
 	allowFakeAuth  bool
-	secret         string
+	secret         []byte
 	artchitectHost string
 	botToken       string
 }
@@ -36,7 +36,7 @@ func NewAuthPortal(
 ) *AuthPortal {
 	return &AuthPortal{
 		allowFakeAuth:  allowFakeAuth,
-		secret:         secret,
+		secret:         []byte(secret),
 		artchitectHost: artchitectHost,
 		botToken:       botToken,
 	}
@@ -143,7 +143,7 @@ func (ap *AuthPortal) checkFromTelegram(values url.Values) error {
 	secretKey := makeSha256(ap.botToken)
 	encryptedDataCheckString := makeHmacSha256([]byte(dataCheckString), secretKey)
 	if hash != hex.EncodeToString(encryptedDataCheckString) {
-		return errors.Errorf("[auth:portal]")
+		return errors.Errorf("[auth:portal] ЭТОТ ЗАПРОС НЕ ИЗ ТЕЛЕГРАМ")
 	}
 	return nil
 }
@@ -169,10 +169,9 @@ func (ap *AuthPortal) generateJWT(v url.Values) (string, error) {
 	claims["photo_url"] = v.Get("photo_url")
 	claims["auth_date"] = v.Get("auth_date")
 
-	log.Info().Msgf("%s", ap.secret)
 	tokenStr, err := token.SignedString(ap.secret)
 	if err != nil {
-		return "", errors.Wrapf(err, "[login_handler] failed to sign JWT")
+		return "", errors.Wrapf(err, "[auth:portal] ОШИБКА ПОДПИСИ JWT_КЛЮЧА")
 	}
 	return tokenStr, nil
 }

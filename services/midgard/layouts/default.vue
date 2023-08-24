@@ -44,8 +44,6 @@
         <span> - </span>
         <NuxtLink :to="localePath('/unity')">{{$t('unity')}}</NuxtLink>
         <span> - </span>
-        <NuxtLink :to="localePath('/loki')">{{$t('fable')}}</NuxtLink>
-        <span> - </span>
 <!--        <template v-if="loggedIn">-->
 <!--          <NuxtLink :to="localePath('/liked')">{{$t('liked')}}</NuxtLink>-->
 <!--          <span> - </span>-->

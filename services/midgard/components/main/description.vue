@@ -51,7 +51,7 @@
       <a href="https://github.com/invoke-ai/InvokeAI" target="_blank">InvokeAI</a>, именно с их помощью создаются
       комплексные изображения из сырых идей.
       <br/>
-      Исходный код проекта Artchitect доступен на <a href="https://github.com/artchitector/artchitect" target="_blank">github</a>.
+      Исходный код проекта Artchitect доступен на <a href="https://github.com/artchitector/artchitect2" target="_blank">github</a>.
     </p>
   </section>
   <section class="content" v-else>
@@ -102,7 +102,7 @@
       <b>Techically</b> artchitect-project is the control-system wrapped around an art-system -
       <a href="https://github.com/Stability-AI/stablediffusion" target="_blank">Stable Diffusion AI v1.5</a>.
       Stable Diffusion AI is the ability to draw pictures for Artchitect.
-      <br/>Full source code of Artchitect is available on <a href="https://github.com/artchitector/artchitect"
+      <br/>Full source code of Artchitect is available on <a href="https://github.com/artchitector/artchitect2"
                                                              target="_blank">github</a>
     </p>
   </section>

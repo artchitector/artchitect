@@ -9,6 +9,10 @@
     "description1000": "Every unity below contains 100 arts",
     "description10000": "Every unity below contains 1000 arts",
     "description100000": "Every unity below contains 10000 arts",
+    "unity_first_part": "First art in unity was created",
+    "unity_no_first_art": "First art in unity not created",
+    "unity_last_part": "and full unity was finished at",
+    "unity_no_last_art": "and unity was not fully finished yet",
     "hundred_description_left": "First art of this hundred was created",
     "hundred_description_middle": "and hundred was finished"
   },

@@ -111,7 +111,7 @@
 import Radio from "@/utils/radio";
 
 export default {
-  name: "common-description",
+  name: "main-description",
   computed: {
     locale() {
       return this.$i18n.locale

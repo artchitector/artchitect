@@ -30,7 +30,7 @@
 import Radio from "@/utils/radio";
 
 export default {
-  name: "common-last99",
+  name: "main-last99",
   data() {
     return {
       radioPid: null,

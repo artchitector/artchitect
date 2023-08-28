@@ -1,9 +1,17 @@
-### Artchitect services
+### Миры Artchitect
 
-**Main services**
-- **soul** - core service, running on server with GPU. Soul handles creation process and service operations.
-- **gate** - api-gateway service. Connected with soul via database and redis.
-- **vision** - nuxt.js (vue.js) frontend service, SSR. connected to gate via http-api and websocket.
+Проект разделён на три мира (три слоя). В скандинавской мифологии девять миров, но Artchitect использует лишь три из
+них: Asgard, Alfheimr, Midgard. Ищи их в папке **services**.
 
-**Util services**
-- **saver** - api to save and get images (for image-storage-servers)
+**Asgard** - высший мир асов, сердце Artchitect. Здесь живёт Odin, здесь и создаются картины. (Этот сервис находится на
+домашнем компьютере с мощной GPU, он создаёт картины). Odin создаёт одну картину каждую минуту и спускает её ниже в мир
+эльфов.
+
+**Alfheimr** - мир светлых эльфов, промежуточный мир между миром асов и миром людей. Это api-gateway сервис, доступный
+из публичной сети. Тут хранятся все данные в хранилищах, и даже если связь с Асгардом рвётся, то картины
+остаются доступны для просмотра с Мидгарда (браузера). Находится на VDS в публичном пространстве.
+
+**Midgard** - мир людей. Технически это фронтэнд Artchitect - человек видит его воочию. Мидагрд не связан с миром асов
+Асгардом (с core-сервисом Artchitect), но связан с api-gateway Alfheimr, откуда черпает данные.
+
+Кроме трёх этих сервисов есть еще технический сервис **warehouse**, используемый как хранилище для файлов картинок.

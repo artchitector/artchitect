@@ -30,23 +30,23 @@ class Radio {
     this.subscribers = {};
   }
 
-  async subscribe(channel, cb) {
-    if (!this.connection) {
-      this.connect()
-    }
-    await this.waitConnection()
-
-    if (this.activeChannels.indexOf(channel) !== -1) {
-      // Слушатель уже подписан
-    } else {
-      this.connection.send(`subscribe.${channel}`)
-      this.activeChannels.push(channel)
-    }
+  subscribe(channel, cb, rejectCb) {
     const pid = this.pidCounter++
     this.subscribers[pid] = {
       channel: channel,
       callback: cb,
     }
+    setTimeout(async () => {
+      if (!this.connection) {
+        this.connect(channel)
+        try {
+          await this.waitConnection()
+        } catch (e) {
+          if (!!rejectCb)
+            rejectCb(e)
+        }
+      }
+    })
 
     return pid
   }
@@ -69,11 +69,11 @@ class Radio {
     })
   }
 
-  connect(cb) {
+  connect(channel) {
     if (process.server === true) {
       return
     }
-    if (this.reconnectAttempts > 10) {
+    if (this.shutdown || this.reconnectAttempts > 10) {
       this.shutdown = true;
       console.log('[RADIO] ПОДКЛЮЧЕНИЕ ЗАКРЫТО НАВСЕГДА. БОЛЕЕ 10 ПОПЫТОК ПОДКЛЮЧЕНИЯ ПРОВАЛЕНО')
       return
@@ -85,7 +85,7 @@ class Radio {
       console.log('[RADIO] ПОДКЛЮЧЕНИЕ ЗАКРЫТО')
       this.reconnectAttempts += 1
       setTimeout(() => {
-        this.connect(cb)
+        this.connect(channel)
       }, 1000)
 
     })
@@ -107,6 +107,13 @@ class Radio {
     this.connection.addEventListener("open", () => {
       console.log('[RADIO] ПОДКЛЮЧЕНО')
       this.reconnectAttempts = 0
+
+      if (this.activeChannels.indexOf(channel) !== -1) {
+        // Слушатель уже подписан
+      } else {
+        this.connection.send(`subscribe.${channel}`)
+        this.activeChannels.push(channel)
+      }
     })
   }
 
@@ -120,17 +127,18 @@ class Radio {
         resolve()
         return
       }
-      let attempts = 0;
+      let start = new Date();
       const interval = setInterval(() => {
-        if (attempts > 10) {
+        const now = new Date();
+        const diffSeconds = Math.ceil(Math.abs(now - start) / 1000);
+        if (diffSeconds > 5) {
+          this.shutdown = true
           clearInterval(interval)
-          reject("[RADIO] СЛИШКОМ МНОГО ПОПЫТОК ОЖИДАНИЯ КОННЕКТА. СТОП")
+          reject("[RADIO] БОЛЕЕ 30 СЕКУНД НЕТ ОТВЕТА ПО РАДИО ПОПЫТОК ОЖИДАНИЯ КОННЕКТА. СТОП")
         }
         if (this.connection.readyState === this.connection.OPEN) {
           resolve()
           clearInterval(interval)
-        } else {
-          attempts++
         }
       }, 100)
     })

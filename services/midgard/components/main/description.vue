@@ -22,9 +22,18 @@
     <p class="has-text-centered">
       <NuxtLink :to="localePath('idea') + `#how_to_draw`">Как Artchitect рисует картину?</NuxtLink>
     </p>
-    <div v-if="entropy">
+
+    <!-- блок датчика энтропии-->
+    <div class="has-text-centered" v-if="radioLoading">
+      <common-loader size="s"/>
+    </div>
+    <div class="notification is-danger is-light" v-else-if="radioError">
+      ошибка подключения к альфхейму
+    </div>
+    <div v-else-if="entropy">
       <common-entropy :entropy="entropy"/>
     </div>
+
     <p>
       <b>Архитектор</b> считывает случайные кванты света из окружающего пространства - <b>энтропию</b>, преобразует её в
       числа, а затем
@@ -51,7 +60,7 @@
       <a href="https://github.com/invoke-ai/InvokeAI" target="_blank">InvokeAI</a>, именно с их помощью создаются
       комплексные изображения из сырых идей.
       <br/>
-      Исходный код проекта Artchitect доступен на <a href="https://github.com/artchitector/artchitect2" target="_blank">github</a>.
+      Исходный код проекта Artchitect доступен на <a href="https://github.com/artchitector/artchitect" target="_blank">github</a>.
     </p>
   </section>
   <section class="content" v-else>
@@ -71,9 +80,18 @@
     <p class="has-text-centered">
       <NuxtLink :to="localePath('idea') + `#how_to_draw`">How Artchitect draw each picture?</NuxtLink>
     </p>
-    <div v-if="entropy">
+
+    <!-- блок датчика энтропии-->
+    <div class="has-text-centered" v-if="radioLoading">
+      <common-loader size="s"/>
+    </div>
+    <div class="notification is-danger is-light" v-else-if="radioError">
+      alfmeimr conection error
+    </div>
+    <div v-else-if="entropy">
       <common-entropy :entropy="entropy"/>
     </div>
+
     <p>
       <b>Artchitect</b> reads random quanta of light from the surrounding space, converts them into numbers, and then
       numbers turn into ideas to create a picture. Every artwork that arises is unique and
@@ -102,7 +120,7 @@
       <b>Techically</b> artchitect-project is the control-system wrapped around an art-system -
       <a href="https://github.com/Stability-AI/stablediffusion" target="_blank">Stable Diffusion AI v1.5</a>.
       Stable Diffusion AI is the ability to draw pictures for Artchitect.
-      <br/>Full source code of Artchitect is available on <a href="https://github.com/artchitector/artchitect2"
+      <br/>Full source code of Artchitect is available on <a href="https://github.com/artchitector/artchitect"
                                                              target="_blank">github</a>
     </p>
   </section>
@@ -120,12 +138,19 @@ export default {
   data() {
     return {
       radioPid: null,
+      radioLoading: false,
+      radioError: null,
       entropy: null,
     }
   },
-  async mounted() {
-    this.radioPid = await Radio.subscribe("entropy", (entropy) => {
+  mounted() {
+    this.radioLoading = true
+    this.radioPid = Radio.subscribe("entropy", (entropy) => {
+      this.radioLoading = false
       this.entropy = entropy
+    }, (error) => {
+      this.radioLoading = false
+      this.radioError = error
     })
   },
   beforeDestroy() {

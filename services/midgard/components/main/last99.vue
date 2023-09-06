@@ -41,12 +41,14 @@ export default {
     this.arts = await this.$axios.$get("/arts/last/99")
   },
   async mounted() {
-    this.radioPid = await Radio.subscribe("new_art", (art) => {
+    this.radioPid = Radio.subscribe("new_art", (art) => {
       console.log(`[LAST99] НОВАЯ КАРТИНА #${art.id}`)
       this.arts.unshift(art)
       if (this.arts.length > 99) {
         this.arts.pop()
       }
+    }, (error) => {
+      alert(error)
     })
   },
   beforeDestroy() {

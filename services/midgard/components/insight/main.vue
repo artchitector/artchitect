@@ -56,7 +56,6 @@ export default {
       this.onMessage("odin", odinState)
     })
     this.radioPid.frigg = await Radio.subscribe("frigg_state", (friggState) => {
-      console.log(friggState)
       this.onMessage("frigg", friggState)
     })
     this.radioPid.giving = await Radio.subscribe("giving", (giving) => {

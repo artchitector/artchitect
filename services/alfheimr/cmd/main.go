@@ -95,7 +95,7 @@ func main() {
 		r.GET("/art/:id", artPortal.HandleArt)
 		r.GET("/art/:id/flat", artPortal.HandleArtFlat)
 		r.GET("/arts/last/:last", artPortal.HandleLast)
-		r.GET("/image/:id/:size", imPortal.HandleArtImage)
+		r.GET("/image/:name", imPortal.HandleArtImage)
 		r.GET("/uimage/:mask/:version/:size", imPortal.HandleUnityImage)
 		// http://localhost/api/ uimage 0XXXXX 0 f
 		r.GET("/unity", unityPortal.HandleMain)

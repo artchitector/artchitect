@@ -69,7 +69,7 @@
 
     <div class="has-text-centered">
       <NuxtLink :to="localePath(`/art/16269`)">
-        <img src="https://artchitect.space/api/image/16269/m" style="max-height: 400px"/>
+        <img src="https://artchitect.space/api/image/artchitect-16269-m" style="max-height: 400px"/>
       </NuxtLink>
       <br/>
       <span class="is-size-7">Картина с номером #16269. Ключевые слова - "architect,rose,romanticism,abstract".
@@ -142,7 +142,7 @@
 
     <div class="has-text-centered">
       <NuxtLink :to="localePath(`/art/16269`)">
-        <img src="https://artchitect.space/api/image/16269/m" style="max-height: 400px"/>
+        <img src="https://artchitect.space/api/image/artchitect-16269-m" style="max-height: 400px"/>
       </NuxtLink>
       <br/>
       <span class="is-size-7">Art #16269. Keywords - "emotional,Big Bang,death of civilizations". Seed =

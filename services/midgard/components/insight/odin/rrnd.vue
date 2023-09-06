@@ -8,7 +8,7 @@
   <div class="rrnd">
     <div class="rrnd-img-link">
       <a :href="localePath(`/art/${artId}`)" @click.prevent="$emit('show', artId)">
-        <img :src="`/api/image/${artId}/s`"/>
+        <img :src="`/api/image/artchitect-${artId}-s`"/>
       </a>
     </div>
     <a class="rrnd-number-link has-text-info"

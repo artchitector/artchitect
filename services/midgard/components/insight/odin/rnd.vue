@@ -7,7 +7,7 @@
 <template>
   <div class="column-image">
     <a :href="localePath(`/art/${artId}`)" @click.prevent="$emit('show', artId)">
-      <img :src="`/api/image/${artId}/s`"/>
+      <img :src="`/api/image/artchitect-${artId}-s`"/>
     </a>
     <div class="link-container">
       <a :href="localePath(`/art/${artId}`)" @click.prevent="$emit('show', artId)"  class="has-text-info">#{{ artId }}</a>

@@ -1,7 +1,7 @@
 <template>
   <div class="art-complex">
     <a :href="localePath(`/art/${art.id}`)" @click.prevent="select()">
-      <img :src="`/api/image/${art.id}/m`" :alt="`art_${art.id}`"/>
+      <img :src="`/api/image/artchitect-${art.id}-m`" :alt="`art_${art.id}`"/>
     </a>
     <div class="version">
       <span class="tag is-primary is-light">{{ art.version }}</span>

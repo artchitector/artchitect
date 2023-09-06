@@ -21,11 +21,8 @@
 </template>
 
 <script>
-import ViewerViewer from "~/components/viewer/viewer.vue";
-
 export default {
   name: "insight-odin",
-  components: {ViewerViewer},
   props: ["odin", "entropy", "giving"]
 }
 </script>

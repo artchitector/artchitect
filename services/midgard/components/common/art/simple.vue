@@ -7,7 +7,7 @@
 <template>
   <div>
     <a :href="localePath(`/art/${this.artId}`)" @click.prevent="select">
-      <img :src="`/api/image/${artId}/m`" :alt="`art_${artId}`"/>
+      <img :src="`/api/image/artchitect-${artId}-m`" :alt="`art_${artId}`"/>
     </a>
   </div>
 </template>

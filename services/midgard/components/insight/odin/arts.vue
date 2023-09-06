@@ -24,7 +24,7 @@
           </a>
           <div class="image-container">
             <a :href="localePath(`/art/${giving.lastArtID}`)" class="has-text-info" @click.prevent="$emit('show', giving.lastArtID)">
-              <img :src="`/api/image/${giving.lastArtID}/m`" :alt="`art_${giving.lastArtID}`"/>
+              <img :src="`/api/image/artchitect-${giving.lastArtID}-m`" :alt="`art_${giving.lastArtID}`"/>
             </a>
           </div>
         </div>

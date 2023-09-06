@@ -58,7 +58,7 @@
           <button class="button" @click="close()">{{ $t('close') }}</button>
         </div>
       </div>
-      <img v-else-if="current.art" :src="`/api/image/${current.art.id}/f`"/>
+      <img v-else-if="current.art" :src="`/api/image/artchitect-${current.art.id}-f`"/>
     </div>
 
     <div class="words">

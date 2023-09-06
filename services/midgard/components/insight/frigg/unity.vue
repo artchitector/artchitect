@@ -54,7 +54,7 @@
         <b-loading :is-full-page="false" v-model="state.collageStarted"/>
         <div class="leadsbox is-relative" v-for="line in leadsLines">
           <div class="leadsline" v-for="lead in line">
-            <img :class="imgClass" v-if="lead" :src="`/api/image/${lead}/xs`"/>
+            <img :class="imgClass" v-if="lead" :src="`/api/image/artchitect-${lead}-xs`"/>
             <img :class="imgClass" v-else :src="`/images/black/black-xs.jpg`"/>
           </div>
         </div>

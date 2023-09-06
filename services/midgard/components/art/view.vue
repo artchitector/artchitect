@@ -32,11 +32,11 @@
       </div>
     </div>
     <div class="has-text-centered mb-1">
-      <a :href="`/api/image/${art.id}/origin`" class="is-size-7">полный размер</a>
+      <a :href="`/api/image/artchitect-${art.id}-origin`" class="is-size-7">полный размер</a>
     </div>
     <div class="card-image">
       <figure class="image is-2by3">
-        <img :src="`/api/image/${art.id}/f`" :alt="`art_${art.id}`"/>
+        <img :src="`/api/image/artchitect-${art.id}-f`" :alt="`art_${art.id}`"/>
       </figure>
     </div>
   </div>

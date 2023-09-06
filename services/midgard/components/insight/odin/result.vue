@@ -26,7 +26,7 @@
     </div>
     <div class="image-container">
       <a :href="localePath(`/art/${odin.artId}`)" @click.prevent="$emit('show', odin.artId)">
-        <img :src="`/api/image/${odin.artId}/f`"/>
+        <img :src="`/api/image/artchitect-${odin.artId}-f`"/>
       </a>
     </div>
     <div class="random-four" v-if="giving && giving.given.length > 0">

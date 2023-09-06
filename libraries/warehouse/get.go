@@ -13,11 +13,17 @@ import (
 )
 
 func (w *Warehouse) DownloadArtImage(ctx context.Context, artID uint, size string) ([]byte, error) {
+	if artID > 1000000000 {
+		return []byte{}, errors.Errorf("слишком большой ART_ID=%d", artID)
+	}
 	url := w.artWarehouseURL + "/" + fmt.Sprintf("art/%d/%s", artID, size)
 	return w.get(ctx, url)
 }
 
 func (w *Warehouse) DownloadArtOrigin(ctx context.Context, artID uint) ([]byte, error) {
+	if artID > 1000000000 {
+		return []byte{}, errors.Errorf("слишком большой ART_ID=%d", artID)
+	}
 	// Odin: исходник, подлинник
 	url := w.originWarehouseURL + "/" + fmt.Sprintf("art/%d/origin", artID)
 	return w.get(ctx, url)

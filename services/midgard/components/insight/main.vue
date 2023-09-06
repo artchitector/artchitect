@@ -49,17 +49,25 @@ export default {
     }
   },
   async mounted() {
-    this.radioPid.entropy = await Radio.subscribe("entropy", (entropy) => {
+    this.radioPid.entropy = Radio.subscribe("entropy", (entropy) => {
       this.state.entropy = entropy
+    }, (err) => {
+      console.error("[RADIO-ENTROPY] ОШИБКА ПОДКЛЮЧЕНИЯ К РАДИО", err)
     })
-    this.radioPid.odin = await Radio.subscribe("odin_state", (odinState) => {
+    this.radioPid.odin = Radio.subscribe("odin_state", (odinState) => {
       this.onMessage("odin", odinState)
+    }, (err) => {
+      console.error("[RADIO-ODIN] ОШИБКА ПОДКЛЮЧЕНИЯ К РАДИО", err)
     })
-    this.radioPid.frigg = await Radio.subscribe("frigg_state", (friggState) => {
+    this.radioPid.frigg = Radio.subscribe("frigg_state", (friggState) => {
       this.onMessage("frigg", friggState)
+    }, (err) => {
+      console.error("[RADIO-FRIGG] ОШИБКА ПОДКЛЮЧЕНИЯ К РАДИО", err)
     })
-    this.radioPid.giving = await Radio.subscribe("giving", (giving) => {
+    this.radioPid.giving = Radio.subscribe("giving", (giving) => {
       this.state.giving = giving
+    }, (err) => {
+      console.error("[RADIO-GIVING] ОШИБКА ПОДКЛЮЧЕНИЯ К РАДИО", err)
     })
   },
   beforeDestroy() {

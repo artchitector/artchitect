@@ -39,13 +39,14 @@ class Radio {
     setTimeout(async () => {
       if (!this.connection) {
         this.connect(channel)
-        try {
-          await this.waitConnection()
-        } catch (e) {
-          if (!!rejectCb)
-            rejectCb(e)
-        }
       }
+      try {
+        await this.waitConnection()
+      } catch (e) {
+        if (!!rejectCb)
+          rejectCb(e)
+      }
+      this._subscribe(channel)
     })
 
     return pid
@@ -107,14 +108,17 @@ class Radio {
     this.connection.addEventListener("open", () => {
       console.log('[RADIO] ПОДКЛЮЧЕНО')
       this.reconnectAttempts = 0
-
-      if (this.activeChannels.indexOf(channel) !== -1) {
-        // Слушатель уже подписан
-      } else {
-        this.connection.send(`subscribe.${channel}`)
-        this.activeChannels.push(channel)
-      }
+      this._subscribe(channel)
     })
+  }
+
+  _subscribe(channel) {
+    if (this.activeChannels.indexOf(channel) !== -1) {
+      // Слушатель уже подписан
+    } else {
+      this.connection.send(`subscribe.${channel}`)
+      this.activeChannels.push(channel)
+    }
   }
 
   async waitConnection() {
@@ -131,7 +135,7 @@ class Radio {
       const interval = setInterval(() => {
         const now = new Date();
         const diffSeconds = Math.ceil(Math.abs(now - start) / 1000);
-        if (diffSeconds > 5) {
+        if (diffSeconds > 30) {
           this.shutdown = true
           clearInterval(interval)
           reject("[RADIO] БОЛЕЕ 30 СЕКУНД НЕТ ОТВЕТА ПО РАДИО ПОПЫТОК ОЖИДАНИЯ КОННЕКТА. СТОП")

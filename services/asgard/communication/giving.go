@@ -71,7 +71,7 @@ func (g *Giving) initState(ctx context.Context, state *model.GivingState) error 
 		if err != nil {
 			return errors.Wrap(err, "[giving] МУНИН НЕ ДАЛ ЯСНОГО ОТВЕТА")
 		}
-		state.Given[i] = oneOf + 1
+		state.Given[i] = oneOf
 		g.lastChangedIndex = i
 	}
 	g.lastChange = time.Now()
@@ -95,7 +95,7 @@ func (g *Giving) updateState(ctx context.Context, state *model.GivingState) erro
 		if err != nil {
 			return errors.Wrap(err, "[giving] МУНИН НЕ ДАЛ ЯСНОГО ОТВЕТА")
 		}
-		state.Given[currentIndex] = oneOf + 1
+		state.Given[currentIndex] = oneOf
 		g.lastChangedIndex = currentIndex
 		g.lastChange = time.Now()
 	}

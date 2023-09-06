@@ -6,11 +6,11 @@
 </i18n>
 <template>
   <div class="column-image">
-    <NuxtLink :to="localePath(`/art/${artId}`)" class="has-text-info">
+    <a :href="localePath(`/art/${artId}`)" @click.prevent="$emit('show', artId)">
       <img :src="`/api/image/${artId}/s`"/>
-    </NuxtLink>
+    </a>
     <div class="link-container">
-      <NuxtLink :to="localePath(`/art/${artId}`)" class="has-test-info">#{{ artId }}</NuxtLink>
+      <a :href="localePath(`/art/${artId}`)" @click.prevent="$emit('show', artId)"  class="has-text-info">#{{ artId }}</a>
     </div>
   </div>
 </template>

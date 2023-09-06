@@ -57,5 +57,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-
+section {
+  padding: 10px
+}
 </style>

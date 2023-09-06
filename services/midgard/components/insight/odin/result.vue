@@ -25,13 +25,13 @@
       </b-progress>
     </div>
     <div class="image-container">
-      <NuxtLink :to="localePath(`/art/${odin.artId}`)" class="has-text-info">
+      <a :href="localePath(`/art/${odin.artId}`)" @click.prevent="$emit('show', odin.artId)">
         <img :src="`/api/image/${odin.artId}/f`"/>
-      </NuxtLink>
+      </a>
     </div>
     <div class="random-four" v-if="giving && giving.given.length > 0">
       <div v-for="give in giving.given" class="random-four-item">
-        <insight-odin-rrnd :art-id="give"/>
+        <insight-odin-rrnd :art-id="give" @show="$emit('show', $event)"/>
       </div>
     </div>
   </div>
@@ -83,7 +83,7 @@ export default {
 
   .random-four {
     flex-grow: 1;
-    flex-shrink: 0.3;
+    flex-shrink: 0.6;
     overflow: hidden;
     display: flex;
     flex-direction: row;

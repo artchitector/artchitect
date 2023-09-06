@@ -7,11 +7,15 @@
 <template>
   <div class="rrnd">
     <div class="rrnd-img-link">
-      <NuxtLink :to="localePath(`/art/${artId}`)">
+      <a :href="localePath(`/art/${artId}`)" @click.prevent="$emit('show', artId)">
         <img :src="`/api/image/${artId}/s`"/>
-      </NuxtLink>
+      </a>
     </div>
-    <NuxtLink class="rrnd-number-link has-text-info" :to="localePath(`/art/${artId}`)">#{{ artId}}</NuxtLink>
+    <a class="rrnd-number-link has-text-info"
+       :href="localePath(`/art/${artId}`)"
+       @click.prevent="$emit('show', artId)">
+      #{{ artId }}
+    </a>
   </div>
 </template>
 

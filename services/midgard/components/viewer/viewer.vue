@@ -84,6 +84,7 @@
 import moment from "moment/moment";
 
 export default {
+  name: "viewer-viewer",
   data () {
     return {
       isVisible: false,

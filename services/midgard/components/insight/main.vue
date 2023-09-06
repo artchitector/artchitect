@@ -9,20 +9,24 @@
 }
 </i18n>
 <template>
-  <div v-if="activeComponent === 'empty'" class="has-text-centered pt-4">
-    {{ $t('loading') }}
-    <br/>
-    <common-loader class="mt-4"/>
+  <div class="wrapper-main">
+    <div v-if="activeComponent === 'empty'" class="has-text-centered pt-4">
+      {{ $t('loading') }}
+      <br/>
+      <common-loader class="mt-4"/>
+    </div>
+    <insight-odin v-else-if="activeComponent === 'odin'"
+                  :odin="state.odin"
+                  :entropy="state.entropy"
+                  :giving="state.giving"
+                  @show="showViewer"
+                  ref="odin"/>
+    <insight-frigg v-else-if="activeComponent === 'frigg'"
+                   :frigg="state.frigg"
+                   :entropy="state.entropy"
+                   ref="frigg"/>
+    <common-viewer ref="viewer"/>
   </div>
-  <insight-odin v-else-if="activeComponent === 'odin'"
-                :odin="state.odin"
-                :entropy="state.entropy"
-                :giving="state.giving"
-                ref="odin"/>
-  <insight-frigg v-else-if="activeComponent === 'frigg'"
-                 :frigg="state.frigg"
-                 :entropy="state.entropy"
-                 ref="frigg"/>
 
 </template>
 
@@ -89,11 +93,17 @@ export default {
         }
         this.state.frigg = state
       }
+    },
+    showViewer(id) {
+      this.$refs.viewer.show([id], id)
     }
   }
 }
 </script>
 
 <style scoped lang="scss">
-
+.wrapper-main {
+  width: 100%;
+  height: 100%;
+}
 </style>

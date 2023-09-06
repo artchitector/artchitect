@@ -11,29 +11,29 @@
 <template>
   <div class="lastart-container">
     <div class="left-column">
-      <insight-odin-rnd v-if="giving.given.length > 0" :art-id="giving.given[0]"/>
-      <insight-odin-rnd v-if="giving.given.length > 1" :art-id="giving.given[1]"/>
+      <insight-odin-rnd v-if="giving.given.length > 0" :art-id="giving.given[0]" @show="$emit('show', $event)"/>
+      <insight-odin-rnd v-if="giving.given.length > 1" :art-id="giving.given[1]" @show="$emit('show', $event)"/>
     </div>
 
     <div class="center-column">
       <div class="column-image" v-if="giving.lastArtID > 0">
         <div class="link-container">
           {{ $t('last_art') }}
-          <NuxtLink :to="localePath(`/art/${giving.lastArtID}`)" class="has-text-info">
+          <a :href="localePath(`/art/${giving.lastArtID}`)" class="has-text-info" @click.prevent="$emit('show', giving.lastArtID)">
             #{{ giving.lastArtID }}
-          </NuxtLink>
+          </a>
           <div class="image-container">
-            <NuxtLink :to="localePath(`/art/${giving.lastArtID}`)" class="has-text-info">
+            <a :href="localePath(`/art/${giving.lastArtID}`)" class="has-text-info" @click.prevent="$emit('show', giving.lastArtID)">
               <img :src="`/api/image/${giving.lastArtID}/m`" :alt="`art_${giving.lastArtID}`"/>
-            </NuxtLink>
+            </a>
           </div>
         </div>
       </div>
     </div>
 
     <div class="right-column">
-      <insight-odin-rnd v-if="giving.given.length > 2" :art-id="giving.given[2]"/>
-      <insight-odin-rnd v-if="giving.given.length > 3" :art-id="giving.given[3]"/>
+      <insight-odin-rnd v-if="giving.given.length > 2" :art-id="giving.given[2]"  @show="$emit('show', $event)"/>
+      <insight-odin-rnd v-if="giving.given.length > 3" :art-id="giving.given[3]"  @show="$emit('show', $event)"/>
     </div>
   </div>
 </template>

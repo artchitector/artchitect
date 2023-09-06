@@ -160,7 +160,7 @@ export default {
 
 <style scoped lang="scss">
   .viewer-container {
-    padding: 20px;
+    padding: 1px;
     position: fixed;
     z-index: 1;
     left: 0;

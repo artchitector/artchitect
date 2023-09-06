@@ -7,22 +7,25 @@
 <template>
   <div class="wrapper">
     <template v-if="odin.painted">
-      <insight-odin-result :odin="odin" :giving="giving" :entropy="entropy"/>
+      <insight-odin-result :odin="odin" :giving="giving" :entropy="entropy" @show="$emit('show', $event)"/>
     </template>
     <template v-else>
       <div class="wrapper-cell">
-        <insight-odin-progress :odin="odin" :entropy="entropy"/>
+        <insight-odin-progress :odin="odin" :entropy="entropy" @show="$emit('show', $event)"/>
       </div>
       <div class="wrapper-cell">
-        <insight-odin-arts v-if="giving" :giving="giving"/>
+        <insight-odin-arts v-if="giving" :giving="giving" @show="$emit('show', $event)"/>
       </div>
     </template>
   </div>
 </template>
 
 <script>
+import ViewerViewer from "~/components/viewer/viewer.vue";
+
 export default {
   name: "insight-odin",
+  components: {ViewerViewer},
   props: ["odin", "entropy", "giving"]
 }
 </script>

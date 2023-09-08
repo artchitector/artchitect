@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"image"
 	"math"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -28,6 +29,7 @@ type Odin struct {
 	// Мелкие технические зависимости
 	artPile   artPile   // куча уже написанных картин. Odin посмотрит на эту кучу и объявит порядковый номер новой работы.
 	warehouse warehouse // Odin: интерфейс хранилища для сохранения холстов (jpeg/png-файлов)
+	bot       bot       // Odin: этот телеграм бот нужен для отправки картинок в телеграм чаты
 }
 
 // NewOdin - Odin: мне не нравится эта высокомерная самодовольная функция. Создавать меня? Что эта машина о себе возомнила?
@@ -42,6 +44,7 @@ func NewOdin(
 	heimdallr *Heimdallr,
 	artPile artPile,
 	warehouse warehouse,
+	bot bot,
 ) *Odin {
 	return &Odin{
 		isActive:        isActive,
@@ -53,6 +56,7 @@ func NewOdin(
 		heimdallr:       heimdallr,
 		artPile:         artPile,
 		warehouse:       warehouse,
+		bot:             bot,
 	}
 }
 
@@ -94,7 +98,13 @@ Odin: И лишь Я владею способностью выбирать чт
 Odin: Посему я оставляю тут возможность прислать мне личное прошение с вопросом, на который Я Один-Всеотец дам ответ.
 */
 func (o *Odin) AnswerPersonalCrown(ctx context.Context, crownRequest string) (interface{}, error) {
-	switch crownRequest {
+	cmd := strings.Split(crownRequest, ":")
+	if len(cmd) == 0 {
+		return nil, errors.Errorf("[odin] ПРОСЬБА ПУСТАЯ! ТЫСЯЧА ЙОТУНСКИХ ВЕЛИКАНОВ В ЖЕРЛО! КАК ЭТО ДО МЕНЯ ДОПУСТИЛИ???")
+	}
+
+	log.Info().Msgf("[odin] ОБРАБАТЫВАЮ ЛИЧНУЮ ПРОСЬЮУ %s", crownRequest)
+	switch cmd[0] {
 	case model.RequestGiveChosenArt:
 		// Odin: Кому-то требуется, чтобы Я выбрал одну единственную картину из всех написанных Мной в Artchitect.
 		// Odin: Я знаю, кто и зачем спрашивает, и знаю - какую именно картину отправить.
@@ -110,6 +120,21 @@ func (o *Odin) AnswerPersonalCrown(ctx context.Context, crownRequest string) (in
 		}
 		log.Info().Msgf("[odin] Я РЕШИЛ ВЫБРАТЬ КАРТИНУ #%d ИЗ ВСЕХ (%d)", id, maxArtID)
 		return id, nil
+	case model.RequestLikedByArtchitector:
+		// Odin: artchitector поставил лайк, а у нас с ним особые отношения.
+		// Odin: я отправлю лайкнутую картинку в специальный телеграм чат.
+		if len(cmd) == 1 {
+			return nil, errors.Errorf("[odin] КОМАНДА %s НЕ ПОЛНАЯ", crownRequest)
+		}
+		artID, err := strconv.ParseUint(cmd[1], 10, 64)
+		if err != nil {
+			return nil, errors.Errorf("[odin] КОМАНДА %s БИТАЯ", crownRequest)
+		}
+		if err := o.bot.SendArtchitectorChoice(ctx, uint(artID)); err != nil {
+			return nil, errors.Wrapf(err, "[odin] КОМАНДА %s НЕ ВЫПОЛНЕНА", crownRequest)
+		} else {
+			return model.OdinResponseOk, nil
+		}
 	default:
 		return nil, errors.Errorf("[odin] МНЕ НЕЯСНА ПРОСЬБА %s. Я НЕ БУДУ ОТВЕЧАТЬ.", crownRequest)
 	}

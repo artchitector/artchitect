@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
+	"strconv"
 )
 
 type Config struct {
@@ -22,6 +23,7 @@ type Config struct {
 	AllowFakeAuth  bool
 	ArtchitectHost string
 	BotToken       string
+	ArtchitectorID uint
 }
 
 func InitEnv() *Config {
@@ -31,6 +33,11 @@ func InitEnv() *Config {
 	}
 
 	env, err := godotenv.Read()
+	if err != nil {
+		log.Fatal().Err(err).Send()
+	}
+
+	artchitectorID, err := strconv.ParseUint(env["ARTCHITECTOR_ID"], 10, 64)
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}
@@ -52,5 +59,6 @@ func InitEnv() *Config {
 		AllowFakeAuth:  env["ALLOW_FAKE_AUTH"] == "true",
 		ArtchitectHost: env["ARTCHITECT_HOST"],
 		BotToken:       env["BOT_TOKEN"],
+		ArtchitectorID: uint(artchitectorID),
 	}
 }

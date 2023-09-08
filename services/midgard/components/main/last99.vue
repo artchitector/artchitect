@@ -48,7 +48,7 @@ export default {
         this.arts.pop()
       }
     }, (error) => {
-      alert(error)
+      console.error(error)
     })
   },
   beforeDestroy() {

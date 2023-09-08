@@ -1,19 +1,25 @@
 package portals
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/artchitector/artchitect2/model"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 	"net/http"
 )
 
 type LikePortal struct {
-	authService authService
-	likePile    likePile
+	authService    authService
+	likePile       likePile
+	harbour        harbour
+	artchitectorID uint
 }
 
-func NewLikePortal(authService authService, likePile likePile) *LikePortal {
-	return &LikePortal{authService: authService, likePile: likePile}
+func NewLikePortal(authService authService, likePile likePile, harbour harbour, artchitectorID uint) *LikePortal {
+	return &LikePortal{authService: authService, likePile: likePile, harbour: harbour, artchitectorID: artchitectorID}
 }
 
 type LikedRequest struct {
@@ -96,6 +102,30 @@ func (lp *LikePortal) HandleLike(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, wrapError(err))
 		return
 	} else {
+		if newLiked == true && userId == lp.artchitectorID {
+			// Odin: когда автор artchitect ставит лайк, это обрабатывается своим способом. Для остальных всё обычно.
+			go func() {
+				log.Info().Msgf("[like_portal] ARTCHITECTOR ПОСТАВИЛ ЛАЙК ПОД %d", req.ArtID)
+				command := fmt.Sprintf("%s:%d", model.RequestLikedByArtchitector, req.ArtID)
+				resp, err := lp.harbour.SendCrownWaitCargo(c, command)
+				if err != nil {
+					log.Error().Err(err).Msgf("[like_portal] ПРОБЛЕМЫ В ОТПРАВКЕ ВОРОНА В АСГАРД С ЛАЙКОМ")
+					return
+				}
+				var r string
+				err = json.Unmarshal([]byte(resp), &r)
+				if err != nil {
+					log.Error().Err(err).Msgf("[like_portal] ПРОБЛЕМЫ В АНМАРШАЛЛИНГЕ ОТВЕТА ОДИНА %s", resp)
+					return
+				} else if r != model.OdinResponseOk {
+					log.Error().Err(err).Msgf("[like_portal] ОДИН НЕ ВНЯЛ СООБЩЕНИЮ %s -> %s", command, resp)
+					return
+				} else {
+					log.Info().Msgf("[like_portal] ОДИН ВНЯЛ СООБЩЕНИЮ %s", command)
+				}
+			}()
+		}
+
 		c.JSON(http.StatusOK, gin.H{"liked": newLiked})
 	}
 }

@@ -12,6 +12,11 @@ type webcam interface {
 
 type artPile interface {
 	GetMaxArtID(ctx context.Context) (uint, error)
+	GetArt(ctx context.Context, artID uint) (model.Art, error)
+}
+
+type warehouse interface {
+	DownloadArtImage(ctx context.Context, artID uint, size string) ([]byte, error)
 }
 
 type muninn interface {

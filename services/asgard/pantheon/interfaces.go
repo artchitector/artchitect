@@ -34,3 +34,7 @@ type bifröst interface {
 type warehouse interface {
 	SaveArtImage(ctx context.Context, artID uint, img image.Image) error
 }
+
+type bot interface {
+	SendArtchitectorChoice(ctx context.Context, artID uint) error
+}

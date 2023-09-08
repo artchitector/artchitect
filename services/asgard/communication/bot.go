@@ -107,7 +107,7 @@ func (b *Bot) downloadImage(ctx context.Context, artID uint) ([]byte, error) {
 }
 
 func (b *Bot) generateText(ctx context.Context, artID uint) (string, error) {
-	art, err := b.artPile.GetArt(ctx, artID)
+	art, err := b.artPile.GetArtRecursive(ctx, artID)
 	if err != nil {
 		return "", errors.Wrapf(err, "[bot] НЕ МОГУ ПОЛУЧИТЬ ART #%d", artID)
 	}

@@ -12,7 +12,7 @@ type webcam interface {
 
 type artPile interface {
 	GetMaxArtID(ctx context.Context) (uint, error)
-	GetArt(ctx context.Context, artID uint) (model.Art, error)
+	GetArtRecursive(ctx context.Context, ID uint) (model.Art, error)
 }
 
 type warehouse interface {

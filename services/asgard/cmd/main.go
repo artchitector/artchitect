@@ -90,7 +90,7 @@ func main() {
 	)
 
 	// запуск фоновых служб
-	go runServices(ctx, lostEye, huginn, heimdallr, webcam, keyhole, giving, odin, bifröst)
+	go runServices(ctx, config, lostEye, huginn, heimdallr, webcam, keyhole, giving, odin, bifröst)
 
 	// запуск временных сервисов, которые обрабатывают задачи. Artchitect будет запущен лишь после их выполнения
 	runTemporary(ctx, artPile, frigg)
@@ -112,6 +112,7 @@ func runArtchitect(
 // runServices - запуск фоновых служб
 func runServices(
 	ctx context.Context,
+	config *infrastructure.Config,
 	eye *pantheon.LostEye,
 	huginn *pantheon.Huginn,
 	heimdall *pantheon.Heimdallr,
@@ -150,9 +151,20 @@ func runServices(
 		log.Debug().Msgf("[main] GIVING ОСТАНОВЛЕН")
 	}()
 	go func() {
-		bifröst.ListenPrivateOdinRequests(ctx, odin)
+		if err := bifröst.ListenPrivateOdinRequests(ctx, odin); err != nil {
+			log.Error().Err(err)
+		}
 		log.Debug().Msgf("[main] ОСТАНОВЛЕНО ЧТЕНИЕ ЛИЧНЫХ ПРОШЕНИЙ К ОДИНУ")
 	}()
+
+	if config.ArtchitectChoiceEnabled {
+		go func() {
+			if err := odin.RunSendChosenArts(ctx); err != nil {
+				log.Error().Err(err)
+			}
+			log.Debug().Msgf("[main] ОСТАНОВЛЕН ПОТОК ARTCHITECT CHOICE")
+		}()
+	}
 }
 
 func runTemporary(ctx context.Context, artPile *model.ArtPile, frigg *pantheon.Frigg) {

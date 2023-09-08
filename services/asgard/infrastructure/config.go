@@ -30,9 +30,10 @@ type Config struct {
 	UnificationEnjoyTime uint
 
 	// telegram
-	BotToken               string
-	ChatArtchitectChoice   int64
-	ChatArtchitectorChoice int64
+	BotToken                string
+	ChatArtchitectChoice    int64
+	ChatArtchitectorChoice  int64
+	ArtchitectChoiceEnabled bool
 }
 
 func InitEnv() *Config {
@@ -88,8 +89,9 @@ func InitEnv() *Config {
 		CreateTotalTimeSec:   uint(totalTime),
 		UnificationEnjoyTime: uint(unificationEnjoyTime),
 
-		BotToken:               env["BOT_TOKEN"],
-		ChatArtchitectChoice:   chatArtchitectChoice,
-		ChatArtchitectorChoice: chatArtchitectorChoice,
+		BotToken:                env["BOT_TOKEN"],
+		ChatArtchitectChoice:    chatArtchitectChoice,
+		ChatArtchitectorChoice:  chatArtchitectorChoice,
+		ArtchitectChoiceEnabled: env["ARTCHITECT_CHOICE_ENABLED"] == "true",
 	}
 }

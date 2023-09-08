@@ -36,5 +36,6 @@ type warehouse interface {
 }
 
 type bot interface {
+	SendArtchitectChoice(ctx context.Context, artID uint) error
 	SendArtchitectorChoice(ctx context.Context, artID uint) error
 }

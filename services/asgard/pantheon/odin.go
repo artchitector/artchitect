@@ -110,16 +110,12 @@ func (o *Odin) AnswerPersonalCrown(ctx context.Context, crownRequest string) (in
 		// Odin: Я знаю, кто и зачем спрашивает, и знаю - какую именно картину отправить.
 		// Я попрошу моего ворона Muninn вспомнить это знание.
 		log.Info().Msgf("[odin] МЕНЯ СПРАШИВАЮТ, КАКУЮ КАРТИНУ ПОКАЗАТЬ")
-		maxArtID, err := o.artPile.GetMaxArtID(ctx)
+		artID, err := o.getChosenArt(ctx)
 		if err != nil {
-			return nil, errors.Wrap(err, "[odin] НЕ УДАЛОСЬ ВСПОМНИТЬ ЧИСЛО ВСЕХ КАРТИН. КЛЯТАЯ КУЧА!")
+			return nil, err
 		}
-		id, _, err := o.muninn.RememberArtNo(ctx, 1, maxArtID)
-		if err != nil {
-			return nil, errors.Wrap(err, "[odin] МУНИН, РАЗРАЗИ ТЕБЯ МЬЁЛЬНИР! ГДЕ ТЕБЯ ЁТУНЫ НОСЯТ?")
-		}
-		log.Info().Msgf("[odin] Я РЕШИЛ ВЫБРАТЬ КАРТИНУ #%d ИЗ ВСЕХ (%d)", id, maxArtID)
-		return id, nil
+		log.Info().Msgf("[odin] Я РЕШИЛ ВЫБРАТЬ КАРТИНУ #%d ИЗ ВСЕХ", artID)
+		return artID, nil
 	case model.RequestLikedByArtchitector:
 		// Odin: artchitector поставил лайк, а у нас с ним особые отношения.
 		// Odin: я отправлю лайкнутую картинку в специальный телеграм чат.
@@ -138,6 +134,41 @@ func (o *Odin) AnswerPersonalCrown(ctx context.Context, crownRequest string) (in
 	default:
 		return nil, errors.Errorf("[odin] МНЕ НЕЯСНА ПРОСЬБА %s. Я НЕ БУДУ ОТВЕЧАТЬ.", crownRequest)
 	}
+}
+
+// RunSendChosenArts
+// Odin: Я буду отправлять раз в 12 минут одну картину в телеграм-чат, картина будет избрана мной
+func (o *Odin) RunSendChosenArts(ctx context.Context) error {
+	log.Info().Msgf("[odin] НАЧИНАЮ ПРОЦЕСС ПОДДЕРЖКИ ПОТОКА 12-МИНУТ - ARTCHITECT CHOSEN")
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-time.Tick(time.Minute * 12):
+			artID, err := o.getChosenArt(ctx)
+			if err != nil {
+				log.Error().Err(err).Msgf("[odin] ПРОБЛЕМА В ПОТОКЕ ОТПРАВКИ 12-МИНУТ. СБОР ART_ID.")
+				continue
+			}
+			if err := o.bot.SendArtchitectChoice(ctx, artID); err != nil {
+				log.Error().Err(err).Msgf("[odin] ПРОБЛЕМА В ПОТОКЕ ОТПРАВКИ 12-МИНУТ. ОТПРАВКА.")
+				continue
+			}
+			log.Info().Msgf("[odin] Я ОТПРАВИЛ ЛЮДЯМ КАРТИНУ, КОТОРУЮ САМ ВЫБРАЛ #%d", artID)
+		}
+	}
+}
+
+func (o *Odin) getChosenArt(ctx context.Context) (uint, error) {
+	maxArtID, err := o.artPile.GetMaxArtID(ctx)
+	if err != nil {
+		return 0, errors.Wrap(err, "[odin] НЕ УДАЛОСЬ ВСПОМНИТЬ ЧИСЛО ВСЕХ КАРТИН. КЛЯТАЯ КУЧА!")
+	}
+	id, _, err := o.muninn.RememberArtNo(ctx, 1, maxArtID)
+	if err != nil {
+		return 0, errors.Wrap(err, "[odin] МУНИН, РАЗРАЗИ ТЕБЯ МЬЁЛЬНИР! ГДЕ ТЕБЯ ЁТУНЫ НОСЯТ?")
+	}
+	return id, nil
 }
 
 // create внутреннее содержимое публичного метода Create

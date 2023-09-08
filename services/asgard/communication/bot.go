@@ -90,9 +90,10 @@ func (b *Bot) send2Chat(ctx context.Context, artID uint, chatID int64) error {
 
 	log.Info().Msgf("[bot] ОТПРАВЛЯЮ СООБЩЕНИЕ В ЧАТ %d: %s", chatID, strings.ReplaceAll(text, "\n", "\\n"))
 	msg, err := b.bot.SendPhoto(ctx, &bot.SendPhotoParams{
-		ChatID:  chatID,
-		Photo:   &models.InputFileUpload{Data: r},
-		Caption: text,
+		ChatID:    chatID,
+		Photo:     &models.InputFileUpload{Data: r},
+		Caption:   text,
+		ParseMode: models.ParseModeHTML,
 	})
 	if err != nil {
 		return errors.Wrapf(err, "[bot] НЕ МОГУ ОТПРАВИТЬ СООБЩЕНИЕ С КАРТИНОЙ #%d", artID)
@@ -113,8 +114,9 @@ func (b *Bot) generateText(ctx context.Context, artID uint) (string, error) {
 	}
 
 	return fmt.Sprintf(
-		"Art #%d. (https://artchitect.space/art/%d)\n\n"+
-			"created: %s, seed: %d, words: %s",
+		"<b>Art <a href='https://artchitect.space/art/%d'>#%d</a></b>.\n"+
+			"created: <i>%s</i>, seed: <b>%d</b>\n"+
+			"words: <i>%s</i>",
 		art.ID,
 		art.ID,
 		art.CreatedAt.Format("2006 Jan 2 15:04"),

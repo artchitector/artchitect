@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -18,24 +17,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const FakeLocalToken = "FAKE_LOCAL_TOKEN"
-const FakeUserID = 999
-
 type AuthPortal struct {
-	allowFakeAuth  bool
+	authService    authService
 	secret         []byte
 	artchitectHost string
 	botToken       string
 }
 
 func NewAuthPortal(
-	allowFakeAuth bool,
+	authService authService,
 	secret string,
 	artchitectHost string,
 	botToken string,
 ) *AuthPortal {
 	return &AuthPortal{
-		allowFakeAuth:  allowFakeAuth,
+		authService:    authService,
 		secret:         []byte(secret),
 		artchitectHost: artchitectHost,
 		botToken:       botToken,
@@ -65,52 +61,8 @@ func (ap *AuthPortal) HandleLogin(c *gin.Context) {
 }
 
 func (ap *AuthPortal) HandleMe(c *gin.Context) {
-	userId := ap.getUserIdFromContext(c)
+	userId := ap.authService.GetUserIdFromContext(c)
 	c.JSON(http.StatusOK, userId)
-}
-
-func (ap *AuthPortal) getUserIdFromContext(c *gin.Context) uint {
-	authHeader := c.GetHeader("Authorization")
-
-	if authHeader == "" || authHeader == "null" {
-		return 0
-	}
-
-	if authHeader == FakeLocalToken {
-		if !ap.allowFakeAuth {
-			err := errors.Errorf("[auth:portal] ФЕЙКОВАЯ АВТОРИЗАЦИЯ ЗАПРЕЩЕНА")
-			log.Error().Err(err).Send()
-			return 0
-		}
-		return FakeUserID
-	}
-
-	log.Debug().Msgf("header=%s", authHeader)
-
-	token, err := jwt.Parse(authHeader, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.Errorf("[auth:portal] НЕОЖИДАННЫЙ МЕТОД ШИФРОВАНИЯ КЛЮЧА: %v", token.Header["alg"])
-		}
-		return ap.secret, nil
-	})
-
-	if err != nil {
-		log.Error().Err(err).Msgf("[auth:portal] ОШИБКА ЧТЕНИЯ ТОКЕНА")
-		return 0
-	}
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		ID, err := strconv.ParseInt(fmt.Sprintf("%s", claims["id"]), 10, 64)
-		if err != nil {
-			log.Error().Err(err).Msgf("[auth:portal] ОШИБКА ЧТЕНИЯ ID")
-			return 0
-		}
-		log.Info().Msgf("[auth:portal] ВХОД ПОДТВЕРЖДЁН. ID=%d", ID)
-		return uint(ID)
-	} else {
-		log.Error().Msgf("[auth:portal] ПРОБЛЕМА С РАСШИФРОВКОЙ ДАННЫХ КЛЮЧА")
-		return 0
-	}
 }
 
 func (ap *AuthPortal) checkFromTelegram(values url.Values) error {

@@ -36,6 +36,7 @@ func InitDB(ctx context.Context, dns string) *gorm.DB {
 		&model.Idea{},
 		&model.Word{},
 		&model.Unity{},
+		&model.Like{},
 	); err != nil {
 		zlog.Fatal().Err(errors.Wrap(err, "[database] ОШИБКА МИГРАЦИИ"))
 	}

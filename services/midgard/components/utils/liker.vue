@@ -1,10 +1,10 @@
 <template>
   <div class="control-like">
-    <font-awesome-icon v-if="liked && liked.error"
+    <font-awesome-icon v-if="error"
                        icon="fa-solid fa-triangle-exclamation"
-                       :title="liked.error.message"/>
+                       :title="error.message"/>
     <a v-else href="#" @click.prevent="like()">
-      <font-awesome-icon v-if="!liked || !liked.liked" icon="fa-solid fa-heart" class="has-color-base"/>
+      <font-awesome-icon v-if="!liked" icon="fa-solid fa-heart" class="has-color-base"/>
       <font-awesome-icon v-else icon="fa-solid fa-heart" class="has-text-danger"/>
     </a>
   </div>
@@ -12,14 +12,12 @@
 
 <script>
 export default {
-  name: "liker",
-  props: ["dream_id"],
+  name: "utils-liker",
+  props: ["art_id"],
   data() {
     return {
-      liked: {
-        liked: false,
-        error: null,
-      }
+      liked: false,
+      error: null
     }
   },
   mounted() {
@@ -29,13 +27,10 @@ export default {
     async like() {
       try {
         let like = await this.$axios.$post("/like", {
-          card_id: this.dream_id,
+          art_id: this.art_id,
         })
         this.$emit('liked', like)
-        this.liked = {
-          id: like.ID,
-          liked: like.Liked,
-        };
+        this.liked = like.liked
       } catch (e) {
         console.error(e)
         this.liked = {
@@ -45,8 +40,8 @@ export default {
     },
     async initLiked() {
       try {
-        let like = await this.$axios.$get(`/liked/${this.dream_id}`)
-        this.liked.liked = like.Liked
+        let like = await this.$axios.$get(`/liked/${this.art_id}`)
+        this.liked = like.liked
       } catch (e) {
         console.error(e)
         this.liked.error = e

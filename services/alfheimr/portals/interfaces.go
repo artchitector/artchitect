@@ -3,10 +3,15 @@ package portals
 import (
 	"context"
 	"github.com/artchitector/artchitect2/model"
+	"github.com/gin-gonic/gin"
 )
 
 type radio interface {
 	ListenRadio(subscribeCtx context.Context) chan model.Radiogram
+}
+
+type authService interface {
+	GetUserIdFromContext(c *gin.Context) uint
 }
 
 type artPile interface {
@@ -20,6 +25,12 @@ type unityPile interface {
 	Get(ctx context.Context, mask string) (model.Unity, error)
 	GetRoot(ctx context.Context) ([]model.Unity, error)
 	GetChildren(ctx context.Context, unity model.Unity) ([]model.Unity, error)
+}
+
+type likePile interface {
+	GetList(ctx context.Context, userID uint) ([]model.Like, error)
+	Get(ctx context.Context, userID uint, artID uint) (model.Like, error)
+	Set(ctx context.Context, userID uint, artID uint, liked bool) error
 }
 
 type warehouse interface {

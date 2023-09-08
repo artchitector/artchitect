@@ -18,7 +18,7 @@
                             @select="showViewer(art.id)"
                             :show-words="showWords"/>
 
-        <common-art-simple v-else
+        <common-art-simple v-else-if="art"
                            :art-id="art"
                            @select="showViewer(art)"/>
       </div>

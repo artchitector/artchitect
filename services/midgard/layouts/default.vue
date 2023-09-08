@@ -16,7 +16,7 @@
     "main": "главная",
     "lottery": "лотерея",
     "selection": "отборное",
-    "liked": "вам нравится",
+    "liked": "нравится",
     "unity": "единства",
     "idea": "идея",
     "entropy": "энтропия",
@@ -46,10 +46,10 @@
         <span> - </span>
         <NuxtLink :to="localePath('/idea')">{{$t('idea')}}</NuxtLink>
         <span> - </span>
-<!--        <template v-if="loggedIn">-->
-<!--          <NuxtLink :to="localePath('/liked')">{{$t('liked')}}</NuxtLink>-->
-<!--          <span> - </span>-->
-<!--        </template>-->
+        <template v-if="loggedIn">
+          <NuxtLink :to="localePath('/liked')">{{$t('liked')}}</NuxtLink>
+          <span> - </span>
+        </template>
         <NuxtLink :to="switchLocalePath('en')">en</NuxtLink>
         <NuxtLink :to="switchLocalePath('ru')">ru</NuxtLink>
       </div>

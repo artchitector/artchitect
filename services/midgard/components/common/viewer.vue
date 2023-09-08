@@ -33,6 +33,9 @@
     <div class="control-next" v-if="hasNext">
       <a href="#" @click.prevent="next()">></a>
     </div>
+    <div class="control-like" v-if="current.art">
+      <utils-liker :art_id="current.art.id"/>
+    </div>
 
     <!-- Заголовок окна -->
     <div class="header">
@@ -242,6 +245,16 @@ export default {
       font-size: 50px;
       z-index: 3;
       font-weight: bolder;
+    }
+    .control-like {
+      position: fixed;
+      left: 50%;
+      bottom: 20%;
+      z-index: 3;
+      margin-left: -20px;
+      font-size: 48px;
+      opacity: 0.7;
+      filter: drop-shadow(0px 0px 8px rgba(255, 0, 0, 0.6));
     }
   }
 </style>

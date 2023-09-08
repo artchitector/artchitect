@@ -54,17 +54,22 @@ func main() {
 	// КУЧИ ДАННЫХ
 	artPile := model.NewArtPile(db)
 	unityPile := model.NewUnityPile(db)
+	likePile := model.NewLikePile(db)
 
 	// WAREHOUSE
 	wh := warehouse.NewWarehouse(config.ArtWarehouseURL, config.OriginWarehouseURL)
+
+	// AUTH
+	authService := infrastructure.NewAuthService(config.AllowFakeAuth, []byte(config.JwtSecret))
 
 	// СБОРКА ПОРТАЛОВ (ХЕНДЛЕРОВ)
 	radioPortal := portals.NewRadioPortal(harbour)
 	artPortal := portals.NewArtPortal(artPile, harbour)
 	imPortal := portals.NewImagePortal(wh)
 	unityPortal := portals.NewUnityPortal(unityPile, artPile)
+	likePortal := portals.NewLikePortal(authService, likePile)
 	authPortal := portals.NewAuthPortal(
-		config.AllowFakeAuth,
+		authService,
 		config.JwtSecret,
 		config.ArtchitectHost,
 		config.BotToken,
@@ -102,6 +107,9 @@ func main() {
 		r.GET("/unity/:mask", unityPortal.HandleUnity)
 		r.GET("/me", authPortal.HandleMe)
 		r.GET("/login", authPortal.HandleLogin)
+		r.GET("/liked", likePortal.HandleLikedList)
+		r.GET("/liked/:art_id", likePortal.HandleLikedArt)
+		r.POST("/like", likePortal.HandleLike)
 
 		// connection - Портал с постоянной связью c Мидгардом (вебсокете)
 		r.GET("/radio", func(c *gin.Context) {

@@ -215,7 +215,7 @@
     </p>
 
     <blockquote v-if="locale === 'ru'">
-      Один: Назовём это "artchitect".
+      Один: Назовём это "<b>artchitect</b>".
     </blockquote>
     <blockquote v-else>
       Odin: Let us name this <b>artchitect</b>".

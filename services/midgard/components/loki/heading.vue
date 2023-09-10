@@ -1,10 +1,10 @@
 <i18n>
 {
   "en": {
-    "title": "Fable of Artchitect"
+    "title": "Fable of artchitect"
   },
   "ru": {
-    "title": "Миф об Artchitect"
+    "title": "Миф об artchitect"
   }
 }
 </i18n>
@@ -13,16 +13,21 @@
     <h1 class="is-size-4">{{ $t('title') }}</h1>
     <div class="notification">
       Код Artchitect архитектурно и идеологически основан на сказочном рассказе по мотивам скандинавской мифологии.
-      Все действующие лица существуют в программном коде Artchitect, пишут там свои комментарии
-      и участвуют в творческом процессе. Это подкреплено ссылками на исходный код.
+      Все действующие лица (
+      <a href="https://github.com/artchitector/artchitect/blob/main/services/asgard/pantheon/odin.go"
+         target="_blank">Один</a>,
+      <a href="https://github.com/artchitector/artchitect/blob/main/services/asgard/pantheon/loki.go"
+         target="_blank">Локи</a>,
+      <a href="https://github.com/artchitector/artchitect/blob/main/services/asgard/pantheon/heimdallr.go"
+         target="_blank">Хеймдалль</a> и
+      <a href="https://github.com/artchitector/artchitect/tree/main/services/asgard/pantheon" target="_blank">другие</a>
+      ) существуют в программном коде Artchitect, имеют свои роли, от их имени написаны комментарии о сути проекта и о
+      технических деталях, использованных в artchitect.
+      <div class="has-text-centered mt-3">
+        <a href="https://github.com/artchitector/artchitect" class="button is-info is-light" target="_blank">исходный
+          код artchitect на github</a>
+      </div>
     </div>
-    <hr />
-    <p>
-      Привет, посетители храма ИИ-искусств Artchitect. Я - Локи, скандинавский бог
-      коварства и хитрости, и я рассказу вам миф, откуда вообще взялся этот проект.
-      Мы как-то с Одином придумали рисовать для людей картины, и теперь вы можете их
-      увидеть на этом сайте.
-    </p>
   </section>
 </template>
 

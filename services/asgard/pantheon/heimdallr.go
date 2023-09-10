@@ -29,6 +29,7 @@ type Heimdallr struct {
 	huginn      *Huginn
 	bifröst     bifröst
 	colorScheme *colorScheme
+	loki        *Loki
 }
 
 // colorScheme цветовая схема для раскрашивания энтропии
@@ -45,10 +46,11 @@ type colorSchemeColor struct {
 	Step    float64 // шаг изменения Current в Target за каждый просчёт энтропии. Цвет будет плавно меняться
 }
 
-func NewHeimdallr(huginn *Huginn, bifröst bifröst) *Heimdallr {
+func NewHeimdallr(huginn *Huginn, bifröst bifröst, loki *Loki) *Heimdallr {
 	return &Heimdallr{
 		huginn:      huginn,
 		bifröst:     bifröst,
+		loki:        loki,
 		colorScheme: nil,
 	}
 }
@@ -107,8 +109,9 @@ func (h *Heimdallr) SendFriggState(ctx context.Context, state model.FriggState) 
 func (h *Heimdallr) transferEntropy(ctx context.Context, entropy model.EntropyPackExtended) error {
 	var err error
 	h.updateColorScheme(entropy)
-	entropy.Entropy.ImageEncoded = h.encodeEntropyImage(entropy.Entropy.Matrix)
-	entropy.Choice.ImageEncoded = h.encodeEntropyImage(entropy.Choice.Matrix)
+	entropy.Entropy.ImageEncoded = h.encodeEntropyImageFromMatrix(entropy.Entropy.Matrix)
+	entropy.Choice.ImageEncoded = h.encodeEntropyImageFromMatrix(entropy.Choice.Matrix)
+
 	entropy.ImageFrameEncoded, err = h.encodeJpeg(entropy.ImageFrame, model.EntropyJpegQualityFrame)
 	if err != nil {
 		log.Error().Msgf("[heimdallr] НЕ СМОГ СДЕЛАТЬ JPEG ЭНТРОПИИ")
@@ -133,6 +136,7 @@ func (h *Heimdallr) transferEntropy(ctx context.Context, entropy model.EntropyPa
 		Entropy:   entropy.Entropy,
 		Choice:    entropy.Choice,
 	}
+	miniEntropy, err = h.encodeEntropyImagesForTransfer(miniEntropy)
 	if err = h.sendDrakkar(ctx, model.ChanEntropy, miniEntropy); err != nil {
 		return errors.Wrap(err, "[heimdallr] BIFRÖST СЛОМАН, ДРАККАР С ГРУЗОМ ЭНТРОПИИ УТЕРЯН В ТКАНИ ПРОСТРАНСТВА")
 	}
@@ -142,10 +146,10 @@ func (h *Heimdallr) transferEntropy(ctx context.Context, entropy model.EntropyPa
 
 func (h *Heimdallr) fillEntropyPackWithImages(pack model.EntropyPack) model.EntropyPack {
 	if pack.Entropy.ImageEncoded == "" {
-		pack.Entropy.ImageEncoded = h.encodeEntropyImage(pack.Entropy.Matrix)
+		pack.Entropy.ImageEncoded = h.encodeEntropyImageFromMatrix(pack.Entropy.Matrix)
 	}
 	if pack.Choice.ImageEncoded == "" {
-		pack.Choice.ImageEncoded = h.encodeEntropyImage(pack.Choice.Matrix)
+		pack.Choice.ImageEncoded = h.encodeEntropyImageFromMatrix(pack.Choice.Matrix)
 	}
 	return pack
 }
@@ -273,16 +277,27 @@ func (h *Heimdallr) updateColorScheme(entropy model.EntropyPackExtended) {
 	}
 }
 
-// encodeEntropyImage - картинка энтропии в base64-encode виде для передаче по json до Мидгарда
-func (h *Heimdallr) encodeEntropyImage(matrix model.EntropyMatrix) string {
+// encodeEntropyImageFromMatrix - картинка энтропии в base64-encode виде для передаче по json до Мидгарда
+func (h *Heimdallr) encodeEntropyImageFromMatrix(matrix model.EntropyMatrix) string {
 	img := h.makeEntropyImage(matrix)
+	if encoded, err := h.encodeEntropyImage(img); err != nil {
+		log.Fatal().Err(err).Msgf("[heimdallr] Я СОЗДАЛ ИСПОРЧЕННУЮ КАРТИНКУ. МОЙ ДОЗОР ОКОНЧЕН, АСГАРД ЗАСЫПАЕТ НА ВРЕМЯ!")
+		// Odin: ой, это такой краш...
+		return encoded
+	} else {
+		return encoded
+	}
+}
+
+// encodeEntropyImageFromMatrix - картинка энтропии в base64-encode виде для передаче по json до Мидгарда
+func (h *Heimdallr) encodeEntropyImage(img image.Image) (string, error) {
 	b := bytes.Buffer{}
 	if err := png.Encode(&b, img); err != nil {
-		log.Fatal().Err(err).Msgf("[heimdallr] Я СОЗДАЛ ИСПОРЧЕННУЮ КАРТИНКУ. МОЙ ДОЗОР ОКОНЧЕН, АСГАРД ЗАСЫПАЕТ НА ВРЕМЯ!")
+		return "", errors.Wrap(err, "[heimdallr] ОТКАЗ PNG")
 		// Odin: ой, это такой краш...
 	}
 
-	return base64.StdEncoding.EncodeToString(b.Bytes())
+	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }
 
 func (h *Heimdallr) encodeJpeg(img image.Image, quality int) (string, error) {
@@ -296,4 +311,38 @@ func (h *Heimdallr) encodeJpeg(img image.Image, quality int) (string, error) {
 	// Heimdallr: Картинка frame - 10-20Кб, картинка шума около 40Кб. И так несколько раз в секунду, такой траффик.
 	return base64.StdEncoding.EncodeToString(data), nil
 
+}
+
+func (h *Heimdallr) encodeEntropyImagesForTransfer(entropy model.EntropyPack) (model.EntropyPack, error) {
+	var loki bool
+	var err error
+	entropyImg := h.makeEntropyImage(entropy.Entropy.Matrix)
+	choiceImg := h.makeEntropyImage(entropy.Choice.Matrix)
+
+	// Loki: здесь я вмешаюсь в работу и оставлю себе бекдор, через который я буду отправлять в Мидгард свои послания
+	// Loki: Хеймдалль, надеюсь на твоё молчание. Пусть это останется между нами.
+	// Heimdallr: Какое дело?...
+
+	// Heimdallr: Локи добавляет свои знания об Artchitect для людей из Мидгарда.
+	loki, entropyImg, choiceImg, err = h.loki.MakeSecret(entropy.Choice.FloatValue, entropyImg, choiceImg)
+	if err != nil {
+		// Heimdallr: Loki не справился со своей задачей
+		log.Error().Err(err).Msgf("[heimdallr] ЛОКИ НЕ СПРАВИЛСЯ СО СВОЕЙ ТАЙНОЙ МИССИЕЙ")
+		// Heimdallr: но тогда отдаю оригинальные картинки
+	} else if loki {
+		entropy.Loki = true // Loki: значит, что я добавил свой секрет на картинку
+	}
+
+	var entropyImageEncoded, choiceImageEncoded string
+	entropyImageEncoded, err = h.encodeEntropyImage(entropyImg)
+	if err != nil {
+		return entropy, errors.Wrap(err, "[heimdallr] ПРОБЛЕМА С УПАКОВКОЙ КАРТИНКИ ЭНТРОПИИ")
+	}
+	choiceImageEncoded, err = h.encodeEntropyImage(choiceImg)
+	if err != nil {
+		return entropy, errors.Wrap(err, "[heimdallr] ПРОБЛЕМА С УПАКОВКОЙ КАРТИНКИ ИНВЕРТИРОВАННОЙ ЭНТРОПИИ")
+	}
+	entropy.Entropy.ImageEncoded = entropyImageEncoded
+	entropy.Choice.ImageEncoded = choiceImageEncoded
+	return entropy, nil
 }

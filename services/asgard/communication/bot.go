@@ -40,6 +40,10 @@ func NewBot(
 }
 
 func (b *Bot) Start(ctx context.Context) error {
+	if b.token == "" {
+		log.Info().Msgf("[bot] БОТ НЕ ИНИЦИАЛИЗИРУЕТСЯ!")
+		return nil
+	}
 	log.Info().Msgf("[bot] НАЧАТА НАСТРОЙКА ТЕЛЕГРАМ-БОТА!")
 	opts := []bot.Option{
 		//bot.WithDebug(),

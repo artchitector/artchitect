@@ -67,6 +67,7 @@ type EntropyPack struct {
 	Timestamp time.Time `json:"timestamp"`
 	Entropy   Entropy   `json:"entropy" gorm:"embedded;embeddedPrefix:entropy_"`
 	Choice    Entropy   `json:"choice" gorm:"embedded;embeddedPrefix:choice_"`
+	Loki      bool      `json:"loki" gorm:"-"` // Loki: мой маленький секрет
 }
 
 // EntropyPackExtended - энтропия с подробным описанием. Видна только на странице /entropy на сайте.
@@ -76,6 +77,7 @@ type EntropyPackExtended struct {
 	Timestamp time.Time `json:"timestamp"`
 	Entropy   Entropy   `json:"entropy" gorm:"embedded;embeddedPrefix:entropy_"`
 	Choice    Entropy   `json:"choice" gorm:"embedded;embeddedPrefix:choice_"`
+	Loki      bool      `json:"loki" gorm:"-"` // Loki: мой маленький секрет
 
 	ImageFrame        image.Image `json:"-" gorm:"-"`          // сами картинки передаются только в памяти сервиса Асгард
 	ImageFrameEncoded string      `json:"imageFrame" gorm:"-"` // base64-encoded jpeg картинки (уходят в Мидгард)

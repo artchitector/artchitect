@@ -1,24 +1,31 @@
 <i18n>
 {
   "en": {
-    "title": "ENTROPY SENSOR"
+    "title": "ENTROPY SENSOR",
+    "secret_title": "ODIN'S LOST EYE"
   },
   "ru": {
-    "title": "ДАТЧИК ЭНТРОПИИ"
+    "title": "ДАТЧИК ЭНТРОПИИ",
+    "secret_title": "ПУСТОЙ ГЛАЗ ОДИНА"
   }
 }
 </i18n>
 <template>
   <div class="has-text-centered entropy-sensor">
     <div class="entropy-sensor-inner">
-      <span class="is-size-7">{{ $t('title') }}</span>
+      <span v-if="entropy.loki" class="is-size-7">
+        <NuxtLink :to="linkPath">
+          {{ $t('secret_title') }}
+        </NuxtLink>
+      </span>
+      <span v-else class="is-size-7">{{ $t('title') }}</span>
       <div>
-        <NuxtLink :to="localePath('entropy')">
+        <NuxtLink :to="linkPath">
           <img v-if="entropy.entropy.image"
                :src="`data:image/png;base64, ${entropy.entropy.image}`"
                alt="odin's mind"/>
         </NuxtLink>
-        <NuxtLink :to="localePath('entropy')">
+        <NuxtLink :to="linkPath">
           <img v-if="entropy.choice.image"
                :src="`data:image/png;base64, ${entropy.choice.image}`"
                alt="odin's choice"/>
@@ -31,7 +38,12 @@
 <script>
 export default {
   name: "common-entropy",
-  props: ['entropy']
+  props: ['entropy'],
+  computed: {
+    linkPath() {
+      return this.entropy.loki ? this.localePath('loki') : this.localePath('entropy')
+    }
+  }
 }
 </script>
 

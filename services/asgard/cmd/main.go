@@ -68,7 +68,8 @@ func main() {
 
 	giving := communication.NewGiving(artPile, muninn, bifröst)
 
-	heimdallr := pantheon.NewHeimdallr(huginn, bifröst)
+	loki := pantheon.NewLoki()
+	heimdallr := pantheon.NewHeimdallr(huginn, bifröst, loki)
 	ai := infrastructure.NewAI(config.UseFakeAI, config.InvokeAIPath)
 	freyja := pantheon.NewFreyja(ai)
 	gungner := pantheon.NewGungner()

@@ -10,9 +10,9 @@
 </i18n>
 <template>
   <div>
-    <loki-heading/>
-    <loki-fable/>
-    <loki-number-one/>
+    <loki-heading :locale="locale"/>
+    <loki-fable :locale="locale"/>
+    <loki-number-one :locale="locale"/>
   </div>
 </template>
 <script>
@@ -23,6 +23,11 @@ export default {
       title: this.$t('page_title')
     }
   },
+  computed: {
+    locale() {
+      return this.$i18n.locale
+    }
+  }
 }
 </script>
 <style lang="scss" scoped></style>

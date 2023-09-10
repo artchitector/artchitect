@@ -9,8 +9,8 @@
 }
 </i18n>
 <template>
-  <div class="card">
-    <div class="card-content pb-1">
+  <div class="art">
+    <div class="art-content pb-1">
       <div class="media">
         <div class="columns">
           <div class="column is-one-fifth">
@@ -34,10 +34,13 @@
     <div class="has-text-centered mb-1">
       <a :href="`/api/image/artchitect-${art.id}-origin`" class="is-size-7">полный размер</a>
     </div>
-    <div class="card-image">
+    <div class="art-image">
       <figure class="image is-2by3">
         <img :src="`/api/image/artchitect-${art.id}-f`" :alt="`art_${art.id}`"/>
       </figure>
+      <div class="liker">
+        <utils-liker :art_id="art.id"/>
+      </div>
     </div>
   </div>
 </template>
@@ -57,7 +60,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.card {
+.art {
   .media .columns {
     width: 100%;
 
@@ -71,6 +74,17 @@ export default {
 
     img {
       image-rendering: pixelated;
+    }
+  }
+
+  .art-image {
+    position: relative;
+    .liker {
+      position: absolute;
+      left: 50%;
+      bottom: 20%;
+      z-index: 3;
+      margin-left: -20px;
     }
   }
 }

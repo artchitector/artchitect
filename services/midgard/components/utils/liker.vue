@@ -1,12 +1,14 @@
 <template>
   <div class="control-like">
-    <font-awesome-icon v-if="error"
-                       icon="fa-solid fa-triangle-exclamation"
-                       :title="error.message"/>
-    <a v-else href="#" @click.prevent="like()">
-      <font-awesome-icon v-if="!liked" icon="fa-solid fa-heart" class="has-color-base"/>
-      <font-awesome-icon v-else icon="fa-solid fa-heart" class="has-text-danger"/>
-    </a>
+    <template v-if="isLoggedIn">
+      <font-awesome-icon v-if="error"
+                         icon="fa-solid fa-triangle-exclamation"
+                         :title="error.message"/>
+      <a v-else href="#" @click.prevent="like()">
+        <font-awesome-icon v-if="!liked" icon="fa-solid fa-heart" class="has-color-base"/>
+        <font-awesome-icon v-else icon="fa-solid fa-heart" class="has-text-danger"/>
+      </a>
+    </template>
   </div>
 </template>
 
@@ -22,6 +24,13 @@ export default {
   },
   mounted() {
     this.initLiked()
+  },
+  computed: {
+    isLoggedIn() {
+      return process.client
+        ? !!localStorage.getItem("token")
+        : false
+    },
   },
   methods: {
     async like() {

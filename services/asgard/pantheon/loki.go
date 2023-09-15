@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const LokiChance = 1.0 / 2000.0 // шанс на появление
+const LokiChance = 1.0 / 4000.0 // шанс на появление
 var frameDuration = time.Millisecond * 500
 var framesScheme = [][]int{
 	// {0, 0} - это обозначает, что на энтропию и на choice будут наложена картинка с индексом ноль из листа (улыбка №1)

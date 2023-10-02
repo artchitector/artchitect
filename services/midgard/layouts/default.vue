@@ -9,7 +9,8 @@
     "unity": "unity",
     "idea": "idea",
     "entropy": "entropy",
-    "fable": "fable"
+    "fable": "fable",
+    "god": "god"
   },
   "ru": {
     "insight": "👁",
@@ -20,7 +21,8 @@
     "unity": "единства",
     "idea": "идея",
     "entropy": "энтропия",
-    "fable": "сказка"
+    "fable": "сказка",
+    "god": "бог"
   }
 }
 </i18n>
@@ -45,6 +47,8 @@
         <NuxtLink :to="localePath('/unity')">{{$t('unity')}}</NuxtLink>
         <span> - </span>
         <NuxtLink :to="localePath('/idea')">{{$t('idea')}}</NuxtLink>
+        <span> - </span>
+        <NuxtLink :to="localePath('/god')">{{$t('god')}}</NuxtLink>
         <span> - </span>
         <template v-if="loggedIn">
           <NuxtLink :to="localePath('/liked')">{{$t('liked')}}</NuxtLink>

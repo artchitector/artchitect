@@ -2,9 +2,11 @@ package portals
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/artchitector/artchitect2/model"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -116,4 +118,15 @@ func (ap *ArtPortal) HandleChosen(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, model.MakeFlatArt(art))
+}
+
+func (ap *ArtPortal) HandleMaxArt(c *gin.Context) {
+	maxArtID, err := ap.artPile.GetMaxArtID(c)
+	if err != nil {
+		err = fmt.Errorf("[art_portal] failed to GetMaxArtID: %w", err)
+		log.Error().Err(err).Send()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, maxArtID)
 }

@@ -9,7 +9,12 @@ import (
 	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
 	"sync"
+	"sync/atomic"
 	"time"
+)
+
+const (
+	SecondsToLostConnection = 2 // если 2 секунды нет сообщений с asgard, то это значит, что коннект мы потеряли
 )
 
 type subscriber struct {
@@ -50,10 +55,12 @@ Odin: некоторые грузы не будут переданы в Мидг
 Odin: некоторые грузы будут ретранслированы наружу (websocket), оно доступно из Мидгарда (браузера)
 */
 type Harbour struct {
-	mutex       sync.Mutex
-	red         *redis.Client
-	listener    []*subscriber // слушатели радио
-	lastCrownID uint
+	mutex              sync.Mutex
+	red                *redis.Client
+	listener           []*subscriber // слушатели радио
+	lastCrownID        uint
+	lostConnectionMode atomic.Bool
+	lastMessageTime    *time.Time // надеюсь, что состояния гонки тут не будет
 }
 
 func NewHarbour(red *redis.Client) *Harbour {
@@ -63,6 +70,8 @@ func NewHarbour(red *redis.Client) *Harbour {
 // Run - запуск процесса получения грузов из Асгарда по радужному мосту (redis-у) и ретрансляции их по радио в виде радиограмм
 // Odin: запускайте это в горутине, или оно остановит всё остальное
 func (l *Harbour) Run(ctx context.Context) error {
+	go l.runLostConnectionSpectator(ctx)
+
 	subscriber := l.red.Subscribe(
 		ctx,
 		model.ChanEntropy,
@@ -90,6 +99,38 @@ func (l *Harbour) Run(ctx context.Context) error {
 			}
 		}
 	}
+}
+
+// runLostConnectionSpectator - следящий за соединением следит за тем, чтобы из асгарда постоянно шёл поток сообщений
+// если потом прерывается, то начинаем рассылать сообщения о том, что связь с Асгардом прервана
+func (l *Harbour) runLostConnectionSpectator(ctx context.Context) {
+	runnerStart := time.Now()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.Tick(time.Millisecond * 100):
+			if l.lostConnectionMode.Load() == true {
+				l.sendOfflineModeMessage(ctx)
+			} else {
+				if l.lastMessageTime == nil {
+					if time.Now().Sub(runnerStart).Seconds() > SecondsToLostConnection {
+						// runner после запуска так ничего и не получил
+						l.lostConnectionMode.Store(true)
+						continue
+					} else {
+						continue // сервис только запустился, еще ничего не получил
+					}
+				} else if time.Now().Sub(*l.lastMessageTime).Seconds() > SecondsToLostConnection {
+					l.lostConnectionMode.Store(true)
+				}
+			}
+		}
+	}
+}
+
+func (l *Harbour) sendOfflineModeMessage(ctx context.Context) {
+	l.makeRadioshow(ctx, model.ChanLostConnection, "{}")
 }
 
 // SendCrownWaitCargo - отправка почтового ворона с личной просьбой к Одину-Всеотцу
@@ -146,6 +187,7 @@ func (l *Harbour) SendCrownWaitCargo(ctx context.Context, request string) (strin
 
 // handle - обработка одного пришедшего груза
 func (l *Harbour) handle(ctx context.Context, msg *redis.Message) error {
+	l.notifyConnectionChecker()
 	broadcastChannels := []string{
 		model.ChanEntropy,
 		model.ChanEntropyExtended,
@@ -164,10 +206,17 @@ func (l *Harbour) handle(ctx context.Context, msg *redis.Message) error {
 		if err := l.handleNewArt(ctx, msg); err != nil {
 			return errors.Wrapf(err, "[harbour] ОШИБКА ОБРАБОТКИ СОБЫТИЯ %s", msg.Channel)
 		}
-
 	}
 
 	return nil
+}
+
+func (l *Harbour) notifyConnectionChecker() {
+	t := time.Now()
+	l.lastMessageTime = &t
+	if l.lostConnectionMode.Load() == true {
+		l.lostConnectionMode.Store(false)
+	}
 }
 
 /*

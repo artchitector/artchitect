@@ -2,14 +2,15 @@ package pantheon
 
 import (
 	"context"
-	"github.com/artchitector/artchitect2/model"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"image"
 	"math"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/artchitector/artchitect2/model"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 // Odin - Всеотец и создатель картин. Именно его уникальные идеи позволяют писать все эти работы в галерее Artchitect.

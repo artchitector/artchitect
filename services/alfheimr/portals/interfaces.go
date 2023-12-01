@@ -18,6 +18,7 @@ type artPile interface {
 	GetArt(ctx context.Context, ID uint) (model.Art, error)
 	GetArtRecursive(ctx context.Context, ID uint) (model.Art, error)
 	GetLastArts(ctx context.Context, last uint) ([]model.Art, error)
+	GetMaxArtID(ctx context.Context) (uint, error)
 	GetArtsInterval(ctx context.Context, min, max uint) ([]model.Art, error)
 }
 

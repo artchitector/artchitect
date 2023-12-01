@@ -26,7 +26,7 @@
       </div>
       <div class="has-text-centered">
       <NuxtLink :to="localePath(`/art/${lastArtID}`)" class="has-text-info">
-        <img :src="`/api/image/${lastArtID}/f`"/>
+        <img :src="`/api/image/artchitect-${lastArtID}-f`"/>
       </NuxtLink>
     </div>
   </div>

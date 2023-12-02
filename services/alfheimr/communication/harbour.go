@@ -104,24 +104,29 @@ func (l *Harbour) Run(ctx context.Context) error {
 // runLostConnectionSpectator - следящий за соединением следит за тем, чтобы из асгарда постоянно шёл поток сообщений
 // если потом прерывается, то начинаем рассылать сообщения о том, что связь с Асгардом прервана
 func (l *Harbour) runLostConnectionSpectator(ctx context.Context) {
+	log.Info().Msgf("[lost_connection] НАБЛЮДАТЕЛЬ ЗАПУЩЕН")
 	runnerStart := time.Now()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.Tick(time.Millisecond * 100):
+		case <-time.After(time.Millisecond * 200):
 			if l.lostConnectionMode.Load() == true {
+				log.Info().Msgf("[lost_connection] ОТПРАВЛЯЮ СООБЩЕНИЕ О ПОТЕРЕ СОЕДИНЕНИЯ")
 				l.sendOfflineModeMessage(ctx)
 			} else {
+				now := time.Now()
 				if l.lastMessageTime == nil {
 					if time.Now().Sub(runnerStart).Seconds() > SecondsToLostConnection {
 						// runner после запуска так ничего и не получил
+						log.Info().Msgf("[lost_connection] РАННЕР НЕ СМОГ ДОЖДАТЬСЯ ПЕРВОГО СОБЫТИЯ, LOST CONNECTION MODE = TRUE")
 						l.lostConnectionMode.Store(true)
 						continue
 					} else {
 						continue // сервис только запустился, еще ничего не получил
 					}
-				} else if time.Now().Sub(*l.lastMessageTime).Seconds() > SecondsToLostConnection {
+				} else if now.Sub(*l.lastMessageTime).Seconds() > SecondsToLostConnection {
+					log.Info().Msgf("[lost_connection] СООБЩЕНИЕ БЫЛО ДАВНО - %s, СЕЙЧАС - %s, LOST CONNECTION MODE = TRUE", l.lastMessageTime, now)
 					l.lostConnectionMode.Store(true)
 				}
 			}
@@ -215,6 +220,7 @@ func (l *Harbour) notifyConnectionChecker() {
 	t := time.Now()
 	l.lastMessageTime = &t
 	if l.lostConnectionMode.Load() == true {
+		log.Info().Msgf("[lost_connection] СНИМАЕТСЯ РЕЖИМ LOST CONNECTION. СООБЩЕНИЕ ПОЛУЧЕНО %s", l.lastMessageTime)
 		l.lostConnectionMode.Store(false)
 	}
 }

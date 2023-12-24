@@ -49,7 +49,7 @@ func main() {
 			log.Fatal().Err(err).Send()
 		}
 
-		r.GET("/metrics/:hostname", mb.GetMetricsHandler)
+		r.GET("/:hostname/metrics", mb.GetMetricsHandler)
 
 		// запуск http-сервера
 		log.Info().Msgf("[warehouse] HTTP-ВРАТА ВКЛ. ПОРТ:%s", config.HttpPort)

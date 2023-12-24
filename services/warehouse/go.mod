@@ -1,10 +1,10 @@
-module github.com/artchitector/artchitect2/services/warehouse
+module github.com/artchitector/artchitect/services/warehouse
 
 go 1.20
 
 require (
-	github.com/artchitector/artchitect2/libraries/resizer v0.0.0-20230808145946-07f8c6ba781d // indirect
-	github.com/artchitector/artchitect2/model v0.0.0-20230808145946-07f8c6ba781d // indirect
+	github.com/artchitector/artchitect/libraries/resizer v0.0.0-20230808145946-07f8c6ba781d // indirect
+	github.com/artchitector/artchitect/model v0.0.0-20230808145946-07f8c6ba781d // indirect
 	github.com/bytedance/sonic v1.10.0-rc3 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/chenzhuoyu/iasm v0.9.0 // indirect
@@ -42,6 +42,6 @@ require (
 	gorm.io/gorm v1.25.2 // indirect
 )
 
-replace github.com/artchitector/artchitect2/model => ../../model
+replace github.com/artchitector/artchitect/model => ../../model
 
-replace github.com/artchitector/artchitect2/libraries/resizer => ../../libraries/resizer
+replace github.com/artchitector/artchitect/libraries/resizer => ../../libraries/resizer

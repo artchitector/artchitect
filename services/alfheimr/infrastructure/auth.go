@@ -2,15 +2,18 @@ package infrastructure
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	"strconv"
 )
 
-const FakeLocalToken = "FAKE_LOCAL_TOKEN"
-const FakeUserID = 999
+const (
+	FakeLocalToken = "FAKE_LOCAL_TOKEN"
+	FakeUserID     = 999
+)
 
 type AuthService struct {
 	allowFakeAuth bool
@@ -45,7 +48,6 @@ func (as *AuthService) GetUserIdFromContext(c *gin.Context) uint {
 		}
 		return as.secret, nil
 	})
-
 	if err != nil {
 		log.Error().Err(err).Msgf("[auth:portal] ОШИБКА ЧТЕНИЯ ТОКЕНА")
 		return 0

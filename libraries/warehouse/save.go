@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/artchitector/artchitect2/libraries/resizer"
-	"github.com/artchitector/artchitect2/model"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"image"
 	"image/jpeg"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"time"
+
+	"github.com/artchitector/artchitect/libraries/resizer"
+	"github.com/artchitector/artchitect/model"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 func (wh *Warehouse) SaveArtImage(ctx context.Context, artID uint, img image.Image) error {

@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/artchitector/artchitect2/model"
+	"net/http"
+	"strings"
+	"sync"
+
+	"github.com/artchitector/artchitect/model"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
-	"net/http"
-	"strings"
-	"sync"
 )
 
 const (
@@ -42,9 +43,9 @@ func NewRadioPortal(radio radio) *RadioPortal {
 }
 
 func (cp *RadioPortal) Handle(w http.ResponseWriter, r *http.Request) {
-	//w.WriteHeader(http.StatusBadRequest)
-	//w.Write([]byte("STOP"))
-	//return
+	// w.WriteHeader(http.StatusBadRequest)
+	// w.Write([]byte("STOP"))
+	// return
 
 	connID := makeRadioConnectionID(3)
 	conn, err := wsupgrader.Upgrade(w, r, nil)

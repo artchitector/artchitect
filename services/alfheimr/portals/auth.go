@@ -3,7 +3,6 @@ package portals
 import (
 	"crypto/hmac"
 	"crypto/sha256"
-
 	"encoding/hex"
 	"fmt"
 	"net/http"
@@ -83,7 +82,7 @@ func (ap *AuthPortal) checkFromTelegram(values url.Values) error {
 	values.Del("hash")
 
 	keys := make([]string, 0, len(values))
-	for key, _ := range values {
+	for key := range values {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)

@@ -1,7 +1,8 @@
-go 1.21
+go 1.21.4
 
 use (
 	./services/alfheimr
 	./services/asgard
 	./services/warehouse
+	./services/metricsbridge
 )

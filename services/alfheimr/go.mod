@@ -1,11 +1,11 @@
-module github.com/artchitector/artchitect2/services/alfheimr
+module github.com/artchitector/artchitect/services/alfheimr
 
 go 1.20
 
 require (
-	github.com/artchitector/artchitect2/libraries/resizer v0.0.0-20230819093634-3a18e65db5f3 // indirect
-	github.com/artchitector/artchitect2/libraries/warehouse v0.0.0-20230819093634-3a18e65db5f3 // indirect
-	github.com/artchitector/artchitect2/model v0.0.0-20230819093634-3a18e65db5f3 // indirect
+	github.com/artchitector/artchitect/libraries/resizer v0.0.0-20230819093634-3a18e65db5f3 // indirect
+	github.com/artchitector/artchitect/libraries/warehouse v0.0.0-20230819093634-3a18e65db5f3 // indirect
+	github.com/artchitector/artchitect/model v0.0.0-20230819093634-3a18e65db5f3 // indirect
 	github.com/bytedance/sonic v1.10.0-rc3 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
@@ -53,6 +53,6 @@ require (
 	gorm.io/gorm v1.25.3 // indirect
 )
 
-replace github.com/artchitector/artchitect2/model => ../../model
+replace github.com/artchitector/artchitect/model => ../../model
 
-replace github.com/artchitector/artchitect2/libraries/warehouse => ../../libraries/warehouse
+replace github.com/artchitector/artchitect/libraries/warehouse => ../../libraries/warehouse

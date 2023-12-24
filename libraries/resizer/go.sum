@@ -1,5 +1,5 @@
-github.com/artchitector/artchitect2/model v0.0.0-20230808134650-4a673e65f228 h1:V1sl2rlh2lf9TxFLmXae15vQbTquZV0dJfx14CJZexA=
-github.com/artchitector/artchitect2/model v0.0.0-20230808134650-4a673e65f228/go.mod h1:QnbpbdVktM1Q4W2fUtKo751aq1B3ETDeHau98g+RWXE=
+github.com/artchitector/artchitect/model v0.0.0-20230808134650-4a673e65f228 h1:V1sl2rlh2lf9TxFLmXae15vQbTquZV0dJfx14CJZexA=
+github.com/artchitector/artchitect/model v0.0.0-20230808134650-4a673e65f228/go.mod h1:QnbpbdVktM1Q4W2fUtKo751aq1B3ETDeHau98g+RWXE=
 github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=
 github.com/jinzhu/inflection v1.0.0/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
 github.com/jinzhu/now v1.1.5 h1:/o9tlHleP7gOFmsnYNz3RGnqzefHA47wQpKrrdTIwXQ=

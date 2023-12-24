@@ -1,12 +1,13 @@
 package portals
 
 import (
-	"github.com/artchitector/artchitect2/model"
+	"net/http"
+	"time"
+
+	"github.com/artchitector/artchitect/model"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
-	"net/http"
-	"time"
 )
 
 type UnityPortal struct {

@@ -3,13 +3,14 @@ package pantheon
 import (
 	"bytes"
 	"context"
-	"github.com/artchitector/artchitect2/model"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"image"
 	"image/png"
 	"strings"
 	"time"
+
+	"github.com/artchitector/artchitect/model"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 // Freyja - Я богиня красоты и любви, так что я лучше остальных знаю толк в красоте. Потому Odin и доверил мне эту работу.

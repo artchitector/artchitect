@@ -4,11 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/artchitector/artchitect2/libraries/resizer"
-	"github.com/artchitector/artchitect2/model"
-	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"image"
 	"image/jpeg"
 	"io"
@@ -17,6 +12,12 @@ import (
 	"os"
 	"path"
 	"strconv"
+
+	"github.com/artchitector/artchitect/libraries/resizer"
+	"github.com/artchitector/artchitect/model"
+	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 type artRequest struct {
@@ -275,13 +276,13 @@ func (w *Warehouse) saveFile(
 	data []byte,
 ) error {
 	dirpath := path.Join(baseDir, subDir)
-	if err := os.MkdirAll(dirpath, 0774); err != nil {
+	if err := os.MkdirAll(dirpath, 0o774); err != nil {
 		return err
 	}
 	log.Info().Msgf("DIR CREATED %s", dirpath)
 
 	filepath := path.Join(dirpath, filename)
-	err := os.WriteFile(filepath, data, 0774)
+	err := os.WriteFile(filepath, data, 0o774)
 	return err
 }
 

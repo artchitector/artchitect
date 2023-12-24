@@ -7,13 +7,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/artchitector/artchitect2/libraries/warehouse"
-	"github.com/artchitector/artchitect2/model"
-	"github.com/artchitector/artchitect2/services/asgard/communication"
-	"github.com/artchitector/artchitect2/services/asgard/infrastructure"
-	"github.com/artchitector/artchitect2/services/asgard/pantheon"
-	frigg2 "github.com/artchitector/artchitect2/services/asgard/pantheon/frigg"
-	"github.com/artchitector/artchitect2/services/asgard/utils"
+	"github.com/artchitector/artchitect/libraries/warehouse"
+	"github.com/artchitector/artchitect/model"
+	"github.com/artchitector/artchitect/services/asgard/communication"
+	"github.com/artchitector/artchitect/services/asgard/infrastructure"
+	"github.com/artchitector/artchitect/services/asgard/pantheon"
+	frigg2 "github.com/artchitector/artchitect/services/asgard/pantheon/frigg"
+	"github.com/artchitector/artchitect/services/asgard/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -52,7 +52,7 @@ func main() {
 
 	// внешние связи
 	bifröst := communication.NewBifröst(red)
-	//warehouse := communication.NewWarehouse(config.WarehouseOriginUrl, config.WarehouseArtUrls)
+	// warehouse := communication.NewWarehouse(config.WarehouseOriginUrl, config.WarehouseArtUrls)
 	wh := warehouse.NewWarehouse(config.WarehouseArtUrls, config.WarehouseOriginUrl)
 	keyhole := communication.NewKeyhole(config.HttpPort, webcam)
 

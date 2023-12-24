@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"github.com/artchitector/artchitect2/model"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"image"
 	"image/color"
 	"image/jpeg"
 	"image/png"
 	"math"
 	"math/bits"
+
+	"github.com/artchitector/artchitect/model"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 /*
@@ -70,7 +71,7 @@ func (h *Heimdallr) StartStream(ctx context.Context) {
 			log.Info().Msgf("[heimdallr] МММММ. НАКОНЕЦ И МОЯ ОСТАНОВКА")
 			return
 		case entropy := <-entropyCh:
-			//log.Debug().Msgf("[heimdallr] ВИЖУ ЭНТРОПИЮ ОТ ХУГИНА %+v", entropy)
+			// log.Debug().Msgf("[heimdallr] ВИЖУ ЭНТРОПИЮ ОТ ХУГИНА %+v", entropy)
 			go func(entropy model.EntropyPackExtended) {
 				if err := h.transferEntropy(ctx, entropy); err != nil {
 					log.Error().Err(err).Msgf("[heimdallr] ОТПРАВКА ЭНТРОПИИ НЕ СЛУЧИЛАСЬ, К СОЖАЛЕНИЮ!")
@@ -177,7 +178,7 @@ func (h *Heimdallr) makeEntropyImage(matrix model.EntropyMatrix) image.Image {
 // Heimdallr: Я охраняю РАДУЖНЫЙ мост, и знаю о цветах многое.
 // Heimdallr: Я сделаю свой цвет. Это и есть моя упомянутая выше деталь.
 func (h *Heimdallr) makeColor(power uint8) color.Color {
-	//greenToRedProportion := 165.0 / 255.0
+	// greenToRedProportion := 165.0 / 255.0
 
 	// Цвета могут быть почти чёрные (по значениям Current, но иметь какой-то цвет). Надо нормализовать цвета так,
 	// чтобы цвет был яркий
@@ -186,9 +187,9 @@ func (h *Heimdallr) makeColor(power uint8) color.Color {
 		R: uint8(float64(power) * h.colorScheme.Red.Current),
 		G: uint8(float64(power) * h.colorScheme.Green.Current),
 		B: uint8(float64(power) * h.colorScheme.Blue.Current),
-		//R: power,
-		//G: uint8(greenToRedProportion * float64(power)),
-		//B: 0,
+		// R: power,
+		// G: uint8(greenToRedProportion * float64(power)),
+		// B: 0,
 		A: math.MaxUint8,
 	}
 }
@@ -236,7 +237,7 @@ func (h *Heimdallr) updateColorScheme(entropy model.EntropyPackExtended) {
 				if col.Current >= col.Target {
 					col.Current = col.Target
 					col.Step = 0.0 // цвет окончательно установлен
-					//log.Debug().Msgf("%s DONE", farge)
+					// log.Debug().Msgf("%s DONE", farge)
 				}
 				// цвет еще в процессе перехода
 			} else {
@@ -244,7 +245,7 @@ func (h *Heimdallr) updateColorScheme(entropy model.EntropyPackExtended) {
 				if col.Current <= col.Target {
 					col.Current = col.Target
 					col.Step = 0.0 // цвет окончательно установлен
-					//log.Debug().Msgf("%s DONE", farge)
+					// log.Debug().Msgf("%s DONE", farge)
 				}
 			}
 		} else if !changedColor {
@@ -273,7 +274,6 @@ func (h *Heimdallr) updateColorScheme(entropy model.EntropyPackExtended) {
 				changedColor = true
 			}
 		}
-
 	}
 }
 
@@ -307,10 +307,9 @@ func (h *Heimdallr) encodeJpeg(img image.Image, quality int) (string, error) {
 		return "", err
 	}
 	data := b.Bytes()
-	//log.Debug().Msgf("[heimdallr] %d. IMAGE SIZE = %dкБ", quality, len(data)/1024)
+	// log.Debug().Msgf("[heimdallr] %d. IMAGE SIZE = %dкБ", quality, len(data)/1024)
 	// Heimdallr: Картинка frame - 10-20Кб, картинка шума около 40Кб. И так несколько раз в секунду, такой траффик.
 	return base64.StdEncoding.EncodeToString(data), nil
-
 }
 
 func (h *Heimdallr) encodeEntropyImagesForTransfer(entropy model.EntropyPack) (model.EntropyPack, error) {

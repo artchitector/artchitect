@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/artchitector/artchitect2/model"
+	"github.com/artchitector/artchitect/model"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )

@@ -2,16 +2,17 @@ package pantheon
 
 import (
 	"context"
-	"github.com/artchitector/artchitect2/model"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
-	"golang.org/x/exp/slices"
 	"image"
 	"image/color"
 	"math"
 	"math/bits"
 	"sync"
 	"time"
+
+	"github.com/artchitector/artchitect/model"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -117,7 +118,7 @@ func (le *LostEye) notifyListeners(
 			case <-time.After(time.Second):
 				log.Error().Msgf("[lost_eye] ОТПРАВКА ЗАВИСЛА, ЭНТРОПИЯ ПОТЕРЯНА")
 			case s.ch <- pack:
-				//log.Debug().Msgf("[lost_eye] ЭНТРОПИЯ ОТПРАВЛЕНА")
+				// log.Debug().Msgf("[lost_eye] ЭНТРОПИЯ ОТПРАВЛЕНА")
 			}
 		}(sub)
 	}
@@ -309,7 +310,7 @@ func (le *LostEye) noiseToEntropy(noise image.Image) model.EntropyMatrix {
 	for x := 0; x < model.EntropySize; x++ {
 		for y := 0; y < model.EntropySize; y++ {
 			// нормализация - из энергии текущего пикселя вычитаем энергию самого слабого пикселя,
-			//так лишняя энергия будет погашена во всех пикселях
+			// так лишняя энергия будет погашена во всех пикселях
 			powerOfPixel := powers[x][y] - minPixelPower
 			scaledPower := math.Round(float64(powerOfPixel) / float64(scale) * math.MaxUint8)
 			matrix.Set(x, y, uint8(scaledPower))

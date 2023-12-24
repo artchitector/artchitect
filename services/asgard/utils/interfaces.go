@@ -2,7 +2,8 @@ package utils
 
 import (
 	"context"
-	"github.com/artchitector/artchitect2/model"
+
+	"github.com/artchitector/artchitect/model"
 )
 
 // artPile - репозиторий картин

@@ -3,12 +3,13 @@ package portals
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/artchitector/artchitect2/model"
+	"net/http"
+
+	"github.com/artchitector/artchitect/model"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
-	"net/http"
 )
 
 type LikePortal struct {

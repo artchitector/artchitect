@@ -1,17 +1,18 @@
 package portals
 
 import (
-	"github.com/artchitector/artchitect2/model"
-	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/artchitector/artchitect/model"
+	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 )
 
 type ArtImageRequest struct {
-	//ID   uint   `uri:"id" binding:"required,numeric"`
-	//Size string `uri:"size" binding:"required"`
+	// ID   uint   `uri:"id" binding:"required,numeric"`
+	// Size string `uri:"size" binding:"required"`
 	Name string `uri:"name" binding:"required"`
 }
 

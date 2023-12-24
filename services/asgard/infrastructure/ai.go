@@ -6,9 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/artchitector/artchitect2/model"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"image/jpeg"
 	"image/png"
 	"io"
@@ -18,6 +15,10 @@ import (
 	"path"
 	"regexp"
 	"strings"
+
+	"github.com/artchitector/artchitect/model"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 /*
@@ -95,19 +96,18 @@ func (ai *AI) prepareListTxt(seed uint, prompt string) error {
 		" ",
 	)
 	listTxtPath := path.Join(ai.invokeAIPath, TxtFilename)
-	err := os.WriteFile(listTxtPath, []byte(line), 0644)
+	err := os.WriteFile(listTxtPath, []byte(line), 0o644)
 	return err
 }
 
 // prepareCmd - сборка консольной команды, которая запустит Invoke.AI
 func (ai *AI) prepareCmd() string {
-
 	return strings.Join(
 		[]string{
 			fmt.Sprintf("export INVOKEAI_ROOT=%s && ", ai.invokeAIPath),
 			fmt.Sprintf("%s/.venv/bin/python", ai.invokeAIPath),
 			fmt.Sprintf("%s/.venv/bin/invoke.py", ai.invokeAIPath),
-			//fmt.Sprintf(`--from_file "%s/list.txt"`, ai.invokeAIPath),
+			// fmt.Sprintf(`--from_file "%s/list.txt"`, ai.invokeAIPath),
 		},
 		" ",
 	)

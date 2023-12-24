@@ -3,13 +3,14 @@ package pantheon
 import (
 	"context"
 	"fmt"
-	"github.com/artchitector/artchitect2/model"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
-	"golang.org/x/exp/slices"
 	"math"
 	"sync"
 	"time"
+
+	"github.com/artchitector/artchitect/model"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+	"golang.org/x/exp/slices"
 )
 
 // Huginn "думающий". Один из двух воронов Odin-а. Huginn - это мысль Одина.
@@ -86,7 +87,7 @@ func (h *Huginn) StartEntropyRealize(ctx context.Context) {
 				case <-time.After(time.Millisecond * 10):
 					log.Warn().Msgf("[higunn] ПРОБЛЕМА С РЕТРАНСЛЯТОРОМ. НЕ УСПЕЛ В 10МС")
 				case currentRetranslator <- pack:
-					//ok
+					// ok
 				}
 				close(currentRetranslator)
 			}
@@ -153,7 +154,7 @@ func (h *Huginn) notifyListeners(ctx context.Context, pack model.EntropyPackExte
 			case <-time.After(time.Second):
 				log.Error().Msgf("[huginn] ОТПРАВКА ЗАВИСЛА, ЭНТРОПИЯ ПОТЕРЯНА, ПОДПИСЧИК: %s", s.name)
 			case s.ch <- pack:
-				//log.Debug().Msgf("[huginn] ЭНТРОПИЯ ОТПРАВЛЕНА")
+				// log.Debug().Msgf("[huginn] ЭНТРОПИЯ ОТПРАВЛЕНА")
 			}
 		}(sub)
 	}

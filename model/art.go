@@ -3,10 +3,11 @@ package model
 import (
 	"context"
 	"fmt"
-	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 	"math"
 	"time"
+
+	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 const (

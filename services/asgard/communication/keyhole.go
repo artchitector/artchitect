@@ -3,12 +3,13 @@ package communication
 import (
 	"bytes"
 	"context"
-	"github.com/artchitector/artchitect2/model"
+	"image/jpeg"
+	"net/http"
+
+	"github.com/artchitector/artchitect/model"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	"image/jpeg"
-	"net/http"
 )
 
 // Keyhole - замочная скважина (http-ручка)

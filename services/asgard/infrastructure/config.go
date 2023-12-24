@@ -1,9 +1,10 @@
 package infrastructure
 
 import (
+	"strconv"
+
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
-	"strconv"
 )
 
 type Config struct {

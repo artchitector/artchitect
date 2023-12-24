@@ -3,17 +3,18 @@ package pantheon
 import (
 	"bytes"
 	"fmt"
-	"github.com/artchitector/artchitect2/model"
+	"image"
+	"image/color"
+	"image/png"
+	"os"
+
+	"github.com/artchitector/artchitect/model"
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
 	"github.com/pkg/errors"
 	"golang.org/x/image/draw"
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
-	"image"
-	"image/color"
-	"image/png"
-	"os"
 )
 
 /*
@@ -65,7 +66,7 @@ func (g *Gungner) MakeUnityWatermark(img image.Image, mask string) (image.Image,
 
 func (g *Gungner) addWatermark(img image.Image, text string) image.Image {
 	// Odin: начинаю наносить подпись на картину своим копьём!
-	//rgba := img.(*image.RGBA)
+	// rgba := img.(*image.RGBA)
 	rgba := image.NewRGBA(img.Bounds())
 	draw.Draw(rgba, rgba.Bounds(), img, image.Point{}, draw.Src)
 

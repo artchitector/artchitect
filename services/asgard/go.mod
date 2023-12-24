@@ -1,11 +1,11 @@
-module github.com/artchitector/artchitect2/services/asgard
+module github.com/artchitector/artchitect/services/asgard
 
 go 1.20
 
 require (
-	github.com/artchitector/artchitect2/libraries/resizer v0.0.0-20230818151811-c8f78c5df613
-	github.com/artchitector/artchitect2/libraries/warehouse v0.0.0-20230819093634-3a18e65db5f3
-	github.com/artchitector/artchitect2/model v0.0.0-20230819093634-3a18e65db5f3
+	github.com/artchitector/artchitect/libraries/resizer v0.0.0-20230818151811-c8f78c5df613
+	github.com/artchitector/artchitect/libraries/warehouse v0.0.0-20230819093634-3a18e65db5f3
+	github.com/artchitector/artchitect/model v0.0.0-20230819093634-3a18e65db5f3
 	github.com/blackjack/webcam v0.0.0-20230509180125-87693b3f29dc
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis/v8 v8.11.5
@@ -60,8 +60,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/artchitector/artchitect2/model => ../../model
+replace github.com/artchitector/artchitect/model => ../../model
 
-replace github.com/artchitector/artchitect2/libraries/resizer => ../../libraries/resizer
+replace github.com/artchitector/artchitect/libraries/resizer => ../../libraries/resizer
 
-replace github.com/artchitector/artchitect2/libraries/warehouse => ../../libraries/warehouse
+replace github.com/artchitector/artchitect/libraries/warehouse => ../../libraries/warehouse

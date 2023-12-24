@@ -3,14 +3,15 @@ package communication
 import (
 	"context"
 	"encoding/json"
-	"github.com/artchitector/artchitect2/model"
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/artchitector/artchitect/model"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/exp/slices"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 const (
@@ -269,7 +270,7 @@ func (l *Harbour) makeRadioshow(ctx context.Context, channel string, payload str
 			case <-time.After(time.Second):
 				log.Error().Msgf("[radio] РАДИОГРАММА ПОТЕРЯНА. КАНАЛ:%s", channel)
 			case s.eventCh <- event:
-				//log.Debug().Msgf("[radio] РАДИОГРАММА ОТПРАВЛЕНА. КАНАЛ:%s. УСПЕХ", msg.Channel)
+				// log.Debug().Msgf("[radio] РАДИОГРАММА ОТПРАВЛЕНА. КАНАЛ:%s. УСПЕХ", msg.Channel)
 			}
 		}(sub)
 	}

@@ -2,7 +2,7 @@
 
 #### Artchitect creation story in english - https://artchitect.space/en/loki
 
-![artchitect_logo](https://github.com/artchitector/artchitect2/blob/main/files/images/logo_anim_92.gif)
+![artchitect_logo](https://github.com/artchitector/artchitect/blob/main/files/images/logo_anim_92.gif)
 
 #### https://artchitect.space
 
@@ -17,7 +17,7 @@
 рисовать по одной картине каждую минуту.
 
 Примеры картин:
-![examples](https://github.com/artchitector/artchitect2/blob/main/files/images/description_five.jpg)
+![examples](https://github.com/artchitector/artchitect/blob/main/files/images/description_five.jpg)
 
 ### Любителям строгого промышленного кода дальше читать не стоит!
 
@@ -98,4 +98,4 @@
 **Midgard** - мир людей. Технически это фронтэнд Artchitect - человек видит его воочию. Мидагрд не связан с миром асов
 Асгардом (с core-сервисом Artchitect), но связан с api-gateway Alfheimr, откуда черпает данные.
 
-![artchitect_installation](https://github.com/artchitector/artchitect2/blob/main/files/images/artchitect_hardware.jpg)
+![artchitect_installation](https://github.com/artchitector/artchitect/blob/main/files/images/artchitect_hardware.jpg)

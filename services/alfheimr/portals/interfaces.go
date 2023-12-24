@@ -2,7 +2,8 @@ package portals
 
 import (
 	"context"
-	"github.com/artchitector/artchitect2/model"
+
+	"github.com/artchitector/artchitect/model"
 	"github.com/gin-gonic/gin"
 )
 

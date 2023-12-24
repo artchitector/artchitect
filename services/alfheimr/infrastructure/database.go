@@ -2,14 +2,15 @@ package infrastructure
 
 import (
 	"context"
+	"log"
+	"os"
+	"time"
+
 	"github.com/pkg/errors"
 	zlog "github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log"
-	"os"
-	"time"
 )
 
 func InitDB(ctx context.Context, dns string) *gorm.DB {

@@ -2,8 +2,9 @@ package pantheon
 
 import (
 	"context"
-	"github.com/artchitector/artchitect2/model"
 	"image"
+
+	"github.com/artchitector/artchitect/model"
 )
 
 // artPile - Куча написанных картин (репозиторий для таблицы art)

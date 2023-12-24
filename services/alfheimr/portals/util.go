@@ -1,8 +1,9 @@
 package portals
 
 import (
-	"github.com/gin-gonic/gin"
 	"math/rand"
+
+	"github.com/gin-gonic/gin"
 )
 
 var letterRunes = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")

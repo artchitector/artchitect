@@ -3,19 +3,22 @@ package pantheon
 import (
 	"context"
 	"encoding/json"
-	"github.com/artchitector/artchitect2/model"
-	"github.com/artchitector/artchitect2/services/asgard/pantheon/frigg"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 	"math"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/artchitector/artchitect/model"
+	"github.com/artchitector/artchitect/services/asgard/pantheon/frigg"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
-var unityRanks = []uint{model.Unity100, model.Unity1K, model.Unity10K, model.Unity100K}
-var updateIntervals = []uint{model.UpdateInterval100, model.UpdateInterval1K, model.UpdateInterval10K, model.UpdateInterval100K}
+var (
+	unityRanks      = []uint{model.Unity100, model.Unity1K, model.Unity10K, model.Unity100K}
+	updateIntervals = []uint{model.UpdateInterval100, model.UpdateInterval1K, model.UpdateInterval10K, model.UpdateInterval100K}
+)
 
 /*
 Frigg - Фригг (др.-сканд. Frigg); — в германо-скандинавской мифологии жена Одина, верховная богиня.

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )

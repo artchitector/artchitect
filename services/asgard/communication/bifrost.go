@@ -3,7 +3,8 @@ package communication
 import (
 	"context"
 	"encoding/json"
-	"github.com/artchitector/artchitect2/model"
+
+	"github.com/artchitector/artchitect/model"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -35,7 +36,7 @@ func (s *Bifröst) SendDrakkar(ctx context.Context, channel string, item interfa
 	if err = s.red.Publish(ctx, channel, j).Err(); err != nil {
 		return errors.Wrap(err, "[ПОТОК] ГРУЗ УТОНУЛ")
 	}
-	//log.Debug().Msgf("[bifröst] ГРУЗ ОТПРАВЛЕН %s", string(cargoData))
+	// log.Debug().Msgf("[bifröst] ГРУЗ ОТПРАВЛЕН %s", string(cargoData))
 	return nil
 }
 
@@ -46,9 +47,9 @@ func (s *Bifröst) ListenPrivateOdinRequests(ctx context.Context, odin odin) err
 	subscriber := s.red.Subscribe(ctx, model.ChanCrown)
 	log.Info().Msg("[bifröst] НАЧИНАЮ ПЕРЕДАЧУ ЛИЧНЫХ ПРОШЕНИЙ ЛИЧНО ОДИНУ")
 	for {
-		//log.Debug().Msgf("[bifröst] ЖДУ ЛИЧНЫХ ПРОШЕНИЙ")
+		// log.Debug().Msgf("[bifröst] ЖДУ ЛИЧНЫХ ПРОШЕНИЙ")
 		msg, err := subscriber.ReceiveMessage(ctx)
-		//log.Debug().Msgf("[bifröst] ЛИЧНОЕ ПРОШЕНИЕ ПОЛУЧЕНО")
+		// log.Debug().Msgf("[bifröst] ЛИЧНОЕ ПРОШЕНИЕ ПОЛУЧЕНО")
 		if err != nil {
 			log.Error().Err(err).Msgf("[bifröst] ОШИБКА ОЖИДАНИЯ ВОРОНА С ЛИЧНЫМ ПРОШЕНИЕМ")
 			continue

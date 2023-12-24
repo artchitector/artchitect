@@ -2,15 +2,16 @@ package infrastructure
 
 import (
 	"context"
-	"github.com/artchitector/artchitect2/model"
+	"log"
+	"os"
+	"time"
+
+	"github.com/artchitector/artchitect/model"
 	"github.com/pkg/errors"
 	zlog "github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log"
-	"os"
-	"time"
 )
 
 func InitDB(ctx context.Context, dns string) *gorm.DB {

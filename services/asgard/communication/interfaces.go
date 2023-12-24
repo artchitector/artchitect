@@ -2,8 +2,9 @@ package communication
 
 import (
 	"context"
-	"github.com/artchitector/artchitect2/model"
 	"image"
+
+	"github.com/artchitector/artchitect/model"
 )
 
 type webcam interface {

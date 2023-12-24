@@ -17,8 +17,8 @@ type FlatArt struct {
 	IdeaWords         []string `json:"ideaWords"`
 
 	// В списках используется лишь одна основная картинка энтропии - энтропия породившая Seed-номер
-	SeedEntropyEncoded string `json:"imageEntropyEncoded"` //base64 encoded png картинка
-	SeedChoiceEncoded  string `json:"imageChoiceEncoded"`  //base64 encoded png картинка
+	SeedEntropyEncoded string `json:"imageEntropyEncoded"` // base64 encoded png картинка
+	SeedChoiceEncoded  string `json:"imageChoiceEncoded"`  // base64 encoded png картинка
 }
 
 func MakeFlatArts(arts []Art) []FlatArt {

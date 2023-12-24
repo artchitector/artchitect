@@ -9,9 +9,11 @@ import (
 
 // EntropySize - Энтропия считается по квадрату 8 на 8 пикселей
 // Odin: Фригг, где мои очки? Я не могу разобрать, что тут нарисовано! Тысяча чертей в эту допотопную машину!
-const EntropySize = 8
-const EntropyJpegQualityFrame = 65
-const EntropyJpegQualityNoise = 20
+const (
+	EntropySize             = 8
+	EntropyJpegQualityFrame = 65
+	EntropyJpegQualityNoise = 20
+)
 
 // EntropyMatrix - матрица хранит силу каждого из 64 пикселей в энтропии
 type EntropyMatrix struct {

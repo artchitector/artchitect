@@ -1,4 +1,4 @@
-module github.com/artchitector/artchitect2/model
+module github.com/artchitector/artchitect/model
 
 go 1.20
 

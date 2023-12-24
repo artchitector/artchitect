@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/artchitector/artchitect2/model"
-	"github.com/pkg/errors"
 	"image"
 	"image/jpeg"
 	"io"
 	"net/http"
+
+	"github.com/artchitector/artchitect/model"
+	"github.com/pkg/errors"
 )
 
 func (w *Warehouse) DownloadArtImage(ctx context.Context, artID uint, size string) ([]byte, error) {
@@ -46,6 +47,7 @@ func (w *Warehouse) GetAndDecodeArtImage(ctx context.Context, artID uint, size s
 	}
 	return img, nil
 }
+
 func (w *Warehouse) GetAndDecodeArtOrigin(ctx context.Context, artID uint) (image.Image, error) {
 	b, err := w.DownloadArtOrigin(ctx, artID)
 	if err != nil {
@@ -58,6 +60,7 @@ func (w *Warehouse) GetAndDecodeArtOrigin(ctx context.Context, artID uint) (imag
 	}
 	return img, nil
 }
+
 func (w *Warehouse) GetAndDecodeUnityImage(ctx context.Context, mask string, version uint, size string) (image.Image, error) {
 	b, err := w.DownloadUnityImage(ctx, mask, version, size)
 	if err != nil {

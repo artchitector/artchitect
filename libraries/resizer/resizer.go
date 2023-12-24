@@ -1,11 +1,12 @@
 package resizer
 
 import (
-	"github.com/artchitector/artchitect2/model"
-	"github.com/nfnt/resize"
-	"github.com/rs/zerolog/log"
 	"image"
 	"math"
+
+	"github.com/artchitector/artchitect/model"
+	"github.com/nfnt/resize"
+	"github.com/rs/zerolog/log"
 )
 
 func ResizeImage(img image.Image, size string) image.Image {

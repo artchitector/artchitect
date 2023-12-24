@@ -3,12 +3,13 @@ package pantheon
 import (
 	"context"
 	"fmt"
-	"github.com/artchitector/artchitect2/model"
+	"math"
+	"os"
+
+	"github.com/artchitector/artchitect/model"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v2"
-	"math"
-	"os"
 )
 
 // Muninn - "помнящий". Один из воронов Odin-а.

@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/artchitector/artchitect2/model"
+	"strings"
+
+	"github.com/artchitector/artchitect/model"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	"strings"
 )
 
 // Bot - телеграм-бот, который отправляет картинки в телеграм-чаты
@@ -46,8 +47,8 @@ func (b *Bot) Start(ctx context.Context) error {
 	}
 	log.Info().Msgf("[bot] НАЧАТА НАСТРОЙКА ТЕЛЕГРАМ-БОТА!")
 	opts := []bot.Option{
-		//bot.WithDebug(),
-		//bot.WithCheckInitTimeout(time.Second * 10),
+		// bot.WithDebug(),
+		// bot.WithCheckInitTimeout(time.Second * 10),
 		bot.WithDefaultHandler(b.defaultHandler),
 	}
 	if tgBot, err := bot.New(b.token, opts...); err != nil {

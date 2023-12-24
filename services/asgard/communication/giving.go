@@ -2,10 +2,11 @@ package communication
 
 import (
 	"context"
-	"github.com/artchitector/artchitect2/model"
+	"time"
+
+	"github.com/artchitector/artchitect/model"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	"time"
 )
 
 // TODO ОТКОММЕНТИРОВАТЬ ЭТО БЕЗОБРАЗИЕ

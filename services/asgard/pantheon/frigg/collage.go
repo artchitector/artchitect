@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/artchitector/artchitect2/libraries/resizer"
-	"github.com/artchitector/artchitect2/model"
-	"github.com/pkg/errors"
-	"golang.org/x/image/draw"
 	"image"
 	"image/color"
 	"image/jpeg"
 	"math"
 	"os"
+
+	"github.com/artchitector/artchitect/libraries/resizer"
+	"github.com/artchitector/artchitect/model"
+	"github.com/pkg/errors"
+	"golang.org/x/image/draw"
 )
 
 type warehouse interface {
@@ -68,7 +69,6 @@ func (c *Collage) MakeCollage(ctx context.Context, mask string, leads []uint, ma
 	}
 
 	return collage, nil
-
 }
 
 func (c *Collage) SaveCollage(ctx context.Context, unity model.Unity, img image.Image) error {

@@ -2,9 +2,10 @@ package pantheon
 
 import (
 	"context"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	"time"
 )
 
 /*
@@ -24,7 +25,6 @@ func NewIntention(odin *Odin, frigg *Frigg) *Intention {
 }
 
 func (a *Intention) Run(ctx context.Context) {
-
 	for {
 		select {
 		case <-ctx.Done():

@@ -7,8 +7,10 @@ import (
 )
 
 // MaxSeed - Seed для ИИ. Может быть нарисовано столько разных вариантов картины (с одинаковыми словами)
-const MaxSeed = 4294967295 // numpy accepts from 0 to 4294967295
-const MaxKeywords = 28     // не более 28 слов
+const (
+	MaxSeed     = 4294967295 // numpy accepts from 0 to 4294967295
+	MaxKeywords = 28         // не более 28 слов
+)
 
 // Word - Слово
 // Odin: вначале было слово... Из таких слов Фрейя поймёт, что нарисовать.

@@ -2,9 +2,10 @@ package model
 
 import (
 	"context"
+	"time"
+
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
-	"time"
 )
 
 type Like struct {

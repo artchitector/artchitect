@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
-	"github.com/artchitector/artchitect2/services/warehouse/infrastructure"
-	warehouse2 "github.com/artchitector/artchitect2/services/warehouse/warehouse"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/artchitector/artchitect/services/warehouse/infrastructure"
+	warehouse2 "github.com/artchitector/artchitect/services/warehouse/warehouse"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {

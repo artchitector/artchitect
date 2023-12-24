@@ -1,5 +1,5 @@
-github.com/artchitector/artchitect2/model v0.0.0-20230808145946-07f8c6ba781d h1:p0hRUw+k+SONhChYerVEcxJ7sx8NiicxrGi7IqnhQ9U=
-github.com/artchitector/artchitect2/model v0.0.0-20230808145946-07f8c6ba781d/go.mod h1:QnbpbdVktM1Q4W2fUtKo751aq1B3ETDeHau98g+RWXE=
+github.com/artchitector/artchitect/model v0.0.0-20230808145946-07f8c6ba781d h1:p0hRUw+k+SONhChYerVEcxJ7sx8NiicxrGi7IqnhQ9U=
+github.com/artchitector/artchitect/model v0.0.0-20230808145946-07f8c6ba781d/go.mod h1:QnbpbdVktM1Q4W2fUtKo751aq1B3ETDeHau98g+RWXE=
 github.com/bytedance/sonic v1.5.0/go.mod h1:ED5hyg4y6t3/9Ku1R6dU/4KyJ48DZ4jPhfY1O2AihPM=
 github.com/bytedance/sonic v1.10.0-rc/go.mod h1:ElCzW+ufi8qKqNW0FY314xriJhyJhuoJ3gFZdAHF7NM=
 github.com/bytedance/sonic v1.10.0-rc3 h1:uNSnscRapXTwUgTyOF0GVljYD08p9X/Lbr9MweSV3V0=

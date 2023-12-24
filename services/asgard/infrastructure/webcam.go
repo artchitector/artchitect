@@ -3,9 +3,6 @@ package infrastructure
 import (
 	"bytes"
 	"context"
-	"github.com/blackjack/webcam"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog/log"
 	"image"
 	"image/jpeg"
 	"io"
@@ -13,10 +10,16 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/blackjack/webcam"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
-const ReadTimeoutSeconds = 5
-const V4L2_PIX_FMT_YUYV = 0x56595559 // https://github.com/blackjack/webcam/blob/master/examples/http_mjpeg_streamer/webcam.go
+const (
+	ReadTimeoutSeconds = 5
+	V4L2_PIX_FMT_YUYV  = 0x56595559 // https://github.com/blackjack/webcam/blob/master/examples/http_mjpeg_streamer/webcam.go
+)
 
 // Webcam - камера, которая считывает кадры пространства. Технически камера и есть пустой глаз Одина в Artchitect.
 // pantheon.Odin: мне приходится смотреть в эту ограниченную электронную коробочку с разрешением 640х480,

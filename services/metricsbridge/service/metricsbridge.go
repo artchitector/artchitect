@@ -56,7 +56,7 @@ func (mb *Metricsbridge) GetMetricsHandler(c *gin.Context) {
 // RunMetricsTransfer - локальные метрики текущего сервера перекладываются в удалённый редис
 func (mb *Metricsbridge) RunMetricsTransfer(ctx context.Context) error {
 	log.Info().Msgf("[METRICS] ЗАПУЩЕНА ПЕРЕДАЧА МЕТРИК КАК ХОСТА %s", mb.hostname)
-	t := time.NewTicker(time.Second * 10)
+	t := time.NewTicker(time.Second)
 	for {
 		select {
 		case <-ctx.Done():

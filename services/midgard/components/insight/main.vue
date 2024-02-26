@@ -58,7 +58,6 @@ export default {
   },
   async mounted() {
     this.radioPid.entropy = Radio.subscribe("entropy", (entropy) => {
-      this.state.lostConnection = false
       this.state.entropy = entropy
     }, (err) => {
       console.error("[RADIO-ENTROPY] ОШИБКА ПОДКЛЮЧЕНИЯ К РАДИО", err)
@@ -79,7 +78,6 @@ export default {
     })
 
     this.radioPid.giving = Radio.subscribe("giving", (giving) => {
-      this.state.lostConnection = false
       this.state.giving = giving
     }, (err) => {
       console.error("[RADIO-GIVING] ОШИБКА ПОДКЛЮЧЕНИЯ К РАДИО", err)

@@ -193,7 +193,7 @@ func (l *Harbour) SendCrownWaitCargo(ctx context.Context, request string) (strin
 
 // handle - обработка одного пришедшего груза
 func (l *Harbour) handle(ctx context.Context, msg *redis.Message) error {
-	l.notifyConnectionChecker()
+	l.notifyConnectionChecker(msg.Channel)
 	broadcastChannels := []string{
 		model.ChanEntropy,
 		model.ChanEntropyExtended,
@@ -217,7 +217,12 @@ func (l *Harbour) handle(ctx context.Context, msg *redis.Message) error {
 	return nil
 }
 
-func (l *Harbour) notifyConnectionChecker() {
+func (l *Harbour) notifyConnectionChecker(channelName string) {
+	if channelName != model.ChanOdinState && channelName != model.ChanFriggState {
+		// Odin: учитываются только активные рабочие процессы на asgard-сервере, когда реально рисуются картины
+		// Odin: энтропия и остальные сообщение не имеют значения
+		return
+	}
 	t := time.Now()
 	l.lastMessageTime = &t
 	if l.lostConnectionMode.Load() == true {

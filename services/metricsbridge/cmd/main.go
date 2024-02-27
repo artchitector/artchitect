@@ -41,6 +41,10 @@ func main() {
 
 	// ЗАПУСК HTTP-СЕРВЕРА
 	go func() {
+		if config.HttpPort == "" {
+			log.Info().Msgf("[main] HTTP-СЕРВИС НЕ ЗАПУСКАЕТСЯ. ОТКЛЮЧЕН")
+			return
+		}
 		r := gin.Default()
 		r.Use(cors.New(cors.Config{
 			AllowAllOrigins: true,
@@ -60,12 +64,12 @@ func main() {
 
 	go func() {
 		if !config.EnableTransfer {
-			log.Info().Msgf("[main] metrics transfer disabled")
+			log.Info().Msgf("[main] ПЕРЕДАЧА МЕТРИК НЕ ВКЛЮЧЕНА")
 			return
 		}
 		err := mb.RunMetricsTransfer(ctx)
 		if err != nil {
-			log.Warn().Err(err).Msgf("[main] metrics transfer stop")
+			log.Warn().Err(err).Msgf("[main] ОСТАНОВ ПЕРЕДАЧИ МЕТРИК")
 		} else {
 			log.Info().Msgf("[main] metrics transfer context.stop")
 		}

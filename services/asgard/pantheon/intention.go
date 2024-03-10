@@ -54,15 +54,15 @@ func (a *Intention) WorkOnce(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "[СТРЕМЛЕНИЕ] FRIGG НЕ СМОГЛА ЗАВЕРШИТЬ ОБЪЕДИНЕНИЕ")
 	} else if worked {
-		log.Info().Msgf("[СТРЕМЛЕНИЕ] FRIGG В ЭТОТ РАЗ ВЫПОЛНИЛА РАБОТУ")
+		log.Info().Msgf("[СТРЕМЛЕНИЕ] FRIGG В ЭТОТ РАЗ ВЫПОЛНИЛА РАБОТУ. ODIN ОТДОХНУЛ.")
 		return nil
 	}
 
 	if a.odin.HasDesire() {
 		if worked, art, err := a.odin.Create(ctx); err != nil {
-			return errors.Wrap(err, "[СТРЕМЛЕНИЕ] ОДИН НЕ СОЗДАЛ КАРТИНУ. ОДИН В ЯРОСТИ")
+			return errors.Wrap(err, "[СТРЕМЛЕНИЕ] ODIN НЕ СОЗДАЛ КАРТИНУ. ОДИН В ЯРОСТИ")
 		} else if worked {
-			log.Debug().Msgf("[СТРЕМЛЕНИЕ] ОДИН СОЗДАЛ КАРТИНУ #%d", art.ID)
+			log.Debug().Msgf("[СТРЕМЛЕНИЕ] ODIN СОТВОРИЛ КАРТИНУ #%d", art.ID)
 			return nil
 		}
 	}

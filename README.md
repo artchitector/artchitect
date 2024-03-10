@@ -19,6 +19,8 @@
 ### Архитектура программного кода
 
 > Если код не читается, как приключенческая книга - его никто не захочет читать.
+> 
+> На сайте проекта есть [сказочная история](https://artchitect.space/loki) об идее возниковения artchitect.
 
 Код artchitect написан в духе скандинавской мифологии. Картины сотворяет верховный бог
 [Асгарда](services/asgard/) -
@@ -63,7 +65,7 @@
 8. Далее всё сотворённое [сохраняется в хранилище](services/asgard/pantheon/odin.go#L244) цифровой галереи Artchitect.
 9. Раз в некоторое время Frigg [берёт на себя управление](services/asgard/pantheon/frigg.go#L87), чтобы собрать
    очередное единство. Это случается 1 раз после 10 написанных картин.
-10. Все данные в реальном времени транслируются в [Midgard](services/midgard) (фронтэнд artchitect)
+10. Все данные в реальном времени, включая [расшифрованные изображения энтропии](services/asgard/pantheon/heimdallr.go#L164), транслируются в [Midgard](services/midgard) (фронтэнд artchitect)
     через [Alfheimr](services/alfheimr) (api-gateway artchitect). В процессе
     трансляции [Heimdallr](services/asgard/pantheon/heimdallr.go) отправляет пакеты
     драккарами

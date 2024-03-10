@@ -26,6 +26,10 @@
 и [многие другие](services/asgard/pantheon).
 
 #### Главный цикл творения
+- процесс творения запускается через [Стремление (Intention)](services/asgard/pantheon/intention.go). Может быть [призван](services/asgard/pantheon/intention.go#L62) Odin для сотворения, или [призвана](services/asgard/pantheon/intention.go#L53) Frigg для объединения.
+
+
+
 ![artchitecture](files/images/artchitecture.jpg)
 
 #### Рабочий стенд Artchitect

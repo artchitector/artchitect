@@ -72,7 +72,7 @@ func main() {
 	artPortal := portals.NewArtPortal(artPile, harbour)
 	imPortal := portals.NewImagePortal(wh)
 	unityPortal := portals.NewUnityPortal(unityPile, artPile)
-	likePortal := portals.NewLikePortal(authService, likePile, harbour, config.ArtchitectorID)
+	likePortal := portals.NewLikePortal(authService, likePile, harbour, config.ArtchitectorID, bot)
 	authPortal := portals.NewAuthPortal(
 		authService,
 		config.JwtSecret,

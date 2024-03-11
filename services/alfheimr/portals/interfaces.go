@@ -44,3 +44,7 @@ type warehouse interface {
 type harbour interface {
 	SendCrownWaitCargo(ctx context.Context, request string) (string, error)
 }
+
+type bot interface {
+	SendArtchitectorChoice(ctx context.Context, artID uint) error
+}

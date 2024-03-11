@@ -154,7 +154,7 @@ func (b *Bot) generateText(ctx context.Context, artID uint) (string, error) {
 func (t *Bot) defaultHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	if update.ChannelPost != nil {
 		log.Info().Msgf("[bot] ПОЛУЧЕНО СООБЩЕНИЕ В КАНАЛЕ: %+v", update.ChannelPost)
-		if update.ChannelPost.ID == int(t.ArtchitectorID) {
+		if update.ChannelPost.Chat.ID == int64(t.ArtchitectorID) {
 			if err := t.handleArtchitector(ctx, update.Message.Text); err != nil {
 				log.Error().Err(err).Msgf("[bot] НЕ СМОГ ОБРАБОТАТЬ ЗАПРОС ARTCHITEСTOR'А")
 				return

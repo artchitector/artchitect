@@ -48,11 +48,12 @@ func main() {
 	artPile := model.NewArtPile(db)
 	unityPile := model.NewUnityPile(db)
 	likePile := model.NewLikePile(db)
+	settingsPile := model.NewSettingPile(db)
 	// WAREHOUSE
 	wh := warehouse.NewWarehouse(config.ArtWarehouseURL, config.OriginWarehouseURL)
 
 	// telegram bot
-	bot := communication.NewBot(artPile, wh, config.BotToken, config.ChatArtchitectChoice, config.ChatArtchitectorChoice)
+	bot := communication.NewBot(artPile, wh, settingsPile, config.BotToken, config.ChatArtchitectChoice, config.ChatArtchitectorChoice, config.ArtchitectorID)
 	if err := bot.Start(ctx); err != nil {
 		log.Fatal().Err(err).Send()
 	}

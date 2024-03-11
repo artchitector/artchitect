@@ -13,11 +13,11 @@ type LikePortal struct {
 	authService    authService
 	likePile       likePile
 	harbour        harbour
-	artchitectorID uint
+	artchitectorID int
 	bot            bot
 }
 
-func NewLikePortal(authService authService, likePile likePile, harbour harbour, artchitectorID uint, bot bot) *LikePortal {
+func NewLikePortal(authService authService, likePile likePile, harbour harbour, artchitectorID int, bot bot) *LikePortal {
 	return &LikePortal{authService: authService, likePile: likePile, harbour: harbour, artchitectorID: artchitectorID, bot: bot}
 }
 
@@ -101,7 +101,7 @@ func (lp *LikePortal) HandleLike(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, wrapError(err))
 		return
 	} else {
-		if newLiked == true && userId == lp.artchitectorID {
+		if newLiked == true && int(userId) == lp.artchitectorID {
 			// Odin: когда автор artchitect ставит лайк, это обрабатывается своим способом. Для остальных всё обычно.
 			go func() {
 				log.Info().Msgf("[like_portal] ARTCHITECTOR ПОСТАВИЛ ЛАЙК ПОД %d", req.ArtID)

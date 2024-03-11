@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"gorm.io/gorm"
 	"strings"
 
 	"github.com/artchitector/artchitect/model"
@@ -18,6 +19,11 @@ type artPile interface {
 	GetArtRecursive(ctx context.Context, ID uint) (model.Art, error)
 }
 
+type settings interface {
+	GetValue(ctx context.Context, name string) (string, error)
+	SetValue(ctx context.Context, name string, value string) (model.Setting, error)
+}
+
 type warehouse interface {
 	DownloadArtImage(ctx context.Context, artID uint, size string) ([]byte, error)
 }
@@ -26,25 +32,31 @@ type warehouse interface {
 type Bot struct {
 	artPile                artPile
 	warehouse              warehouse
+	settings               settings
 	bot                    *bot.Bot
 	token                  string
 	ChatArtchitectChoice   int64
 	ChatArtchitectorChoice int64
+	ArtchitectorID         int
 }
 
 func NewBot(
 	artPile artPile,
 	warehouse warehouse,
+	settings settings,
 	token string,
 	chatArtchitectChoice int64,
 	chatArtchitectorChoice int64,
+	artchitectorID int,
 ) *Bot {
 	b := &Bot{
 		artPile:                artPile,
 		warehouse:              warehouse,
+		settings:               settings,
 		token:                  token,
 		ChatArtchitectChoice:   chatArtchitectChoice,
 		ChatArtchitectorChoice: chatArtchitectorChoice,
+		ArtchitectorID:         artchitectorID,
 	}
 	return b
 }
@@ -142,7 +154,64 @@ func (b *Bot) generateText(ctx context.Context, artID uint) (string, error) {
 func (t *Bot) defaultHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	if update.ChannelPost != nil {
 		log.Info().Msgf("[bot] ПОЛУЧЕНО СООБЩЕНИЕ В КАНАЛЕ: %+v", update.ChannelPost)
+		if update.ChannelPost.ID == int(t.ArtchitectorID) {
+			if err := t.handleArtchitector(ctx, update.Message.Text); err != nil {
+				log.Error().Err(err).Msgf("[bot] НЕ СМОГ ОБРАБОТАТЬ ЗАПРОС ARTCHITEСTOR'А")
+				return
+			}
+		}
 	} else {
 		log.Info().Msgf("[bot] ПОЛУЧЕНО ЛИЧНОЕ СООБЩЕНИЕ: %+v", update.Message)
 	}
+}
+
+const (
+	ArtchitectorSwitch = "переключи"
+)
+
+func (t *Bot) handleArtchitector(ctx context.Context, message string) error {
+	if strings.Trim(message, " ") == ArtchitectorSwitch {
+		// переключаем artchitect в ВЫКЛ/ВКЛ (запускается цикл творения или нет?)
+		var newVal string
+		val, err := t.settings.GetValue(ctx, model.SettingOdinActive)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			newVal = model.OdinActive
+		} else if err != nil {
+			switch val {
+			case model.OdinActive:
+				newVal = model.OdinDisactive
+			case model.OdinDisactive:
+				newVal = model.OdinActive
+			default:
+				return fmt.Errorf("[bot] НЕИЗВЕСТНЫЙ СТАТУС НАСТРОЙКИ %s: %s", model.SettingOdinActive, val)
+			}
+		}
+		if setting, err := t.settings.SetValue(ctx, model.SettingOdinActive, newVal); err != nil {
+			return fmt.Errorf("[bot] ПРОБЛЕМЫ С СОХРАНЕНИЕМ НАСТРОЙКИ %s: %w", model.SettingOdinActive, err)
+		} else {
+			log.Info().Msgf("[bot] СОХРАНЕНА НАСТРОЙКА %s В ПОЛОЖЕНИИ %s", setting.SettingID, setting.Value)
+			if err := t.replyArtchitector(ctx, fmt.Sprintf("[bot] СОХРАНЕНА НАСТРОЙКА %s В ПОЛОЖЕНИИ %s", setting.SettingID, setting.Value)); err != nil {
+				return fmt.Errorf("[bot] НЕ МОГУ ОТПРАВИТЬ ОТВЕТ ARTCHITECTOR'У: %w", err)
+			}
+		}
+
+	} else {
+		if err := t.replyArtchitector(ctx, "НЕ ПОНИМАЮ КОМАНДУ"); err != nil {
+			return fmt.Errorf("[bot] НЕ МОГУ ОТПРАВИТЬ ОТВЕТ ARTCHITECTOR'У: %w", err)
+		}
+	}
+	return nil
+}
+
+func (b *Bot) replyArtchitector(ctx context.Context, message string) error {
+	msg, err := b.bot.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID:    b.ArtchitectorID,
+		Text:      message,
+		ParseMode: models.ParseModeHTML,
+	})
+	if err != nil {
+		return fmt.Errorf("[bot] ПРОБЛЕМА ОТПРАВКИ СООБЩЕНИЯ ARTCHITECTOR'У: %w", err)
+	}
+	log.Info().Msgf("[bot] ОТПРАВИЛ СООБЩЕНИЕ ARTCHITECTOR'У: ID=%d", msg.ID)
+	return nil
 }

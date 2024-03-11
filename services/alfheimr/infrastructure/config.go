@@ -23,7 +23,7 @@ type Config struct {
 	JwtSecret      string
 	AllowFakeAuth  bool
 	ArtchitectHost string
-	ArtchitectorID uint
+	ArtchitectorID int
 
 	// telegram
 	BotToken                string
@@ -72,7 +72,7 @@ func InitEnv() *Config {
 		JwtSecret:      env["JWT_SECRET"],
 		AllowFakeAuth:  env["ALLOW_FAKE_AUTH"] == "true",
 		ArtchitectHost: env["ARTCHITECT_HOST"],
-		ArtchitectorID: uint(artchitectorID),
+		ArtchitectorID: int(artchitectorID),
 
 		BotToken:               env["BOT_TOKEN"],
 		ChatArtchitectChoice:   chatArtchitectChoice,

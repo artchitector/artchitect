@@ -185,7 +185,7 @@ func (t *Bot) handleArtchitector(ctx context.Context, message string) error {
 			case model.OdinDisactive:
 				newVal = model.OdinActive
 			default:
-				return fmt.Errorf("[bot] НЕИЗВЕСТНЫЙ СТАТУС НАСТРОЙКИ %s: %s", model.SettingOdinActive, val)
+				newVal = model.OdinActive
 			}
 		}
 		if setting, err := t.settings.SetValue(ctx, model.SettingOdinActive, newVal); err != nil {

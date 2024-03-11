@@ -125,16 +125,21 @@ func (o *Odin) AnswerPersonalCrown(ctx context.Context, crownRequest string) (in
 // Odin: Я буду отправлять раз в 12 минут одну картину в телеграм-чат, картина будет избрана мной
 func (o *Odin) RunSendChosenArts(ctx context.Context) error {
 	log.Info().Msgf("[odin] НАЧИНАЮ ПРОЦЕСС ПОДДЕРЖКИ ПОТОКА 12-МИНУТ - ARTCHITECT CHOSEN")
-	if err := o.sendChosenArt(ctx); err != nil {
-		log.Error().Err(err).Msgf("[odin] ПРОБЛЕМА ОТПРАВКЕ ИЗБРАННОГО В ТЕЛЕГРАМ-ЧАТ.")
-	}
+
+	go func() {
+		<-time.After(time.Second * 5)
+		if err := o.sendChosenArt(ctx); err != nil {
+			log.Error().Err(err).Msgf("[odin] ПРОБЛЕМА ОТПРАВКИ ИЗБРАННОГО В ТЕЛЕГРАМ-ЧАТ.")
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-time.Tick(time.Minute * 12):
 			if err := o.sendChosenArt(ctx); err != nil {
-				log.Error().Err(err).Msgf("[odin] ПРОБЛЕМА ОТПРАВКЕ ИЗБРАННОГО В ТЕЛЕГРАМ-ЧАТ.")
+				log.Error().Err(err).Msgf("[odin] ПРОБЛЕМА ОТПРАВКИ ИЗБРАННОГО В ТЕЛЕГРАМ-ЧАТ.")
 			}
 		}
 	}

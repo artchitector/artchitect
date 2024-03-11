@@ -177,6 +177,8 @@ func (t *Bot) handleArtchitector(ctx context.Context, message string) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			newVal = model.OdinActive
 		} else if err != nil {
+			return fmt.Errorf("[bot] ОШИБКА ПРИ ПОЛУЧЕНИИ НАСТРОЙКИ %s %w", model.SettingOdinActive, val)
+		} else {
 			switch val {
 			case model.OdinActive:
 				newVal = model.OdinDisactive

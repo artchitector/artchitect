@@ -44,20 +44,25 @@ func main() {
 	// СЛУШАТЕЛЬ РЕДИСА И СОБЫТИЙ. ФОНОВЫЙ ЗАПУСК ОБРАБОТКИ
 	red := infrastructure.InitRedis(config)
 
-	harbour := communication.NewHarbour(red)
+	// КУЧИ ДАННЫХ
+	artPile := model.NewArtPile(db)
+	unityPile := model.NewUnityPile(db)
+	likePile := model.NewLikePile(db)
+	// WAREHOUSE
+	wh := warehouse.NewWarehouse(config.ArtWarehouseURL, config.OriginWarehouseURL)
+
+	// telegram bot
+	bot := communication.NewBot(artPile, wh, config.BotToken, config.ChatArtchitectChoice, config.ChatArtchitectorChoice)
+	if err := bot.Start(ctx); err != nil {
+		log.Fatal().Err(err).Send()
+	}
+
+	harbour := communication.NewHarbour(red, bot)
 	go func() {
 		if err := harbour.Run(ctx); err != nil {
 			log.Fatal().Msgf("[ГЛАВНЫЙ] ГАВАНЬ ПРЕКРАТИЛА РАБОТУ. ODIN НЕДОВОЛЕН")
 		}
 	}()
-
-	// КУЧИ ДАННЫХ
-	artPile := model.NewArtPile(db)
-	unityPile := model.NewUnityPile(db)
-	likePile := model.NewLikePile(db)
-
-	// WAREHOUSE
-	wh := warehouse.NewWarehouse(config.ArtWarehouseURL, config.OriginWarehouseURL)
 
 	// AUTH
 	authService := infrastructure.NewAuthService(config.AllowFakeAuth, []byte(config.JwtSecret))

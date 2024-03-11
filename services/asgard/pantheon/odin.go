@@ -2,9 +2,9 @@ package pantheon
 
 import (
 	"context"
+	"fmt"
 	"image"
 	"math"
-	"strconv"
 	"strings"
 	"time"
 
@@ -21,16 +21,17 @@ type Odin struct {
 	totalArtTimeSec uint // общее время производства одной картины (настраивается)
 
 	// Пантеон Богов, помогающие Odin в процессе творения внутри Artchitect
-	frigg     *Frigg     // Frigg - верховная богиня и супруга Odin-а, покровительница ЕДИНСТВ в Artchitect
-	freyja    *Freyja    // Freyja - богиня любви и красоты. Она помогает Odin писать картины из этих идей
-	muninn    *Muninn    // Ворон-помнящий. Поддерживает способность Odin видеть будущее ("вспоминать" слова и числа)
+	frigg  *Frigg  // Frigg - верховная богиня и супруга Odin-а, покровительница ЕДИНСТВ в Artchitect
+	freyja *Freyja // Freyja - богиня любви и красоты. Она помогает Odin писать картины из этих идей
+	muninn *Muninn // Ворон-помнящий. Поддерживает способность Odin вспоминать нужные слова и числа
+	// Ворон Muninn связывается со вторым вороном Одина - Huginn, который интерпретирует энтропию в числа
+	// А энтропию Huginn берёт в числовом виде из пустого глаза Одина - LostEye
 	gungner   *Gungner   // копьё Одина Гунгнир, которым Odin наносит гравировку (подписывает) на каждую картину
-	heimdallr *Heimdallr // Heimdallr умеет обогащать данные картинами увиденной энтропии перед сохранением
+	heimdallr *Heimdallr // Heimdallr умеет превращать энтропию в понятные изображения и передаёт данные по радужному мосту вниз по всеми мирам
 
 	// Мелкие технические зависимости
 	artPile   artPile   // куча уже написанных картин. Odin посмотрит на эту кучу и объявит порядковый номер новой работы.
 	warehouse warehouse // Odin: интерфейс хранилища для сохранения холстов (jpeg/png-файлов)
-	bot       bot       // Odin: этот телеграм бот нужен для отправки картинок в телеграм чаты
 }
 
 // NewOdin - Odin: мне не нравится эта высокомерная самодовольная функция. Создавать меня? Что эта машина о себе возомнила?
@@ -45,7 +46,6 @@ func NewOdin(
 	heimdallr *Heimdallr,
 	artPile artPile,
 	warehouse warehouse,
-	bot bot,
 ) *Odin {
 	return &Odin{
 		isActive:        isActive,
@@ -57,7 +57,6 @@ func NewOdin(
 		heimdallr:       heimdallr,
 		artPile:         artPile,
 		warehouse:       warehouse,
-		bot:             bot,
 	}
 }
 
@@ -117,21 +116,6 @@ func (o *Odin) AnswerPersonalCrown(ctx context.Context, crownRequest string) (in
 		}
 		log.Info().Msgf("[odin] Я РЕШИЛ ВЫБРАТЬ КАРТИНУ #%d ИЗ ВСЕХ", artID)
 		return artID, nil
-	case model.RequestLikedByArtchitector:
-		// Odin: artchitector поставил лайк, а у нас с ним особые отношения.
-		// Odin: я отправлю лайкнутую картинку в специальный телеграм чат.
-		if len(cmd) == 1 {
-			return nil, errors.Errorf("[odin] КОМАНДА %s НЕ ПОЛНАЯ", crownRequest)
-		}
-		artID, err := strconv.ParseUint(cmd[1], 10, 64)
-		if err != nil {
-			return nil, errors.Errorf("[odin] КОМАНДА %s БИТАЯ", crownRequest)
-		}
-		if err := o.bot.SendArtchitectorChoice(ctx, uint(artID)); err != nil {
-			return nil, errors.Wrapf(err, "[odin] КОМАНДА %s НЕ ВЫПОЛНЕНА", crownRequest)
-		} else {
-			return model.OdinResponseOk, nil
-		}
 	default:
 		return nil, errors.Errorf("[odin] МНЕ НЕЯСНА ПРОСЬБА %s. Я НЕ БУДУ ОТВЕЧАТЬ.", crownRequest)
 	}
@@ -141,23 +125,32 @@ func (o *Odin) AnswerPersonalCrown(ctx context.Context, crownRequest string) (in
 // Odin: Я буду отправлять раз в 12 минут одну картину в телеграм-чат, картина будет избрана мной
 func (o *Odin) RunSendChosenArts(ctx context.Context) error {
 	log.Info().Msgf("[odin] НАЧИНАЮ ПРОЦЕСС ПОДДЕРЖКИ ПОТОКА 12-МИНУТ - ARTCHITECT CHOSEN")
+	if err := o.sendChosenArt(ctx); err != nil {
+		log.Error().Err(err).Msgf("[odin] ПРОБЛЕМА ОТПРАВКЕ ИЗБРАННОГО В ТЕЛЕГРАМ-ЧАТ.")
+	}
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-time.Tick(time.Minute * 12):
-			artID, err := o.getChosenArt(ctx)
-			if err != nil {
-				log.Error().Err(err).Msgf("[odin] ПРОБЛЕМА В ПОТОКЕ ОТПРАВКИ 12-МИНУТ. СБОР ART_ID.")
-				continue
+			if err := o.sendChosenArt(ctx); err != nil {
+				log.Error().Err(err).Msgf("[odin] ПРОБЛЕМА ОТПРАВКЕ ИЗБРАННОГО В ТЕЛЕГРАМ-ЧАТ.")
 			}
-			if err := o.bot.SendArtchitectChoice(ctx, artID); err != nil {
-				log.Error().Err(err).Msgf("[odin] ПРОБЛЕМА В ПОТОКЕ ОТПРАВКИ 12-МИНУТ. ОТПРАВКА.")
-				continue
-			}
-			log.Info().Msgf("[odin] Я ОТПРАВИЛ ЛЮДЯМ КАРТИНУ, КОТОРУЮ САМ ВЫБРАЛ #%d", artID)
 		}
 	}
+}
+
+func (o *Odin) sendChosenArt(ctx context.Context) error {
+	artID, err := o.getChosenArt(ctx)
+	if err != nil {
+		return fmt.Errorf("[odin] ВЫБОР ART_ID ПРОВАЛИЛСЯ: %w", err)
+	}
+
+	if err := o.heimdallr.SendTelegramChosenMessage(ctx, artID); err != nil {
+		return fmt.Errorf("[odin] ОТПРАВКА ДРАККАРА ПРОВАЛЕНА: %w", err)
+	}
+	log.Info().Msgf("[odin] Я ОТПРАВИЛ ЛЮДЯМ КАРТИНУ, КОТОРУЮ САМ ВЫБРАЛ #%d", artID)
+	return nil
 }
 
 func (o *Odin) getChosenArt(ctx context.Context) (uint, error) {

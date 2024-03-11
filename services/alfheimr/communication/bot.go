@@ -13,6 +13,15 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type artPile interface {
+	GetMaxArtID(ctx context.Context) (uint, error)
+	GetArtRecursive(ctx context.Context, ID uint) (model.Art, error)
+}
+
+type warehouse interface {
+	DownloadArtImage(ctx context.Context, artID uint, size string) ([]byte, error)
+}
+
 // Bot - телеграм-бот, который отправляет картинки в телеграм-чаты
 type Bot struct {
 	artPile                artPile

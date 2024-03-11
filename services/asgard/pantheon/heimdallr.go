@@ -96,6 +96,10 @@ func (h *Heimdallr) SendNewArt(ctx context.Context, art model.Art) error {
 	return h.bifröst.SendDrakkar(ctx, model.ChanNewArt, art)
 }
 
+func (s *Heimdallr) SendTelegramChosenMessage(ctx context.Context, artID uint) error {
+	return s.bifröst.SendDrakkar(ctx, model.ChanTelegramChosen, artID)
+}
+
 func (h *Heimdallr) SendOdinState(ctx context.Context, state model.OdinState) error {
 	return h.bifröst.SendDrakkar(ctx, model.ChanOdinState, state)
 }

@@ -13,6 +13,7 @@ const (
 	// Odin: в личном канале я буду отвечать эльфам Альвхейма на их вопросы, которые они отправляют мне почтовыми воронами Crown
 	ChanOdin           = "for_odin"        // в этот канал идут личные распоряжения Одина
 	ChanLostConnection = "lost_connection" // если Альвхейм потерял связь с Асгардом, он будет рассылать такие сообщения
+	ChanTelegramChosen = "telegram_chosen" // Один выбрал одну картину из всех для отправки в телеграм-чат
 
 	RequestGiveChosenArt       = "Укажи нам на нужную картину, о, Всеотец!"
 	RequestLikedByArtchitector = "artchitector поставил лайк"

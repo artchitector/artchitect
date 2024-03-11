@@ -36,11 +36,6 @@ type warehouse interface {
 	SaveArtImage(ctx context.Context, artID uint, img image.Image) error
 }
 
-type bot interface {
-	SendArtchitectChoice(ctx context.Context, artID uint) error
-	SendArtchitectorChoice(ctx context.Context, artID uint) error
-}
-
 type subImager interface {
 	SubImage(r image.Rectangle) image.Image
 }

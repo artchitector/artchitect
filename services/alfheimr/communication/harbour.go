@@ -18,6 +18,10 @@ const (
 	SecondsToLostConnection = 2 // если 2 секунды нет сообщений с asgard, то это значит, что коннект мы потеряли
 )
 
+type botInterface interface {
+	SendArtchitectChoice(ctx context.Context, artID uint) error
+}
+
 type subscriber struct {
 	ctx     context.Context
 	eventCh chan model.Radiogram
@@ -57,6 +61,7 @@ Odin: некоторые грузы будут ретранслированы н
 */
 type Harbour struct {
 	mutex              sync.Mutex
+	bot                botInterface
 	red                *redis.Client
 	listener           []*subscriber // слушатели радио
 	lastCrownID        uint
@@ -64,8 +69,8 @@ type Harbour struct {
 	lastMessageTime    *time.Time // надеюсь, что состояния гонки тут не будет
 }
 
-func NewHarbour(red *redis.Client) *Harbour {
-	return &Harbour{red: red, mutex: sync.Mutex{}, listener: make([]*subscriber, 0)}
+func NewHarbour(red *redis.Client, bot botInterface) *Harbour {
+	return &Harbour{red: red, bot: bot, mutex: sync.Mutex{}, listener: make([]*subscriber, 0)}
 }
 
 // Run - запуск процесса получения грузов из Асгарда по радужному мосту (redis-у) и ретрансляции их по радио в виде радиограмм
@@ -212,6 +217,11 @@ func (l *Harbour) handle(ctx context.Context, msg *redis.Message) error {
 		if err := l.handleNewArt(ctx, msg); err != nil {
 			return errors.Wrapf(err, "[harbour] ОШИБКА ОБРАБОТКИ СОБЫТИЯ %s", msg.Channel)
 		}
+
+	case model.ChanTelegramChosen:
+		if err := l.handleTelegramChosen(ctx, msg); err != nil {
+			return errors.Wrapf(err, "[harbour] ОШИБКА ОБРАБОТКИ СОБЫТИЯ %s", msg.Channel)
+		}
 	}
 
 	return nil
@@ -250,6 +260,18 @@ func (l *Harbour) handleNewArt(ctx context.Context, msg *redis.Message) error {
 
 	log.Debug().Msgf("[harbour] ПЕРЕОТПРАВЛЯЮ FLAT-ART #%d В КАНАЛ %s", flat.ID, model.ChanNewArt)
 	l.makeRadioshow(ctx, model.ChanNewArt, string(j))
+	return nil
+}
+
+func (l *Harbour) handleTelegramChosen(ctx context.Context, msg *redis.Message) error {
+	var artID uint
+	if err := json.Unmarshal([]byte(msg.Payload), &artID); err != nil {
+		return errors.Wrap(err, "[harbour] ОШИБКА JSON-РАСПАКОВКИ TELEGRAM-CHOSEN ГРУЗА. ГРУЗ ПОВРЕЖДЁН.")
+	}
+	if err := l.bot.SendArtchitectChoice(ctx, artID); err != nil {
+		return errors.Wrap(err, "[harbour] ОШИБКА ОТПРАВКИ CHOSEN ART В ТЕЛЕГРАМ.")
+	}
+	log.Info().Msgf("[harbour] ОТПРАВЛЕН TELEGRAM CHOSEN ART.")
 	return nil
 }
 

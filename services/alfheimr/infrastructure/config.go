@@ -23,8 +23,13 @@ type Config struct {
 	JwtSecret      string
 	AllowFakeAuth  bool
 	ArtchitectHost string
-	BotToken       string
 	ArtchitectorID uint
+
+	// telegram
+	BotToken                string
+	ChatArtchitectChoice    int64
+	ChatArtchitectorChoice  int64
+	ArtchitectChoiceEnabled bool
 }
 
 func InitEnv() *Config {
@@ -41,6 +46,14 @@ func InitEnv() *Config {
 	artchitectorID, err := strconv.ParseUint(env["ARTCHITECTOR_ID"], 10, 64)
 	if err != nil {
 		log.Fatal().Err(err).Send()
+	}
+	chatArtchitectChoice, err := strconv.ParseInt(env["CHAT_ARTCHITECT_CHOICE"], 10, 64)
+	if err != nil {
+		log.Fatal().Err(err).Msgf("[config] ОШИБКА ЧТЕНИЯ CHAT_ARTCHITECT_CHOICE")
+	}
+	chatArtchitectorChoice, err := strconv.ParseInt(env["CHAT_ARTCHITECTOR_CHOICE"], 10, 64)
+	if err != nil {
+		log.Fatal().Err(err).Msgf("[config] ОШИБКА ЧТЕНИЯ CHAT_ARTCHITECTOR_CHOICE")
 	}
 
 	return &Config{
@@ -59,7 +72,10 @@ func InitEnv() *Config {
 		JwtSecret:      env["JWT_SECRET"],
 		AllowFakeAuth:  env["ALLOW_FAKE_AUTH"] == "true",
 		ArtchitectHost: env["ARTCHITECT_HOST"],
-		BotToken:       env["BOT_TOKEN"],
 		ArtchitectorID: uint(artchitectorID),
+
+		BotToken:               env["BOT_TOKEN"],
+		ChatArtchitectChoice:   chatArtchitectChoice,
+		ChatArtchitectorChoice: chatArtchitectorChoice,
 	}
 }

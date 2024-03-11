@@ -3,7 +3,6 @@ package communication
 import (
 	"context"
 	"encoding/json"
-
 	"github.com/artchitector/artchitect/model"
 	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"

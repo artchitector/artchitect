@@ -60,12 +60,6 @@ func main() {
 	artPile := model.NewArtPile(database)
 	unityPile := model.NewUnityPile(database)
 
-	// telegram bot
-	bot := communication.NewBot(artPile, wh, config.BotToken, config.ChatArtchitectChoice, config.ChatArtchitectorChoice)
-	if err := bot.Start(ctx); err != nil {
-		log.Fatal().Err(err).Send()
-	}
-
 	giving := communication.NewGiving(artPile, muninn, bifröst)
 
 	loki := pantheon.NewLoki()
@@ -87,7 +81,6 @@ func main() {
 		heimdallr,
 		artPile,
 		wh,
-		bot,
 	)
 
 	// запуск фоновых служб

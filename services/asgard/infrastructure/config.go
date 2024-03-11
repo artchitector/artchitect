@@ -30,10 +30,6 @@ type Config struct {
 	CreateTotalTimeSec   uint
 	UnificationEnjoyTime uint
 
-	// telegram
-	BotToken                string
-	ChatArtchitectChoice    int64
-	ChatArtchitectorChoice  int64
 	ArtchitectChoiceEnabled bool
 }
 
@@ -57,14 +53,6 @@ func InitEnv() *Config {
 	unificationEnjoyTime, err := strconv.ParseUint(env["UNIFICATION_ENJOY_TIME"], 10, 64)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("[config] ОШИБКА ЧТЕНИЯ UNIFICATION_ENJOY_TIME")
-	}
-	chatArtchitectChoice, err := strconv.ParseInt(env["CHAT_ARTCHITECT_CHOICE"], 10, 64)
-	if err != nil {
-		log.Fatal().Err(err).Msgf("[config] ОШИБКА ЧТЕНИЯ CHAT_12MIN_ID")
-	}
-	chatArtchitectorChoice, err := strconv.ParseInt(env["CHAT_ARTCHITECTOR_CHOICE"], 10, 64)
-	if err != nil {
-		log.Fatal().Err(err).Msgf("[config] ОШИБКА ЧТЕНИЯ CHAT_INFINITE_ID")
 	}
 
 	return &Config{
@@ -90,9 +78,6 @@ func InitEnv() *Config {
 		CreateTotalTimeSec:   uint(totalTime),
 		UnificationEnjoyTime: uint(unificationEnjoyTime),
 
-		BotToken:                env["BOT_TOKEN"],
-		ChatArtchitectChoice:    chatArtchitectChoice,
-		ChatArtchitectorChoice:  chatArtchitectorChoice,
 		ArtchitectChoiceEnabled: env["ARTCHITECT_CHOICE_ENABLED"] == "true",
 	}
 }

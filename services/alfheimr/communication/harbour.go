@@ -86,6 +86,7 @@ func (l *Harbour) Run(ctx context.Context) error {
 		model.ChanOdinState,
 		model.ChanFriggState,
 		model.ChanGiving,
+		model.ChanTelegramChosen,
 	)
 	log.Info().Msgf("[harbour] ГАВАНЬ НАЧИНАЕТ ПРИЁМ ГРУЗОВ")
 	for {

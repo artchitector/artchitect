@@ -32,6 +32,7 @@ type Odin struct {
 	// Мелкие технические зависимости
 	artPile   artPile   // куча уже написанных картин. Odin посмотрит на эту кучу и объявит порядковый номер новой работы.
 	warehouse warehouse // Odin: интерфейс хранилища для сохранения холстов (jpeg/png-файлов)
+	settings  settings  // Настройки, понять стейт активности Одина (может быть неактивен для рисования по этой настройке)
 }
 
 // NewOdin - Odin: мне не нравится эта высокомерная самодовольная функция. Создавать меня? Что эта машина о себе возомнила?
@@ -46,6 +47,7 @@ func NewOdin(
 	heimdallr *Heimdallr,
 	artPile artPile,
 	warehouse warehouse,
+	settings settings,
 ) *Odin {
 	return &Odin{
 		isActive:        isActive,
@@ -57,12 +59,20 @@ func NewOdin(
 		heimdallr:       heimdallr,
 		artPile:         artPile,
 		warehouse:       warehouse,
+		settings:        settings,
 	}
 }
 
 // HasDesire - имеет ли Odin желание сотворять картину?
-func (o *Odin) HasDesire() bool {
-	return o.isActive
+func (o *Odin) HasDesire(ctx context.Context) (bool, error) {
+	if !o.isActive {
+		return false, nil
+	}
+	val, err := o.settings.GetValue(ctx, model.SettingOdinActive)
+	if err != nil {
+		return false, fmt.Errorf("[odin] СТАТУС НЕИЗВЕСТЕН. КРИТИЧЕСКАЯ ОШИБКА!")
+	}
+	return val == model.OdinActive, nil
 }
 
 /*

@@ -2,6 +2,7 @@ package pantheon
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -58,13 +59,17 @@ func (a *Intention) WorkOnce(ctx context.Context) error {
 		return nil
 	}
 
-	if a.odin.HasDesire() {
+	if desire, err := a.odin.HasDesire(ctx); err != nil {
+		return fmt.Errorf("[СТРЕМЛЕНИЕ] СТАТУС ЖЕЛАНИЯ ОДИНА НЕИЗВЕСТЕН! ОШИБКА: %w", err)
+	} else if desire {
 		if worked, art, err := a.odin.Create(ctx); err != nil {
 			return errors.Wrap(err, "[СТРЕМЛЕНИЕ] ODIN НЕ СОЗДАЛ КАРТИНУ. ОДИН В ЯРОСТИ")
 		} else if worked {
 			log.Debug().Msgf("[СТРЕМЛЕНИЕ] ODIN СОТВОРИЛ КАРТИНУ #%d", art.ID)
 			return nil
 		}
+	} else {
+		log.Debug().Msgf("[СТРЕМЛЕНИЕ] ODIN НЕ ИМЕЕТ ЖЕЛАНИЯ ТВОРИТЬ")
 	}
 
 	log.Debug().Msg("[СТРЕМЛЕНИЕ] НЕТ РАБОТЫ. АСГАРД ОТДЫХАЕТ.")

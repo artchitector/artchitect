@@ -59,6 +59,7 @@ func main() {
 	// хранилища сущностей
 	artPile := model.NewArtPile(database)
 	unityPile := model.NewUnityPile(database)
+	settingsPile := model.NewSettingPile(database)
 
 	giving := communication.NewGiving(artPile, muninn, bifröst)
 
@@ -81,6 +82,7 @@ func main() {
 		heimdallr,
 		artPile,
 		wh,
+		settingsPile,
 	)
 
 	// запуск фоновых служб

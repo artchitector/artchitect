@@ -39,3 +39,7 @@ type warehouse interface {
 type subImager interface {
 	SubImage(r image.Rectangle) image.Image
 }
+
+type settings interface {
+	GetValue(ctx context.Context, name string) (string, error)
+}

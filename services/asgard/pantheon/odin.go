@@ -70,7 +70,7 @@ func (o *Odin) HasDesire(ctx context.Context) (bool, error) {
 	}
 	val, err := o.settings.GetValue(ctx, model.SettingOdinActive)
 	if err != nil {
-		return false, fmt.Errorf("[odin] СТАТУС НЕИЗВЕСТЕН. КРИТИЧЕСКАЯ ОШИБКА!")
+		return false, fmt.Errorf("[odin] СТАТУС НЕИЗВЕСТЕН. КРИТИЧЕСКАЯ ОШИБКА! %w", err)
 	}
 	return val == model.OdinActive, nil
 }
